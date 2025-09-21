@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, Home, Users } from 'lucide-react';
+import { FileText, Home, Users, BookText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -12,16 +13,16 @@ import {
 } from '@/components/ui/tooltip';
 
 const navItems = [
-  { href: '/dashboard', label: 'Resumen', icon: Home },
   { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
   { href: '/dashboard/clients', label: 'Compañías', icon: Users },
+  { href: '/dashboard/documentation', label: 'Documentación', icon: BookText },
 ];
 
 export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
   const pathname = usePathname();
 
   const getBasePath = (path: string) => {
-    if (path === '/dashboard') return path;
+    if (path === '/dashboard') return '/dashboard/documents'; // Default to documents
     const parts = path.split('/');
     return `/${parts[1]}/${parts[2]}`;
   };
@@ -39,7 +40,7 @@ export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
                   href={item.href}
                   className={cn(
                     'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
-                    (basePath === item.href || (item.href === '/dashboard/documents' && basePath === '/dashboard')) && 'bg-accent text-accent-foreground'
+                    basePath === item.href && 'bg-accent text-accent-foreground'
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -64,7 +65,7 @@ export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
           href={item.href}
           className={cn(
             'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-            (basePath === item.href || (item.href === '/dashboard/documents' && basePath === '/dashboard')) && 'bg-accent text-primary'
+            basePath === item.href && 'bg-accent text-primary'
           )}
         >
           <item.icon className="h-4 w-4" />
