@@ -70,7 +70,7 @@ function AccountSettings() {
             <CardHeader>
                 <div className="flex items-center gap-4">
                     <CardTitle>Cuenta</CardTitle>
-                    <Badge variant="outline">Administrador</Badge>
+                    <Badge variant="outline" className="border-chart-4 bg-chart-4/10 text-chart-4">Administrador</Badge>
                 </div>
                 <CardDescription>
                     Realiza cambios en tu cuenta aquí. Haz clic en guardar cuando hayas terminado.
@@ -339,3 +339,5 @@ export default function SettingsPage() {
     </div>
   )
 }
+
+    
