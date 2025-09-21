@@ -106,12 +106,3 @@ export interface ProcessingStep {
   timestamp: Timestamp;
   details?: Record<string, unknown>;
 }
-
-
-export type Analytics = {
-  totalDocuments: number;
-  pendingDocuments: number;
-  errorRate: number;
-  documentsByStatus: Array<{ name: string; value: number; fill: string }>;
-  volumeLast6Months: Array<{ name: string; total: number }>;
-};

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, FileText, Home, Users } from 'lucide-react';
+import { FileText, Home, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -15,7 +15,6 @@ const navItems = [
   { href: '/dashboard', label: 'Resumen', icon: Home },
   { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
   { href: '/dashboard/clients', label: 'Compañías', icon: Users },
-  { href: '/dashboard/reports', label: 'Analíticas', icon: BarChart3 },
 ];
 
 export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {

@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { getDocumentById } from '@/lib/firebase/firestore';
+import { getDocumentById, getDocuments } from '@/lib/firebase/firestore';
 import ErrorExplainer from './_components/error-explainer';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
@@ -39,14 +39,21 @@ export default function DocumentDetailPage() {
     async function fetchDocument() {
       if (!id) return;
       setIsLoading(true);
-      // We don't have companyId, so we can't fetch. This will be fixed later.
-      // For now, let's simulate a fetch and then show notFound.
-      const fetchedDocument = await getDocumentById(id);
-      if (fetchedDocument) {
-        setDocument(fetchedDocument as FiscalDocument);
+      
+      const allDocuments = await getDocuments();
+      const targetDocument = allDocuments.find(doc => doc.id === id);
+
+      if (targetDocument) {
+        const fetchedDocument = await getDocumentById(targetDocument.companyId, id);
+        if (fetchedDocument) {
+            setDocument(fetchedDocument as FiscalDocument);
+        } else {
+            notFound();
+        }
       } else {
         notFound();
       }
+
       setIsLoading(false);
     }
     fetchDocument();
