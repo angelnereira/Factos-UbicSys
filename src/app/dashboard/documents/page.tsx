@@ -17,12 +17,40 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { getDocuments } from '@/lib/firebase/firestore';
+import { getDocuments, getClients, addDocument } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
-import type { Document } from '@/lib/types';
-import { Loader2, ArrowUpDown, Search } from 'lucide-react';
+import type { Document, Client } from '@/lib/types';
+import { Loader2, ArrowUpDown, Search, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 const statusStyles: { [key in Document['status']]: string } = {
   Processed: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -175,31 +203,165 @@ function DocumentsTable({
   );
 }
 
+const documentSchema = z.object({
+  clientId: z.string().min(1, "Debes seleccionar un cliente"),
+  amount: z.coerce.number().min(0.01, "El monto debe ser mayor que cero"),
+  currency: z.enum(['USD', 'EUR', 'GBP']),
+});
+
+type DocumentFormValues = z.infer<typeof documentSchema>;
+
+
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<DocumentFormValues>({
+    resolver: zodResolver(documentSchema),
+  });
 
   useEffect(() => {
-    async function fetchDocuments() {
+    async function fetchData() {
       setIsLoading(true);
-      const fetchedDocuments = await getDocuments();
+      const [fetchedDocuments, fetchedClients] = await Promise.all([
+        getDocuments(),
+        getClients(),
+      ]);
       setDocuments(fetchedDocuments);
+      setClients(fetchedClients);
       setIsLoading(false);
     }
-    fetchDocuments();
+    fetchData();
   }, []);
+  
+  const onSubmit = async (values: DocumentFormValues) => {
+    const selectedClient = clients.find(c => c.id === values.clientId);
+    if (!selectedClient) {
+        toast({ title: "Error", description: "Cliente no encontrado", variant: "destructive"});
+        return;
+    }
+
+    const newDocumentData = {
+        client: selectedClient.name,
+        clientId: selectedClient.id,
+        erpType: selectedClient.erpType,
+        amount: values.amount,
+        currency: values.currency,
+        date: new Date().toISOString().split('T')[0],
+        status: 'Pending' as const,
+    };
+
+    const { newDocument, error } = await addDocument(newDocumentData);
+
+    if (error) {
+        toast({ title: "Error", description: "No se pudo agregar el documento.", variant: "destructive" });
+    } else if (newDocument) {
+        setDocuments(prev => [...prev, newDocument]);
+        toast({ title: "Éxito", description: "Documento agregado exitosamente." });
+        setIsDialogOpen(false);
+        form.reset();
+    }
+  };
 
   return (
     <>
       <div className="flex items-center">
-        <h1 className="font-headline text-2xl font-bold tracking-tight">Documentos</h1>
+        <h1 className="font-headline flex-1 text-2xl font-bold tracking-tight">Documentos</h1>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="h-8 gap-1">
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Agregar Documento
+              </span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Agregar Nuevo Documento</DialogTitle>
+              <DialogDescription>
+                Ingrese los detalles para crear un nuevo documento.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+                 <FormField
+                  control={form.control}
+                  name="clientId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cliente</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar Cliente" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clients.map(client => (
+                            <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Monto</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="100.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Moneda</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar Moneda" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                          <SelectItem value="GBP">GBP</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : "Guardar Documento"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
       <Tabs defaultValue="all">
         <div className="flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="all">Todos</TabsTrigger>
             <TabsTrigger value="pending">Pendientes</TabsTrigger>
+            <TabsTrigger value="processed">Procesados</TabsTrigger>
             <TabsTrigger value="error">Error</TabsTrigger>
           </TabsList>
            <div className="relative w-full max-w-sm">
@@ -209,7 +371,7 @@ export default function DocumentsPage() {
                     placeholder="Buscar por cliente..."
                     className="w-full bg-background pl-8"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => setSearchQuery(e.TabsValue)}
                 />
             </div>
         </div>
@@ -218,6 +380,9 @@ export default function DocumentsPage() {
         </TabsContent>
         <TabsContent value="pending">
           <DocumentsTable documents={documents} isLoading={isLoading} status="Pending" searchQuery={searchQuery} />
+        </TabsContent>
+        <TabsContent value="processed">
+          <DocumentsTable documents={documents} isLoading={isLoading} status="Processed" searchQuery={searchQuery} />
         </TabsContent>
         <TabsContent value="error">
           <DocumentsTable documents={documents} isLoading={isLoading} status="Error" searchQuery={searchQuery} />

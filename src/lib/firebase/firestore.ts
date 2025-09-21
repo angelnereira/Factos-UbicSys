@@ -5,6 +5,8 @@ import type { Client, Document } from '../types';
 
 // Define the type for the data to be added, omitting the 'id'
 type ClientData = Omit<Client, 'id'>;
+type DocumentDataToAdd = Omit<Document, 'id'>;
+
 
 /**
  * Adds a new client to the 'clients' collection in Firestore.
@@ -42,6 +44,25 @@ export const getClients = async (): Promise<Client[]> => {
     return []; // Return an empty array in case of an error
   }
 };
+
+/**
+ * Adds a new document to the 'documents' collection in Firestore.
+ * @param documentData - The document data to add.
+ * @returns An object with the new document data (including id) or an error.
+ */
+export const addDocument = async (documentData: DocumentDataToAdd): Promise<{ newDocument?: Document, error?: any }> => {
+  try {
+    const docRef = await addDoc(collection(db, "documents"), documentData);
+    const newDocument: Document = {
+      id: docRef.id,
+      ...documentData
+    };
+    return { newDocument };
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    return { error };
+  }
+}
 
 
 /**
