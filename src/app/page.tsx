@@ -32,6 +32,9 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { signUpWithEmailAndPassword } from '@/lib/firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -49,6 +52,8 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export default function AuthPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -74,15 +79,33 @@ export default function AuthPage() {
     router.push('/dashboard');
   };
 
-  const onSignUpSubmit = (values: SignUpFormValues) => {
-    console.log('Sign up values:', values);
-    // Here you would typically handle user registration
-    // For now, we'll just redirect to the dashboard
-    router.push('/dashboard');
+  const onSignUpSubmit = async (values: SignUpFormValues) => {
+    setIsSigningUp(true);
+    const { email, password } = values;
+    const { user, error } = await signUpWithEmailAndPassword(email, password);
+
+    if (error) {
+      toast({
+        title: 'Sign-up failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setIsSigningUp(false);
+    } else {
+      toast({
+        title: 'Sign-up successful!',
+        description: 'You will be redirected to the dashboard.',
+      });
+      console.log('User signed up:', user);
+      // Redirect to the dashboard after a short delay
+       setTimeout(() => {
+        router.push('/dashboard');
+      }, 2000);
+    }
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
         <div className="absolute top-8 left-8">
             <Logo />
         </div>
@@ -186,8 +209,12 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full">
-                    Sign Up
+                  <Button type="submit" className="w-full" disabled={isSigningUp}>
+                    {isSigningUp ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      'Sign Up'
+                    )}
                   </Button>
                 </form>
               </Form>
