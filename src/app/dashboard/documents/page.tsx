@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { getDocuments, getClients, addDocument } from '@/lib/firebase/firestore';
+import { getDocuments, getCompanies, addDocument } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument, Company } from '@/lib/types';
 import { Loader2, ArrowUpDown, Search, PlusCircle } from 'lucide-react';
@@ -51,6 +51,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import type { Timestamp } from 'firebase/firestore';
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
   approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -103,8 +104,8 @@ function DocumentsTable({
             if (aValue === undefined || bValue === undefined) return 0;
             
             // Handle Timestamp objects for date sorting
-            const valA = aValue instanceof Object && 'seconds' in aValue ? (aValue as any).seconds : aValue;
-            const valB = bValue instanceof Object && 'seconds' in bValue ? (bValue as any).seconds : bValue;
+            const valA = aValue instanceof Object && 'seconds' in aValue ? (aValue as Timestamp).seconds : aValue;
+            const valB = bValue instanceof Object && 'seconds' in bValue ? (bValue as Timestamp).seconds : bValue;
 
 
             if (valA < valB) {
@@ -194,7 +195,7 @@ function DocumentsTable({
                     </Badge>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {new Date((doc.date as any).seconds * 1000).toLocaleDateString()}
+                  {new Date((doc.date as Timestamp).seconds * 1000).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right">
                     {new Intl.NumberFormat('en-US', {
@@ -222,7 +223,7 @@ type DocumentFormValues = z.infer<typeof documentSchema>;
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<FiscalDocument[]>([]);
-  const [clients, setClients] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -235,33 +236,33 @@ export default function DocumentsPage() {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      const [fetchedDocuments, fetchedClients] = await Promise.all([
+      const [fetchedDocuments, fetchedCompanies] = await Promise.all([
         getDocuments(),
-        getClients(),
+        getCompanies(),
       ]);
       setDocuments(fetchedDocuments as FiscalDocument[]);
-      setClients(fetchedClients);
+      setCompanies(fetchedCompanies);
       setIsLoading(false);
     }
     fetchData();
   }, []);
   
   const onSubmit = async (values: DocumentFormValues) => {
-    const selectedClient = clients.find(c => c.id === values.companyId);
-    if (!selectedClient) {
+    const selectedCompany = companies.find(c => c.id === values.companyId);
+    if (!selectedCompany) {
         toast({ title: "Error", description: "Compañía no encontrada", variant: "destructive"});
         return;
     }
 
-    const newDocumentData = {
-        client: selectedClient.name,
-        companyId: selectedClient.id,
-        erpType: selectedClient.integrationConfig.erpType,
+    const newDocumentData: Partial<FiscalDocument> = {
+        client: selectedCompany.name,
+        companyId: selectedCompany.id,
+        erpType: selectedCompany.integrationConfig.erpType,
         amount: values.amount,
         currency: values.currency,
         date: new Date(),
-        status: 'pending' as const,
-        documentType: 'factura' as const,
+        status: 'pending',
+        documentType: 'factura',
         statusHistory: [],
         originalData: {},
     };
@@ -313,7 +314,7 @@ export default function DocumentsPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {clients.map(client => (
+                          {companies.map(client => (
                             <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
                           ))}
                         </SelectContent>

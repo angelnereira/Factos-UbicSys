@@ -48,10 +48,12 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { addClient, getClients } from '@/lib/firebase/firestore';
+import { addCompany, getCompanies } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import type { Timestamp } from 'firebase/firestore';
+
 
 const statusStyles: { [key in Company['status']]: string } = {
   Production: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -67,10 +69,10 @@ const clientSchema = z.object({
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
-type SortKey = keyof Company | '';
+type SortKey = keyof Company | 'erpType' | '';
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,8 +83,8 @@ export default function ClientsPage() {
   useEffect(() => {
     async function fetchClients() {
       setIsLoading(true);
-      const fetchedClients = await getClients();
-      setClients(fetchedClients);
+      const fetchedCompanies = await getCompanies();
+      setCompanies(fetchedCompanies);
       setIsLoading(false);
     }
     fetchClients();
@@ -106,7 +108,7 @@ export default function ClientsPage() {
   };
 
   const sortedAndFilteredClients = useMemo(() => {
-    let result = [...clients];
+    let result = [...companies];
 
     if (searchQuery) {
       result = result.filter(client =>
@@ -116,37 +118,41 @@ export default function ClientsPage() {
     }
 
     if (sortKey) {
-      result.sort((a, b) => {
-        const aValue = a[sortKey];
-        const bValue = b[sortKey];
+       result.sort((a, b) => {
+        const aValue = sortKey === 'erpType' ? a.integrationConfig.erpType : a[sortKey as keyof Company];
+        const bValue = sortKey === 'erpType' ? b.integrationConfig.erpType : b[sortKey as keyof Company];
 
         if (aValue === undefined || bValue === undefined) return 0;
         
-        const valA = aValue instanceof Object && 'seconds' in aValue ? (aValue as any).seconds : aValue;
-        const valB = bValue instanceof Object && 'seconds' in bValue ? (bValue as any).seconds : bValue;
+        const valA = aValue instanceof Object && 'seconds' in aValue ? (aValue as Timestamp).seconds : aValue;
+        const valB = bValue instanceof Object && 'seconds' in bValue ? (bValue as Timestamp).seconds : bValue;
 
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
 
-        if (valA < valB) {
-          return sortDirection === 'asc' ? -1 : 1;
-        }
-        if (valA > valB) {
-          return sortDirection === 'asc' ? 1 : -1;
-        }
+        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+        
         return 0;
       });
     }
 
     return result;
-  }, [clients, searchQuery, sortKey, sortDirection]);
+  }, [companies, searchQuery, sortKey, sortDirection]);
 
   const onSubmit = async (values: ClientFormValues) => {
-    const newClientData = {
+    const newCompanyData = {
+      name: values.name,
+      email: values.email,
+      status: values.status,
+      integrationConfig: {
+        erpType: values.erpType,
+      },
       onboarded: new Date(),
-      ...values,
     };
 
-    // @ts-ignore
-    const { newClient, error } = await addClient(newClientData);
+    const { newCompany, error } = await addCompany(newCompanyData as Partial<Company>);
 
     if (error) {
       toast({
@@ -154,8 +160,8 @@ export default function ClientsPage() {
         description: 'No se pudo guardar la compañía en la base de datos.',
         variant: 'destructive',
       });
-    } else if (newClient) {
-      setClients(prevClients => [...prevClients, newClient]);
+    } else if (newCompany) {
+      setCompanies(prevCompanies => [...prevCompanies, newCompany]);
       toast({
         title: 'Compañía agregada',
         description: 'La nueva compañía ha sido guardada exitosamente.',
@@ -329,7 +335,7 @@ export default function ClientsPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('integrationConfig.erpType')}>
+                  <Button variant="ghost" onClick={() => handleSort('erpType')}>
                     Tipo de ERP
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -349,21 +355,21 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedAndFilteredClients.map(client => (
-                <TableRow key={client.id}>
+              {sortedAndFilteredClients.map(company => (
+                <TableRow key={company.id}>
                   <TableCell>
-                    <div className="font-medium">{client.name}</div>
+                    <div className="font-medium">{company.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      {client.email}
+                      {company.email}
                     </div>
                   </TableCell>
-                  <TableCell>{client.integrationConfig.erpType}</TableCell>
+                  <TableCell>{company.integrationConfig.erpType}</TableCell>
                   <TableCell>
-                    <Badge variant={'outline'} className={cn(statusStyles[client.status!])}>
-                      {client.status}
+                    <Badge variant={'outline'} className={cn(statusStyles[company.status!])}>
+                      {company.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date((client.onboarded as any).seconds * 1000).toLocaleDateString()}</TableCell>
+                  <TableCell>{company.onboarded ? new Date((company.onboarded as any).seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -374,5 +380,3 @@ export default function ClientsPage() {
     </>
   );
 }
-
-    

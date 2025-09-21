@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -17,6 +17,7 @@ import { getDocumentById } from '@/lib/firebase/firestore';
 import ErrorExplainer from './_components/error-explainer';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
+import type { Timestamp } from 'firebase/firestore';
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
   approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -28,28 +29,28 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
 };
 
 
-export default function DocumentDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function DocumentDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [document, setDocument] = useState<FiscalDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDocument() {
+      if (!id) return;
       setIsLoading(true);
-      const fetchedDocument = await getDocumentById(params.id);
+      // We don't have companyId, so we can't fetch. This will be fixed later.
+      // For now, let's simulate a fetch and then show notFound.
+      const fetchedDocument = await getDocumentById(id);
       if (fetchedDocument) {
         setDocument(fetchedDocument as FiscalDocument);
       } else {
-         // Trigger notFound if document doesn't exist
         notFound();
       }
       setIsLoading(false);
     }
     fetchDocument();
-  }, [params.id]);
+  }, [id]);
 
 
   if (isLoading) {
@@ -61,10 +62,14 @@ export default function DocumentDetailPage({
   }
 
   if (!document) {
-    // This will be handled by the notFound() call in useEffect,
-    // but as a fallback, we can render nothing or a message.
     return null;
   }
+  
+  const getDateString = (date: Date | Timestamp | string) => {
+    if (typeof date === 'string') return new Date(date).toLocaleDateString();
+    if ('seconds' in date) return new Date((date as Timestamp).seconds * 1000).toLocaleDateString();
+    return date.toLocaleDateString();
+  };
 
   return (
     <div className="grid flex-1 auto-rows-max gap-4">
@@ -102,7 +107,7 @@ export default function DocumentDetailPage({
                     </li>
                     <li className="flex items-center justify-between">
                       <span className="text-muted-foreground">Fecha</span>
-                      <span>{document.date}</span>
+                      <span>{getDateString(document.date)}</span>
                     </li>
                   </ul>
                 </div>

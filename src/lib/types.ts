@@ -43,8 +43,8 @@ export interface Company {
   
   createdAt: Timestamp;
   updatedAt: Timestamp;
-  status?: 'Production' | 'Development' | 'Demo';
-  onboarded?: string;
+  status: 'Production' | 'Development' | 'Demo';
+  onboarded: Date | Timestamp;
 }
 
 // Documents Collection (Sub-collection under each company)
@@ -107,32 +107,6 @@ export interface ProcessingStep {
   details?: Record<string, unknown>;
 }
 
-
-// --- Old types for reference, to be removed ---
-export type Document = {
-  id: string;
-  client: string;
-  clientId: string;
-  erpType: string;
-  amount: number;
-  currency: string;
-  date: string;
-  status: 'Processed' | 'Pending' | 'Error';
-  errorDetails?: string;
-};
-
-export type Client = {
-  id:string;
-  name: string;
-  email: string;
-  erpType: 'SAP' | 'Oracle' | 'Microsoft Dynamics' | 'Custom' | 'Claris FileMaker';
-  onboarded: string;
-  status: 'Production' | 'Development' | 'Demo';
-  ruc?: string;
-  contactNumber?: string;
-  location?: string;
-  authUid?: string;
-};
 
 export type Analytics = {
   totalDocuments: number;
