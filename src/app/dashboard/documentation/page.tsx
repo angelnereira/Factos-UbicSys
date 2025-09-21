@@ -36,7 +36,30 @@ export default function DocumentationPage() {
             </CardDescription>
         </CardHeader>
         <CardContent>
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full" defaultValue="item-3">
+            <AccordionItem value="item-3">
+                <AccordionTrigger>
+                    Definición de Tipos para la Carga de Documentos (23/09/2025)
+                </AccordionTrigger>
+                <AccordionContent className="prose dark:prose-invert max-w-none">
+                    <h4>Descripción General</h4>
+                    <p>
+                        Para preparar el sistema para la transformación y el envío de documentos a The Factory HKA, se han añadido las definiciones de tipo de TypeScript que corresponden a la estructura JSON esperada por su API. Esto es fundamental para asegurar que los datos se envían en el formato correcto.
+                    </p>
+                    <h4>Especificaciones Técnicas</h4>
+                    <ul>
+                        <li>
+                            <strong>Archivo Modificado:</strong> <code>src/lib/factory-hka/types.ts</code>.
+                        </li>
+                        <li>
+                            <strong>Tipos Añadidos:</strong> Se ha creado un conjunto completo de interfaces de TypeScript (<code>FactoryHkaDocumentRequest</code>, <code>Documento</code>, <code>DatosTransaccion</code>, <code>Cliente</code>, etc.) que reflejan la estructura anidada del JSON proporcionado.
+                        </li>
+                        <li>
+                            <strong>Beneficios:</strong> Esto proporciona seguridad de tipos estática, previene errores de formato en los datos y facilita el desarrollo de las funciones de transformación de datos, ya que los desarrolladores y la IA pueden usar estas interfaces como una guía precisa.
+                        </li>
+                    </ul>
+                </AccordionContent>
+            </AccordionItem>
             <AccordionItem value="item-2">
                 <AccordionTrigger>
                     Sincronización de README con Documentación Interna (22/09/2025)
