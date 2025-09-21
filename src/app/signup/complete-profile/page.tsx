@@ -15,8 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
-import type { Client } from '@/lib/types';
-import { clients } from '@/lib/data';
+import { addClient } from '@/lib/firebase/firestore';
 
 const profileSchema = z.object({
   ruc: z.string().optional(),
@@ -47,24 +46,26 @@ function CompleteProfileForm() {
   const onSubmit = async (values: ProfileFormValues) => {
     setIsLoading(true);
 
-    const clientData: Client = {
+    const clientData = {
       name,
       email,
-      id: `CLI${(clients.length + 1).toString().padStart(3, '0')}`,
-      status: 'Demo',
+      status: 'Demo' as const,
       onboarded: new Date().toISOString().split('T')[0],
-      erpType: 'Custom', // Defaulting ERP type for new signups
-      // Incorporating optional fields if they exist
-      ...(values.ruc && { ruc: values.ruc }),
-      ...(values.contactNumber && { contactNumber: values.contactNumber }),
-      ...(values.location && { location: values.location }),
+      erpType: 'Custom' as const,
+      ...values,
     };
 
-    // In a real application, you would save this to your database.
-    // For this prototype, we'll add it to our in-memory data array.
-    clients.push(clientData);
-    console.log('Nuevo cliente agregado:', clientData);
-    console.log('Lista de clientes actualizada:', clients);
+    const { error } = await addClient(clientData);
+    
+    if (error) {
+        toast({
+            title: 'Error al completar el perfil',
+            description: 'No se pudo guardar la información del cliente.',
+            variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+    }
 
     toast({
       title: '¡Registro completado!',

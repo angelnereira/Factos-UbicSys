@@ -17,6 +17,9 @@ export type Client = {
   erpType: 'SAP' | 'Oracle' | 'Microsoft Dynamics' | 'Custom' | 'Claris FileMaker';
   onboarded: string;
   status: 'Production' | 'Development' | 'Demo';
+  ruc?: string;
+  contactNumber?: string;
+  location?: string;
 };
 
 export type Analytics = {

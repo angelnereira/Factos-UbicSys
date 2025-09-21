@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -48,9 +48,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { clients as initialClients } from '@/lib/data';
+import { addClient, getClients } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { Client } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 const statusStyles: { [key in Client['status']]: string } = {
   Production: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -68,8 +69,20 @@ const clientSchema = z.object({
 type ClientFormValues = z.infer<typeof clientSchema>;
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchClients() {
+      setIsLoading(true);
+      const fetchedClients = await getClients();
+      setClients(fetchedClients);
+      setIsLoading(false);
+    }
+    fetchClients();
+  }, []);
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -79,15 +92,29 @@ export default function ClientsPage() {
     },
   });
 
-  const onSubmit = (values: ClientFormValues) => {
-    const newClient: Client = {
-      id: `CLI${(clients.length + 1).toString().padStart(3, '0')}`,
+  const onSubmit = async (values: ClientFormValues) => {
+    const newClientData = {
       onboarded: new Date().toISOString().split('T')[0],
       ...values,
     };
-    setClients(prevClients => [...prevClients, newClient]);
-    setIsDialogOpen(false);
-    form.reset();
+
+    const { newClient, error } = await addClient(newClientData);
+
+    if (error) {
+      toast({
+        title: 'Error al agregar cliente',
+        description: 'No se pudo guardar el cliente en la base de datos.',
+        variant: 'destructive',
+      });
+    } else if (newClient) {
+      setClients(prevClients => [...prevClients, newClient]);
+      toast({
+        title: 'Cliente agregado',
+        description: 'El nuevo cliente ha sido guardado exitosamente.',
+      });
+      setIsDialogOpen(false);
+      form.reset();
+    }
   };
 
   return (
@@ -215,6 +242,11 @@ export default function ClientsPage() {
           <CardDescription>Una lista de todos los clientes incorporados.</CardDescription>
         </CardHeader>
         <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -244,6 +276,7 @@ export default function ClientsPage() {
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </>
