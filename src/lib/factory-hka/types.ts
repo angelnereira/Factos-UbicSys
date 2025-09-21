@@ -8,13 +8,10 @@
  * Represents the successful response from The Factory HKA authentication endpoint.
  */
 export interface FactoryHkaAuthSuccess {
+  codigo: string;
+  mensaje: string;
   token: string;
-  exp: string; // Expiration date string, e.g., "2024-12-31 23:59:59"
-  user: {
-    id: number;
-    username: string;
-    // ... any other user properties returned
-  };
+  expiracion: string; // Expiration date string, e.g., "2025-09-22T15:26:55.2510335Z"
 }
 
 /**

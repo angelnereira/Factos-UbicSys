@@ -30,16 +30,15 @@ export async function getAuthToken(): Promise<{
   }
 
   try {
-    // This endpoint is a placeholder. Replace with the actual auth endpoint.
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/v2/login/autenticacion`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: JSON.stringify({
-        username,
-        password,
+        Username: username,
+        Password: password,
       }),
     });
 
