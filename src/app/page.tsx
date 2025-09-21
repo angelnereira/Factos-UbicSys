@@ -103,7 +103,7 @@ export default function AuthPage() {
     if (error) {
       toast({
         title: 'Registro fallido',
-        description: 'Este correo electrónico ya está en uso.',
+        description: error.message,
         variant: 'destructive',
       });
       setIsLoading(false);
