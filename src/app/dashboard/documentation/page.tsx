@@ -37,6 +37,29 @@ export default function DocumentationPage() {
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="item-2">
+                <AccordionTrigger>
+                    Sincronización de README con Documentación Interna (22/09/2025)
+                </AccordionTrigger>
+                <AccordionContent className="prose dark:prose-invert max-w-none">
+                    <h4>Descripción General</h4>
+                    <p>
+                        Para asegurar que los desarrolladores tengan una fuente de información coherente tanto dentro como fuera de la aplicación, se ha actualizado el archivo <code>README.md</code> para que refleje la arquitectura, objetivos y estado actual del proyecto.
+                    </p>
+                    <h4>Especificaciones Técnicas</h4>
+                    <ul>
+                        <li>
+                            <strong>Archivo Modificado:</strong> <code>README.md</code>.
+                        </li>
+                        <li>
+                            <strong>Contenido Añadido:</strong> Se ha incluido una descripción del proyecto, lista de características clave, la pila tecnológica y una guía de inicio rápido para nuevos desarrolladores.
+                        </li>
+                        <li>
+                            <strong>Sincronización:</strong> Se ha establecido la práctica de mantener este archivo alineado con la documentación interna. El README ahora redirige a los usuarios a esta sección para obtener detalles más exhaustivos y actualizados.
+                        </li>
+                    </ul>
+                </AccordionContent>
+            </AccordionItem>
             <AccordionItem value="item-1">
               <AccordionTrigger>
                 Creación de la Sección de Documentación (21/09/2025)
