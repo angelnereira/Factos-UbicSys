@@ -1,11 +1,8 @@
 
 import { db } from './firebase';
-import { collection, getDocs, addDoc, doc, getDoc, DocumentData, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
-
-// Define the type for the data to be added, omitting the 'id'
-type CompanyData = Omit<Company, 'id'>;
-type DocumentDataToAdd = Omit<FiscalDocument, 'id'>;
+import type { DocumentData, Timestamp } from 'firebase/firestore';
 
 
 /**
@@ -13,9 +10,8 @@ type DocumentDataToAdd = Omit<FiscalDocument, 'id'>;
  * @param companyData - The company data to add, without the 'id'.
  * @returns An object with the new company data (including id) or an error.
  */
-export const addCompany = async (companyData: Partial<CompanyData>): Promise<{ newCompany?: Company, error?: any }> => {
+export const addCompany = async (companyData: Partial<Omit<Company, 'id'>>): Promise<{ newCompany?: Company, error?: any }> => {
   try {
-    // Add server-side timestamps
     const dataWithTimestamps = {
       ...companyData,
       createdAt: Timestamp.now(),
@@ -47,25 +43,28 @@ export const getCompanies = async (): Promise<Company[]> => {
     return companies;
   } catch (error) {
     console.error("Error getting companies: ", error);
-    return []; // Return an empty array in case of an error
+    return [];
   }
 };
 
 /**
  * Adds a new document to the 'documents' sub-collection of a company in Firestore.
- * @param companyId - The ID of the company this document belongs to.
- * @param documentData - The document data to add.
+ * @param documentData - The document data to add. Must contain companyId.
  * @returns An object with the new document data (including id) or an error.
  */
-export const addDocument = async (companyId: string, documentData: Partial<DocumentDataToAdd>): Promise<{ newDocument?: FiscalDocument, error?: any }> => {
+export const addDocument = async (documentData: Partial<Omit<FiscalDocument, 'id'>>): Promise<{ newDocument?: FiscalDocument, error?: any }> => {
+  if (!documentData.companyId) {
+    const error = new Error("companyId is required to add a document.");
+    console.error(error);
+    return { error };
+  }
   try {
     const dataWithTimestamps = {
       ...documentData,
-      companyId,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     };
-    const docRef = await addDoc(collection(db, "companies", companyId, "documents"), dataWithTimestamps);
+    const docRef = await addDoc(collection(db, "companies", documentData.companyId, "documents"), dataWithTimestamps);
     const newDocument: FiscalDocument = {
       id: docRef.id,
       ...dataWithTimestamps
@@ -79,19 +78,20 @@ export const addDocument = async (companyId: string, documentData: Partial<Docum
 
 
 /**
- * Fetches all documents from all companies from the 'documents' collection group in Firestore.
- * @returns A promise that resolves to an array of documents.
+ * Fetches all documents from all companies by querying the 'documents' collection group.
+ * @returns A promise that resolves to an array of all fiscal documents.
  */
 export const getDocuments = async (): Promise<FiscalDocument[]> => {
     try {
-        const querySnapshot = await getDocs(collection(db, "documents"));
+        const documentsQuery = query(collectionGroup(db, 'documents'));
+        const querySnapshot = await getDocs(documentsQuery);
         const documents: FiscalDocument[] = [];
         querySnapshot.forEach((doc) => {
             documents.push({ id: doc.id, ...doc.data() } as FiscalDocument);
         });
         return documents;
     } catch (error) {
-        console.error("Error getting documents: ", error);
+        console.error("Error getting documents from collection group: ", error);
         return [];
     }
 };
@@ -104,6 +104,10 @@ export const getDocuments = async (): Promise<FiscalDocument[]> => {
  */
 export const getDocumentById = async (companyId: string, documentId: string): Promise<FiscalDocument | null> => {
     try {
+        if (!companyId || !documentId) {
+            console.error("companyId and documentId must be provided.");
+            return null;
+        }
         const docRef = doc(db, "companies", companyId, "documents", documentId);
         const docSnap = await getDoc(docRef);
 
@@ -118,6 +122,3 @@ export const getDocumentById = async (companyId: string, documentId: string): Pr
         return null;
     }
 }
-
-// Re-exporting old function names for temporary compatibility
-export { addCompany as addClient, getCompanies as getClients };

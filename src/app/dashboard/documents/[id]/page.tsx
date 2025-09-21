@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { getDocumentById, getDocuments } from '@/lib/firebase/firestore';
+import { getDocumentById } from '@/lib/firebase/firestore';
 import ErrorExplainer from './_components/error-explainer';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
@@ -32,32 +32,46 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
 export default function DocumentDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  const companyId = params.companyId as string; // Assuming companyId is in the route or passed as prop
   const [document, setDocument] = useState<FiscalDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDocument() {
-      if (!id) return;
-      setIsLoading(true);
-      
-      const allDocuments = await getDocuments();
-      const targetDocument = allDocuments.find(doc => doc.id === id);
-
-      if (targetDocument) {
-        const fetchedDocument = await getDocumentById(targetDocument.companyId, id);
-        if (fetchedDocument) {
-            setDocument(fetchedDocument as FiscalDocument);
-        } else {
+      if (!id || !companyId) {
+          // A more robust solution might be needed to get companyId if not in URL
+          // For now, this is a placeholder to demonstrate the issue
+          console.error("Document ID or Company ID is missing.");
+          setIsLoading(false);
+          // Temporary workaround: fetch from all documents to find companyId
+          const { getDocuments } = await import('@/lib/firebase/firestore');
+          const allDocs = await getDocuments();
+          const targetDoc = allDocs.find(d => d.id === id);
+          if (targetDoc) {
+             const fetchedDocument = await getDocumentById(targetDoc.companyId, id);
+             if (fetchedDocument) {
+                setDocument(fetchedDocument as FiscalDocument);
+             } else {
+                notFound();
+             }
+          } else {
             notFound();
-        }
-      } else {
-        notFound();
+          }
+          setIsLoading(false);
+          return;
       }
-
+      
+      setIsLoading(true);
+      const fetchedDocument = await getDocumentById(companyId, id);
+      if (fetchedDocument) {
+          setDocument(fetchedDocument as FiscalDocument);
+      } else {
+          notFound();
+      }
       setIsLoading(false);
     }
     fetchDocument();
-  }, [id]);
+  }, [id, companyId]);
 
 
   if (isLoading) {
@@ -69,13 +83,18 @@ export default function DocumentDetailPage() {
   }
 
   if (!document) {
-    return null;
+    return (
+        <div className="flex justify-center items-center h-40">
+            <p>Document not found. The link may be incorrect or the document was deleted.</p>
+        </div>
+    );
   }
   
   const getDateString = (date: Date | Timestamp | string) => {
     if (typeof date === 'string') return new Date(date).toLocaleDateString();
-    if ('seconds' in date) return new Date((date as Timestamp).seconds * 1000).toLocaleDateString();
-    return date.toLocaleDateString();
+    if (date && 'seconds' in date) return new Date((date as Timestamp).seconds * 1000).toLocaleDateString();
+    if (date instanceof Date) return date.toLocaleDateString();
+    return 'N/A';
   };
 
   return (

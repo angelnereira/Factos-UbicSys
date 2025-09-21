@@ -15,12 +15,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { addClient } from '@/lib/firebase/firestore';
+import { addCompany } from '@/lib/firebase/firestore';
+import type { Company } from '@/lib/types';
 
 const profileSchema = z.object({
-  ruc: z.string().optional(),
-  contactNumber: z.string().optional(),
-  location: z.string().optional(),
+  taxId: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -38,9 +39,9 @@ function CompleteProfileForm() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      ruc: '',
-      contactNumber: '',
-      location: '',
+      taxId: '',
+      phone: '',
+      address: '',
     },
   });
 
@@ -58,23 +59,41 @@ function CompleteProfileForm() {
         return;
     }
 
-    const clientData = {
+    const companyData: Partial<Company> = {
       name,
       email,
       authUid: uid,
-      status: 'Demo' as const,
-      onboarded: new Date().toISOString().split('T')[0],
-      erpType: 'Custom' as const,
+      status: 'Demo',
+      onboarded: new Date(),
+      integrationConfig: {
+        erpType: 'custom',
+        notificationSettings: {
+            emailNotifications: true,
+            webhookNotifications: false,
+            smsNotifications: false,
+        }
+      },
+      factoryHkaConfig: {
+        demo: {
+            username: "user_demo", // Placeholder
+            isActive: true,
+            maxDocumentsPerMonth: 1000,
+            documentsUsedThisMonth: 0,
+        },
+        production: {
+            username: "user_prod", // Placeholder
+            isActive: false,
+        }
+      },
       ...values,
     };
 
-    // @ts-ignore
-    const { error } = await addClient(clientData);
+    const { error } = await addCompany(companyData);
     
     if (error) {
         toast({
             title: 'Error al completar el perfil',
-            description: 'No se pudo guardar la información del cliente.',
+            description: 'No se pudo guardar la información de la compañía.',
             variant: 'destructive',
         });
         setIsLoading(false);
@@ -111,7 +130,7 @@ function CompleteProfileForm() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="ruc"
+                name="taxId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>RUC</FormLabel>
@@ -124,7 +143,7 @@ function CompleteProfileForm() {
               />
               <FormField
                 control={form.control}
-                name="contactNumber"
+                name="phone"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Número de Contacto</FormLabel>
@@ -137,7 +156,7 @@ function CompleteProfileForm() {
               />
               <FormField
                 control={form.control}
-                name="location"
+                name="address"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ubicación</FormLabel>

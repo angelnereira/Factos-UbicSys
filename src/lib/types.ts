@@ -6,10 +6,10 @@ import type { Timestamp } from 'firebase/firestore';
 export interface Company {
   id: string;
   name: string;
-  taxId: string; // RUC
+  taxId?: string; // RUC
   email: string;
   phone?: string;
-  address: string;
+  address?: string;
   authUid: string; // Firebase Auth User ID
   
   // The Factory HKA Credentials & Config
@@ -39,7 +39,7 @@ export interface Company {
     };
   };
   
-  subscription: {
+  subscription?: {
     plan: 'basic' | 'professional' | 'enterprise';
     status: 'active' | 'suspended' | 'cancelled';
     billingEmail: string;

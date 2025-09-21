@@ -314,8 +314,8 @@ export default function DocumentsPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {companies.map(client => (
-                            <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                          {companies.map(company => (
+                            <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
