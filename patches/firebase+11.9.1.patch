@@ -1,0 +1,70 @@
+diff --git a/node_modules/firebase/app/package.json b/node_modules/firebase/app/package.json
+index 5ee3428..3e69888 100644
+--- a/node_modules/firebase/app/package.json
++++ b/node_modules/firebase/app/package.json
+@@ -28,5 +28,8 @@
+   "peerDependencies": {
+     "@firebase/app": "0.10.7"
+   },
+-  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/app"
++  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/app",
++  "exports": {
++    "./package.json": "./package.json"
++  }
+ }
+diff --git a/node_modules/firebase/auth/package.json b/node_modules/firebase/auth/package.json
+index f7a83a0..4d3600c 100644
+--- a/node_modules/firebase/auth/package.json
++++ b/node_modules/firebase/auth/package.json
+@@ -28,5 +28,8 @@
+   "peerDependencies": {
+     "@firebase/app": "0.10.7"
+   },
+-  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/auth"
++  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/auth",
++  "exports": {
++    "./package.json": "./package.json"
++  }
+ }
+diff --git a/node_modules/firebase/firestore/package.json b/node_modules/firebase/firestore/package.json
+index 73b40c1..b294b43 100644
+--- a/node_modules/firebase/firestore/package.json
++++ b/node_modules/firebase/firestore/package.json
+@@ -28,5 +28,8 @@
+   "peerDependencies": {
+     "@firebase/app": "0.10.7"
+   },
+-  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/firestore"
++  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/firestore",
++  "exports": {
++    "./package.json": "./package.json"
++  }
+ }
+diff --git a/node_modules/firebase/functions/package.json b/node_modules/firebase/functions/package.json
+index 7393430..ffc8414 100644
+--- a/node_modules/firebase/functions/package.json
++++ b/node_modules/firebase/functions/package.json
+@@ -28,5 +28,8 @@
+   "peerDependencies": {
+     "@firebase/app": "0.10.7"
+   },
+-  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/functions"
++  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/functions",
++  "exports": {
++    "./package.json": "./package.json"
++  }
+ }
+diff --git a/node_modules/firebase/storage/package.json b/node_modules/firebase/storage/package.json
+index b248446..2156828 100644
+--- a/node_modules/firebase/storage/package.json
++++ b/node_modules/firebase/storage/package.json
+@@ -28,5 +28,8 @@
+   "peerDependencies": {
+     "@firebase/app": "0.10.7"
+   },
+-  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/storage"
++  "repository": "https://github.com/firebase/firebase-js-sdk/tree/master/packages/firebase/storage",
++  "exports": {
++    "./package.json": "./package.json"
++  }
+ }
