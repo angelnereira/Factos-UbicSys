@@ -86,7 +86,39 @@ export default function DocumentationPage() {
             </CardDescription>
         </CardHeader>
         <CardContent>
-          <Accordion type="single" collapsible className="w-full" defaultValue="item-4">
+          <Accordion type="single" collapsible className="w-full" defaultValue="item-5">
+            <AccordionItem value="item-5">
+                <AccordionTrigger>
+                    Mejoras de UI/UX y Funcionalidad del Dashboard (24/09/2025)
+                </AccordionTrigger>
+                <AccordionContent className="prose dark:prose-invert max-w-none">
+                    <h4>Descripción General</h4>
+                    <p>
+                        Se implementó una serie de mejoras significativas en la interfaz y la experiencia de usuario del dashboard para hacerlo más informativo, funcional y fácil de usar, de acuerdo con la visión del producto.
+                    </p>
+                    <h4>Especificaciones Técnicas</h4>
+                    <ul>
+                        <li>
+                            <strong>Dashboard Principal:</strong> La página de inicio (<code>/dashboard/documents</code>) fue rediseñada para funcionar como un dashboard con KPIs (tarjetas de resumen de documentos) y un gráfico de volumen mensual.
+                        </li>
+                         <li>
+                            <strong>Página de Configuración Avanzada:</strong> Se creó una nueva sección en <code>/dashboard/settings</code> con un layout de navegación lateral. Incluye subsecciones para "Cuenta", "Apariencia", y un "Baúl de Secretos" para gestionar credenciales de API de forma dinámica.
+                        </li>
+                        <li>
+                            <strong>Barra de Búsqueda Global:</strong> Se añadió una barra de búsqueda en la cabecera principal (<code>dashboard/layout.tsx</code>) para permitir un acceso rápido a la información en el futuro.
+                        </li>
+                         <li>
+                            <strong>Indicador de Ambiente:</strong> Se agregó una insignia de estado (Demo, Producción, Desarrollo) junto al perfil de usuario para una clara identificación del ambiente de trabajo.
+                        </li>
+                         <li>
+                            <strong>Menú de Navegación Extendido:</strong> Se añadieron enlaces a las futuras secciones de "Registros", "Monitoreo" y "Finanzas".
+                        </li>
+                        <li>
+                            <strong>Corrección de Tema:</strong> Se solucionó un error en el `ThemeProvider` y en `globals.css` que impedía el correcto funcionamiento del cambio entre modo claro y oscuro. El interruptor de tema se simplificó a un solo botón de toggle.
+                        </li>
+                    </ul>
+                </AccordionContent>
+            </AccordionItem>
              <AccordionItem value="item-4">
                 <AccordionTrigger>
                     Definición de Tipos para la Carga de Documentos (23/09/2025)
