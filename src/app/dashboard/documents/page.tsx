@@ -45,32 +45,34 @@ function DocumentsTable({ status }: { status?: Document['status'] }) {
           </TableHeader>
           <TableBody>
             {filteredDocuments.map(doc => (
-              <TableRow key={doc.id} asChild>
-                <Link href={`/dashboard/documents/${doc.id}`} className="cursor-pointer">
-                  <TableCell className="font-medium">
-                      {doc.id}
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    {doc.client}
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
+              <TableRow key={doc.id} className="cursor-pointer">
+                <TableCell className="font-medium">
+                  <Link href={`/dashboard/documents/${doc.id}`}>{doc.id}</Link>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <Link href={`/dashboard/documents/${doc.id}`}>{doc.client}</Link>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <Link href={`/dashboard/documents/${doc.id}`}>
                     <Badge
                       className={cn('capitalize', statusStyles[doc.status])}
                       variant="outline"
                     >
                       {doc.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {doc.date}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </Link>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <Link href={`/dashboard/documents/${doc.id}`}>{doc.date}</Link>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Link href={`/dashboard/documents/${doc.id}`}>
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: doc.currency,
                     }).format(doc.amount)}
-                  </TableCell>
-                </Link>
+                  </Link>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
