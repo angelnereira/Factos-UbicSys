@@ -241,32 +241,37 @@ export default function ClientsPage() {
                 <FormField
                   control={form.control}
                   name="erpType"
-                  render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Tipo de ERP</FormLabel>
-                      <div className="col-span-3">
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar ERP" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="sap">SAP</SelectItem>
-                            <SelectItem value="oracle">Oracle</SelectItem>
-                            <SelectItem value="microsoft-dynamics">
-                              Microsoft Dynamics
-                            </SelectItem>
-                             <SelectItem value="quickbooks">Quickbooks</SelectItem>
-                             <SelectItem value="api">API</SelectItem>
-                            <SelectItem value="claris-filemaker">Claris FileMaker</SelectItem>
-                            <SelectItem value="custom">Personalizado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const erpTypes = [
+                      { value: 'sap', label: 'SAP' },
+                      { value: 'oracle', label: 'Oracle' },
+                      { value: 'microsoft-dynamics', label: 'Microsoft Dynamics' },
+                      { value: 'quickbooks', label: 'Quickbooks' },
+                      { value: 'api', label: 'API' },
+                      { value: 'claris-filemaker', label: 'Claris FileMaker' },
+                      { value: 'custom', label: 'Personalizado' },
+                    ];
+                    return (
+                      <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">Tipo de ERP</FormLabel>
+                        <div className="col-span-3">
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar ERP" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {erpTypes.map(erp => (
+                                <SelectItem key={erp.value} value={erp.value}>{erp.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    );
+                  }}
                 />
                  <FormField
                   control={form.control}
@@ -279,7 +284,7 @@ export default function ClientsPage() {
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Seleccionar Ambiente" />
-                              </Trigger>
+                              </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="Production">Producción</SelectItem>

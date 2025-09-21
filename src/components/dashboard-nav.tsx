@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/tooltip';
 
 const navItems = [
+  { href: '/dashboard/documents', label: 'Inicio', icon: Home },
   { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
   { href: '/dashboard/clients', label: 'Compañías', icon: Users },
   { href: '/dashboard/documentation', label: 'Documentación', icon: BookText },
@@ -40,7 +41,8 @@ export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
                   href={item.href}
                   className={cn(
                     'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
-                    basePath === item.href && 'bg-accent text-accent-foreground'
+                    basePath === item.href && item.label !== 'Inicio' && 'bg-accent text-accent-foreground',
+                     pathname === item.href && item.label === 'Inicio' && 'bg-accent text-accent-foreground'
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -65,7 +67,10 @@ export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
           href={item.href}
           className={cn(
             'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-            basePath === item.href && 'bg-accent text-primary'
+            (basePath === item.href && item.href !== '/dashboard/documents') && 'bg-accent text-primary',
+            (basePath === item.href && item.label === 'Documentos') && 'bg-accent text-primary',
+            (pathname === '/dashboard' && item.label === 'Inicio') && 'bg-accent text-primary',
+            (pathname === item.href && item.label === 'Inicio') && 'bg-accent text-primary'
           )}
         >
           <item.icon className="h-4 w-4" />
