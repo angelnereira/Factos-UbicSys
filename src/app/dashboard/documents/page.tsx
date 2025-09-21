@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import {
   Card,
@@ -50,28 +51,24 @@ function DocumentsTable({ status }: { status?: Document['status'] }) {
                   <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">{doc.id}</Link>
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
-                  <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">{doc.client}</Link>
+                  {doc.client}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
-                  <Link href={`/dashboard/documents/${doc.id}`}>
                     <Badge
                       className={cn('capitalize', statusStyles[doc.status])}
                       variant="outline"
                     >
                       {doc.status}
                     </Badge>
-                  </Link>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">{doc.date}</Link>
+                  {doc.date}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: doc.currency,
                     }).format(doc.amount)}
-                  </Link>
                 </TableCell>
               </TableRow>
             ))}
