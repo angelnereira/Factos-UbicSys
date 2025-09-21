@@ -23,6 +23,19 @@ export interface FactoryHkaError {
   errors?: Record<string, string[]>;
 }
 
+/**
+ * Represents the response from the document submission endpoint.
+ */
+export interface FactoryHkaDocumentResponse {
+    // This is a placeholder. The actual structure should be updated
+    // once a successful response is available.
+    success: boolean;
+    message: string;
+    documentId?: string;
+    cufe?: string;
+}
+
+
 // --- Document Submission Types ---
 
 /**

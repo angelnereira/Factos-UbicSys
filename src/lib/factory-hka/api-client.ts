@@ -4,10 +4,10 @@
  * handling authentication and data submission.
  */
 
-import type { FactoryHkaAuthSuccess, FactoryHkaError } from './types';
+import type { FactoryHkaAuthSuccess, FactoryHkaDocumentRequest, FactoryHkaDocumentResponse, FactoryHkaError } from './types';
 
 // The base URL for The Factory HKA API, configured via environment variables.
-const API_BASE_URL = process.env.NEXT_PUBLIC_THE_FACTORY_HKA_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_THE_FACTORY_HKA_API_URL || 'https://demointegracion.thefactoryhka.com.pa';
 
 /**
  * Retrieves an authentication token from The Factory HKA API.
@@ -59,5 +59,45 @@ export async function getAuthToken(): Promise<{
   }
 }
 
-// Future functions for document processing will be added here, e.g.:
-// export async function submitDocument(documentData: any, token: string) { ... }
+/**
+ * Submits a fiscal document to The Factory HKA API.
+ * 
+ * @param documentData - The document data to be sent.
+ * @param token - The authentication token obtained from getAuthToken.
+ * @returns A promise that resolves with the API response or an error object.
+ */
+export async function submitDocument(
+    documentData: FactoryHkaDocumentRequest,
+    token: string
+): Promise<{ data: FactoryHkaDocumentResponse | null; error: string | null; }> {
+    if (!API_BASE_URL) {
+        return { data: null, error: 'The Factory HKA API URL is not configured.' };
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/Enviar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(documentData),
+        });
+
+        if (!response.ok) {
+            const errorResponse: FactoryHkaError = await response.json();
+            const errorMessage = `Failed to submit document to The Factory HKA: ${errorResponse.message || response.statusText}`;
+            console.error(errorMessage, errorResponse.errors);
+            return { data: null, error: errorMessage };
+        }
+
+        const data: FactoryHkaDocumentResponse = await response.json();
+        return { data, error: null };
+
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown network error occurred.';
+        console.error('Error during document submission:', errorMessage);
+        return { data: null, error: `Network error: ${errorMessage}` };
+    }
+}
