@@ -12,21 +12,26 @@ export interface Company {
   address: string;
   authUid: string; // Firebase Auth User ID
   
-  // The Factory HKA Credentials
+  // The Factory HKA Credentials & Config
   factoryHkaConfig: {
-    username: string;
-    password: string; // Encrypted
-    licenseType: 'basic' | 'professional' | 'enterprise';
-    maxDocumentsPerMonth: number;
-    documentsUsedThisMonth: number;
-    isActive: boolean;
+    demo: {
+      username: string;
+      password?: string; // Encrypted
+      isActive: boolean;
+      maxDocumentsPerMonth: number;
+      documentsUsedThisMonth: number;
+    },
+    production: {
+      username: string;
+      password?: string; // Encrypted
+      isActive: boolean;
+    }
   };
   
   // Integration Settings
   integrationConfig: {
     webhookUrl?: string;
     erpType: 'quickbooks' | 'sap' | 'custom' | 'api' | 'oracle' | 'microsoft-dynamics' | 'claris-filemaker';
-    // apiCredentials?: EncryptedCredentials; // Assuming EncryptedCredentials would be defined elsewhere
     notificationSettings: {
       emailNotifications: boolean;
       webhookNotifications: boolean;
@@ -62,19 +67,13 @@ export interface FiscalDocument {
   statusHistory: ProcessingStep[];
   
   // Original Data (from client ERP)
-  originalData: {
-    // customer: CustomerInfo; // Assuming CustomerInfo would be defined elsewhere
-    // items: DocumentItem[]; // Assuming DocumentItem would be defined elsewhere
-    // totals: DocumentTotals; // Assuming DocumentTotals would be defined elsewhere
-    additionalInfo?: Record<string, unknown>;
-  };
+  originalData: Record<string, unknown>;
   
   // Transformed Data (sent to The Factory HKA)
-  // transformedData?: FactoryHkaDocumentRequest; // Assuming FactoryHkaDocumentRequest would be defined elsewhere
+  // transformedData?: FactoryHkaDocumentRequest;
   
   // Responses
-  // factoryHkaResponse?: FactoryHkaResponse; // Assuming FactoryHkaResponse would be defined elsewhere
-  // dgiResponse?: DgiResponse; // Assuming DgiResponse would be defined elsewhere
+  // factoryHkaResponse?: FactoryHkaResponse;
   
   // Generated Documents
   generatedDocuments?: {
@@ -84,17 +83,17 @@ export interface FiscalDocument {
   };
   
   // Error Information
-  // errors?: ProcessingError[]; // Assuming ProcessingError would be defined elsewhere
+  errorDetails?: string;
   
   createdAt: Timestamp;
   updatedAt: Timestamp;
   processedAt?: Timestamp;
+
   // Properties from old Document type to keep UI working temporarily
   client: string;
   amount: number;
   currency: string;
   date: Date | Timestamp;
-  errorDetails?: string;
   erpType: string;
 }
 

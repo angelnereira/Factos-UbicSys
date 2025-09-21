@@ -6,8 +6,27 @@
 
 import type { FactoryHkaAuthSuccess, FactoryHkaDocumentRequest, FactoryHkaDocumentResponse, FactoryHkaError } from './types';
 
-// The base URL for The Factory HKA API, configured via environment variables.
-const API_BASE_URL = process.env.NEXT_PUBLIC_THE_FACTORY_HKA_API_URL || 'https://demointegracion.thefactoryhka.com.pa';
+// The base URLs for The Factory HKA API, configured via environment variables.
+const DEMO_API_URL = process.env.NEXT_PUBLIC_THE_FACTORY_HKA_DEMO_API_URL;
+const PROD_API_URL = process.env.NEXT_PUBLIC_THE_FACTORY_HKA_PROD_API_URL;
+
+type Environment = 'Production' | 'Development' | 'Demo';
+
+function getApiConfig(env: Environment) {
+  if (env === 'Production') {
+    return {
+      apiUrl: PROD_API_URL,
+      username: process.env.THE_FACTORY_HKA_PROD_USERNAME,
+      password: process.env.THE_FACTORY_HKA_PROD_PASSWORD,
+    };
+  }
+  // Default to Demo for 'Development' and 'Demo'
+  return {
+    apiUrl: DEMO_API_URL,
+    username: process.env.THE_FACTORY_HKA_DEMO_USERNAME,
+    password: process.env.THE_FACTORY_HKA_DEMO_PASSWORD,
+  };
+}
 
 /**
  * Retrieves an authentication token from The Factory HKA API.
@@ -15,36 +34,35 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_THE_FACTORY_HKA_API_URL || 'https:/
  * 
  * @returns A promise that resolves with the authentication data or an error object.
  */
-export async function getAuthToken(): Promise<{
+export async function getAuthToken(env: Environment): Promise<{
   data: FactoryHkaAuthSuccess | null;
   error: string | null;
 }> {
-  const username = process.env.THE_FACTORY_HKA_USERNAME;
-  const password = process.env.THE_FACTORY_HKA_PASSWORD;
+  const config = getApiConfig(env);
 
-  if (!API_BASE_URL) {
-    return { data: null, error: 'The Factory HKA API URL is not configured.' };
+  if (!config.apiUrl) {
+    return { data: null, error: `The Factory HKA API URL for ${env} is not configured.` };
   }
-  if (!username || !password) {
-    return { data: null, error: 'The Factory HKA credentials are not configured.' };
+  if (!config.username || !config.password) {
+    return { data: null, error: `The Factory HKA credentials for ${env} are not configured.` };
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v2/login/autenticacion`, {
+    const response = await fetch(`${config.apiUrl}/api/v2/login/autenticacion`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: JSON.stringify({
-        Username: username,
-        Password: password,
+        Username: config.username,
+        Password: config.password,
       }),
     });
 
     if (!response.ok) {
       const errorResponse: FactoryHkaError = await response.json();
-      const errorMessage = `Failed to authenticate with The Factory HKA: ${errorResponse.message || response.statusText}`;
+      const errorMessage = `Failed to authenticate with The Factory HKA (${env}): ${errorResponse.message || response.statusText}`;
       console.error(errorMessage, errorResponse.errors);
       return { data: null, error: errorMessage };
     }
@@ -54,7 +72,7 @@ export async function getAuthToken(): Promise<{
 
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'An unknown network error occurred.';
-    console.error('Error during authentication request:', errorMessage);
+    console.error(`Error during authentication request (${env}):`, errorMessage);
     return { data: null, error: `Network error: ${errorMessage}` };
   }
 }
@@ -64,18 +82,21 @@ export async function getAuthToken(): Promise<{
  * 
  * @param documentData - The document data to be sent.
  * @param token - The authentication token obtained from getAuthToken.
+ * @param env - The environment (Demo or Production) to target.
  * @returns A promise that resolves with the API response or an error object.
  */
 export async function submitDocument(
     documentData: FactoryHkaDocumentRequest,
-    token: string
+    token: string,
+    env: Environment
 ): Promise<{ data: FactoryHkaDocumentResponse | null; error: string | null; }> {
-    if (!API_BASE_URL) {
-        return { data: null, error: 'The Factory HKA API URL is not configured.' };
+    const config = getApiConfig(env);
+    if (!config.apiUrl) {
+        return { data: null, error: `The Factory HKA API URL for ${env} is not configured.` };
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/Enviar`, {
+        const response = await fetch(`${config.apiUrl}/api/Enviar`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -87,7 +108,7 @@ export async function submitDocument(
 
         if (!response.ok) {
             const errorResponse: FactoryHkaError = await response.json();
-            const errorMessage = `Failed to submit document to The Factory HKA: ${errorResponse.message || response.statusText}`;
+            const errorMessage = `Failed to submit document to The Factory HKA (${env}): ${errorResponse.message || response.statusText}`;
             console.error(errorMessage, errorResponse.errors);
             return { data: null, error: errorMessage };
         }
@@ -97,7 +118,7 @@ export async function submitDocument(
 
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown network error occurred.';
-        console.error('Error during document submission:', errorMessage);
+        console.error(`Error during document submission (${env}):`, errorMessage);
         return { data: null, error: `Network error: ${errorMessage}` };
     }
 }

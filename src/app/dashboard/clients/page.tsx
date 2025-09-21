@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -95,6 +94,8 @@ export default function ClientsPage() {
     defaultValues: {
       name: '',
       email: '',
+      status: 'Demo',
+      erpType: 'custom',
     },
   });
 
@@ -142,17 +143,30 @@ export default function ClientsPage() {
   }, [companies, searchQuery, sortKey, sortDirection]);
 
   const onSubmit = async (values: ClientFormValues) => {
-    const newCompanyData = {
+    const newCompanyData: Partial<Company> = {
       name: values.name,
       email: values.email,
       status: values.status,
       integrationConfig: {
         erpType: values.erpType,
+        notificationSettings: { emailNotifications: true, webhookNotifications: false, smsNotifications: false }
+      },
+      factoryHkaConfig: {
+        demo: {
+          username: "user_demo", // Placeholder
+          isActive: true,
+          maxDocumentsPerMonth: 1000,
+          documentsUsedThisMonth: 0,
+        },
+        production: {
+          username: "user_prod", // Placeholder
+          isActive: false,
+        }
       },
       onboarded: new Date(),
     };
 
-    const { newCompany, error } = await addCompany(newCompanyData as Partial<Company>);
+    const { newCompany, error } = await addCompany(newCompanyData);
 
     if (error) {
       toast({
@@ -164,7 +178,7 @@ export default function ClientsPage() {
       setCompanies(prevCompanies => [...prevCompanies, newCompany]);
       toast({
         title: 'Compañía agregada',
-        description: 'La nueva compañía ha sido guardada exitosamente.',
+        description: 'La nueva compañía ha sido guardada exitosamente en modo Demo.',
       });
       setIsDialogOpen(false);
       form.reset();
@@ -276,26 +290,28 @@ export default function ClientsPage() {
                  <FormField
                   control={form.control}
                   name="status"
-                  render={({ field }) => (
-                    <FormItem className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Ambiente</FormLabel>
-                      <div className="col-span-3">
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar Ambiente" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Production">Producción</SelectItem>
-                              <SelectItem value="Development">Desarrollo</SelectItem>
-                              <SelectItem value="Demo">Demo</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    return (
+                      <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">Ambiente</FormLabel>
+                        <div className="col-span-3">
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Seleccionar Ambiente" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Production">Producción</SelectItem>
+                                <SelectItem value="Development">Desarrollo</SelectItem>
+                                <SelectItem value="Demo">Demo</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    );
+                  }}
                 />
                 <DialogFooter>
                   <Button type="submit">Guardar Compañía</Button>
