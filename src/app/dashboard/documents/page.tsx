@@ -1,11 +1,11 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import {
   Table,
@@ -17,9 +17,10 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { documents } from '@/lib/data';
+import { getDocuments } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { Document } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 const statusStyles: { [key in Document['status']]: string } = {
   Processed: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -27,10 +28,29 @@ const statusStyles: { [key in Document['status']]: string } = {
   Error: 'text-destructive border-destructive bg-destructive/10',
 };
 
-function DocumentsTable({ status }: { status?: Document['status'] }) {
+function DocumentsTable({ documents, isLoading, status }: { documents: Document[], isLoading: boolean, status?: Document['status'] }) {
   const filteredDocuments = status
     ? documents.filter(doc => doc.status === status)
     : documents;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  
+  if (filteredDocuments.length === 0) {
+    return (
+        <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+                No se encontraron documentos.
+            </CardContent>
+        </Card>
+    )
+  }
+
   return (
     <Card>
       <CardContent className="p-0">
@@ -80,6 +100,19 @@ function DocumentsTable({ status }: { status?: Document['status'] }) {
 }
 
 export default function DocumentsPage() {
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDocuments() {
+      setIsLoading(true);
+      const fetchedDocuments = await getDocuments();
+      setDocuments(fetchedDocuments);
+      setIsLoading(false);
+    }
+    fetchDocuments();
+  }, []);
+
   return (
     <>
       <div className="flex items-center">
@@ -94,13 +127,13 @@ export default function DocumentsPage() {
           </TabsList>
         </div>
         <TabsContent value="all">
-          <DocumentsTable />
+          <DocumentsTable documents={documents} isLoading={isLoading} />
         </TabsContent>
         <TabsContent value="pending">
-          <DocumentsTable status="Pending" />
+          <DocumentsTable documents={documents} isLoading={isLoading} status="Pending" />
         </TabsContent>
         <TabsContent value="error">
-          <DocumentsTable status="Error" />
+          <DocumentsTable documents={documents} isLoading={isLoading} status="Error" />
         </TabsContent>
       </Tabs>
     </>

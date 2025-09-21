@@ -1,6 +1,10 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -9,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { documents } from '@/lib/data';
+import { getDocumentById } from '@/lib/firebase/firestore';
 import ErrorExplainer from './_components/error-explainer';
 import { cn } from '@/lib/utils';
 import type { Document } from '@/lib/types';
@@ -26,10 +30,37 @@ export default function DocumentDetailPage({
 }: {
   params: { id: string };
 }) {
-  const document = documents.find(d => d.id === params.id);
+  const [document, setDocument] = useState<Document | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDocument() {
+      setIsLoading(true);
+      const fetchedDocument = await getDocumentById(params.id);
+      if (fetchedDocument) {
+        setDocument(fetchedDocument);
+      } else {
+         // Trigger notFound if document doesn't exist
+        notFound();
+      }
+      setIsLoading(false);
+    }
+    fetchDocument();
+  }, [params.id]);
+
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!document) {
-    notFound();
+    // This will be handled by the notFound() call in useEffect,
+    // but as a fallback, we can render nothing or a message.
+    return null;
   }
 
   return (

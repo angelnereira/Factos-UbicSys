@@ -1,6 +1,7 @@
+
 import { db } from './firebase';
-import { collection, getDocs, addDoc, doc, DocumentData } from 'firebase/firestore';
-import type { Client } from '../types';
+import { collection, getDocs, addDoc, doc, getDoc, DocumentData } from 'firebase/firestore';
+import type { Client, Document } from '../types';
 
 // Define the type for the data to be added, omitting the 'id'
 type ClientData = Omit<Client, 'id'>;
@@ -37,7 +38,48 @@ export const getClients = async (): Promise<Client[]> => {
     });
     return clients;
   } catch (error) {
-    console.error("Error getting documents: ", error);
+    console.error("Error getting clients: ", error);
     return []; // Return an empty array in case of an error
   }
 };
+
+
+/**
+ * Fetches all documents from the 'documents' collection in Firestore.
+ * @returns A promise that resolves to an array of documents.
+ */
+export const getDocuments = async (): Promise<Document[]> => {
+    try {
+        const querySnapshot = await getDocs(collection(db, "documents"));
+        const documents: Document[] = [];
+        querySnapshot.forEach((doc) => {
+            documents.push({ id: doc.id, ...doc.data() } as Document);
+        });
+        return documents;
+    } catch (error) {
+        console.error("Error getting documents: ", error);
+        return [];
+    }
+};
+
+/**
+ * Fetches a single document from the 'documents' collection in Firestore.
+ * @param id - The ID of the document to fetch.
+ * @returns A promise that resolves to the document data or null if not found.
+ */
+export const getDocumentById = async (id: string): Promise<Document | null> => {
+    try {
+        const docRef = doc(db, "documents", id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return { id: docSnap.id, ...docSnap.data() } as Document;
+        } else {
+            console.log("No such document!");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error getting document by ID: ", error);
+        return null;
+    }
+}
