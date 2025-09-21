@@ -113,7 +113,7 @@ export default function AuthPage() {
         description: 'Ahora completa tu perfil.',
       });
       // Pass user info to the next step
-      router.push(`/signup/complete-profile?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`);
+      router.push(`/signup/complete-profile?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&uid=${user.uid}`);
     }
   };
 

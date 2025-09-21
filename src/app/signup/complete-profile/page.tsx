@@ -33,6 +33,7 @@ function CompleteProfileForm() {
 
   const name = searchParams.get('name') || '';
   const email = searchParams.get('email') || '';
+  const uid = searchParams.get('uid') || '';
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -46,15 +47,28 @@ function CompleteProfileForm() {
   const onSubmit = async (values: ProfileFormValues) => {
     setIsLoading(true);
 
+    if (!uid) {
+        toast({
+            title: 'Error de Registro',
+            description: 'No se encontró el ID de usuario. Por favor, intenta registrarte de nuevo.',
+            variant: 'destructive',
+        });
+        setIsLoading(false);
+        router.push('/');
+        return;
+    }
+
     const clientData = {
       name,
       email,
+      authUid: uid,
       status: 'Demo' as const,
       onboarded: new Date().toISOString().split('T')[0],
       erpType: 'Custom' as const,
       ...values,
     };
 
+    // @ts-ignore
     const { error } = await addClient(clientData);
     
     if (error) {

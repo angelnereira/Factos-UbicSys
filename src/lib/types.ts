@@ -10,6 +10,7 @@ export interface Company {
   email: string;
   phone?: string;
   address: string;
+  authUid: string; // Firebase Auth User ID
   
   // The Factory HKA Credentials
   factoryHkaConfig: {
@@ -130,6 +131,7 @@ export type Client = {
   ruc?: string;
   contactNumber?: string;
   location?: string;
+  authUid?: string;
 };
 
 export type Analytics = {
@@ -139,5 +141,3 @@ export type Analytics = {
   documentsByStatus: Array<{ name: string; value: number; fill: string }>;
   volumeLast6Months: Array<{ name: string; total: number }>;
 };
-
-    
