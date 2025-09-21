@@ -1,8 +1,8 @@
+
 import Link from 'next/link';
 import {
   Menu,
-  Package2,
-  Settings,
+  BookText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,7 +36,23 @@ export default function DashboardLayout({
           <div className="flex-1">
             <DashboardNav isCollapsed={false} />
           </div>
-          <div className="mt-auto p-4">
+          <div className="mt-auto p-4 space-y-4">
+            <Card>
+              <CardHeader className="p-2 pt-0 md:p-4">
+                <CardTitle>Documentación</CardTitle>
+                <CardDescription>
+                  Guía completa para integrar y usar el sistema.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
+                <Button size="sm" className="w-full" asChild>
+                  <Link href="/dashboard/documentation">
+                    <BookText className="mr-2 h-4 w-4" />
+                    Leer Manual
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader className="p-2 pt-0 md:p-4">
                 <CardTitle>¿Necesitas ayuda?</CardTitle>

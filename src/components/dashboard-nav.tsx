@@ -16,7 +16,6 @@ const navItems = [
   { href: '/dashboard/documents', label: 'Inicio', icon: Home },
   { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
   { href: '/dashboard/clients', label: 'Compañías', icon: Users },
-  { href: '/dashboard/documentation', label: 'Documentación', icon: BookText },
 ];
 
 export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
