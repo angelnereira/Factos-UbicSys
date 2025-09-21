@@ -334,7 +334,7 @@ export default function DocumentsPage() {
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar Moneda" />
-                          </SelectTrigger>
+                          </Trigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="USD">USD</SelectItem>
@@ -371,7 +371,7 @@ export default function DocumentsPage() {
                     placeholder="Buscar por cliente..."
                     className="w-full bg-background pl-8"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.TabsValue)}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
         </div>
