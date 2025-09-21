@@ -68,7 +68,10 @@ function AccountSettings() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Cuenta</CardTitle>
+                <div className="flex items-center gap-4">
+                    <CardTitle>Cuenta</CardTitle>
+                    <Badge variant="outline">Administrador</Badge>
+                </div>
                 <CardDescription>
                     Realiza cambios en tu cuenta aquí. Haz clic en guardar cuando hayas terminado.
                 </CardDescription>
@@ -84,12 +87,6 @@ function AccountSettings() {
                     <Label htmlFor="email">Email</Label>
                     <div className="mt-2">
                         <Input type="email" name="email" id="email" defaultValue="admin@factos-ubicsys.com" readOnly />
-                    </div>
-                </div>
-                 <div>
-                    <Label htmlFor="role">Rol de la Cuenta</Label>
-                    <div className="mt-2">
-                        <Input type="text" name="role" id="role" defaultValue="Administrador" readOnly />
                     </div>
                 </div>
             </CardContent>
@@ -342,5 +339,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-
-    
