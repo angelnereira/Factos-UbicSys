@@ -20,12 +20,24 @@ import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Placeholder for the current status. In a real app, this would come from a state management or context.
+  const currentStatus: 'Production' | 'Development' | 'Demo' = 'Demo';
+
+  const statusStyles = {
+    Production: 'text-chart-2 border-chart-2 bg-chart-2/10',
+    Development: 'text-destructive border-destructive bg-destructive/10',
+    Demo: 'text-chart-4 border-chart-4 bg-chart-4/10',
+  };
+
+
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
@@ -124,7 +136,12 @@ export default function DashboardLayout({
             </form>
           </div>
           <ThemeToggle />
-          <UserNav />
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={cn(statusStyles[currentStatus])}>
+              {currentStatus}
+            </Badge>
+            <UserNav />
+          </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
           {children}
