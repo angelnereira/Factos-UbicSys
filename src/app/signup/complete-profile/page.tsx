@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
+import type { Client } from '@/lib/types';
+import { clients } from '@/lib/data';
 
 const profileSchema = z.object({
   ruc: z.string().optional(),
@@ -45,19 +47,24 @@ function CompleteProfileForm() {
   const onSubmit = async (values: ProfileFormValues) => {
     setIsLoading(true);
 
-    const clientData = {
+    const clientData: Client = {
       name,
       email,
-      ...values,
-      clientId: `CLI${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+      id: `CLI${(clients.length + 1).toString().padStart(3, '0')}`,
       status: 'Demo',
       onboarded: new Date().toISOString().split('T')[0],
+      erpType: 'Custom', // Defaulting ERP type for new signups
+      // Incorporating optional fields if they exist
+      ...(values.ruc && { ruc: values.ruc }),
+      ...(values.contactNumber && { contactNumber: values.contactNumber }),
+      ...(values.location && { location: values.location }),
     };
 
-    console.log('Final Client Data:', clientData);
-
-    // Here you would typically save the data to your database (e.g., Firestore)
-    // For now, we'll just simulate a successful registration.
+    // In a real application, you would save this to your database.
+    // For this prototype, we'll add it to our in-memory data array.
+    clients.push(clientData);
+    console.log('Nuevo cliente agregado:', clientData);
+    console.log('Lista de clientes actualizada:', clients);
 
     toast({
       title: '¡Registro completado!',
