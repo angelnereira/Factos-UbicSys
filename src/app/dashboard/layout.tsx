@@ -4,6 +4,7 @@ import {
   Menu,
   BookText,
   Search,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,6 +52,22 @@ export default function DashboardLayout({
             <DashboardNav isCollapsed={false} />
           </div>
           <div className="mt-auto p-4 space-y-4">
+            <Card>
+              <CardHeader className="p-2 pt-0 md:p-4">
+                <CardTitle>Configurar API y ERP</CardTitle>
+                <CardDescription>
+                  Conecta tu sistema o configura los ajustes de la API.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
+                <Button size="sm" className="w-full" asChild>
+                  <Link href="/dashboard/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Ir a Configuración
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader className="p-2 pt-0 md:p-4">
                 <CardTitle>Documentación</CardTitle>
