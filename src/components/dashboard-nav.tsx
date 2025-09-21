@@ -14,7 +14,7 @@ import {
 const navItems = [
   { href: '/dashboard', label: 'Resumen', icon: Home },
   { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
-  { href: '/dashboard/clients', label: 'Clientes', icon: Users },
+  { href: '/dashboard/clients', label: 'Compañías', icon: Users },
   { href: '/dashboard/reports', label: 'Analíticas', icon: BarChart3 },
 ];
 

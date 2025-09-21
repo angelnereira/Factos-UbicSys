@@ -16,12 +16,15 @@ import {
 import { getDocumentById } from '@/lib/firebase/firestore';
 import ErrorExplainer from './_components/error-explainer';
 import { cn } from '@/lib/utils';
-import type { Document } from '@/lib/types';
+import type { FiscalDocument } from '@/lib/types';
 
-const statusStyles: { [key in Document['status']]: string } = {
-  Processed: 'text-chart-2 border-chart-2 bg-chart-2/10',
-  Pending: 'text-chart-4 border-chart-4 bg-chart-4/10',
-  Error: 'text-destructive border-destructive bg-destructive/10',
+const statusStyles: { [key in FiscalDocument['status']]: string } = {
+  approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
+  pending: 'text-chart-4 border-chart-4 bg-chart-4/10',
+  rejected: 'text-destructive border-destructive bg-destructive/10',
+  processing: 'text-blue-500 border-blue-500 bg-blue-500/10',
+  sent_to_pac: 'text-indigo-500 border-indigo-500 bg-indigo-500/10',
+  cancelled: 'text-gray-500 border-gray-500 bg-gray-500/10',
 };
 
 
@@ -30,7 +33,7 @@ export default function DocumentDetailPage({
 }: {
   params: { id: string };
 }) {
-  const [document, setDocument] = useState<Document | null>(null);
+  const [document, setDocument] = useState<FiscalDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -38,7 +41,7 @@ export default function DocumentDetailPage({
       setIsLoading(true);
       const fetchedDocument = await getDocumentById(params.id);
       if (fetchedDocument) {
-        setDocument(fetchedDocument);
+        setDocument(fetchedDocument as FiscalDocument);
       } else {
          // Trigger notFound if document doesn't exist
         notFound();
@@ -107,7 +110,7 @@ export default function DocumentDetailPage({
             </CardContent>
           </Card>
 
-          {document.status === 'Error' && document.errorDetails && (
+          {(document.status === 'rejected' || document.status === 'cancelled') && document.errorDetails && (
             <Card>
               <CardHeader>
                 <CardTitle>Detalles del Error</CardTitle>
@@ -121,12 +124,12 @@ export default function DocumentDetailPage({
             </Card>
           )}
 
-          {document.status === 'Error' && <ErrorExplainer document={document} />}
+          {(document.status === 'rejected' || document.status === 'cancelled') && <ErrorExplainer document={document} />}
         </div>
         <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
           <Card>
             <CardHeader>
-              <CardTitle>Información del Cliente</CardTitle>
+              <CardTitle>Información de la Compañía</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="grid gap-3">

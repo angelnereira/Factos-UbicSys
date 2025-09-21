@@ -60,7 +60,7 @@ const statusStyles: { [key in Client['status']]: string } = {
 };
 
 const clientSchema = z.object({
-  name: z.string().min(1, 'El nombre del cliente es requerido'),
+  name: z.string().min(1, 'El nombre de la compañía es requerido'),
   email: z.string().email('Dirección de correo electrónico inválida'),
   erpType: z.enum(['SAP', 'Oracle', 'Microsoft Dynamics', 'Claris FileMaker', 'Custom']),
   status: z.enum(['Production', 'Development', 'Demo']),
@@ -145,15 +145,15 @@ export default function ClientsPage() {
 
     if (error) {
       toast({
-        title: 'Error al agregar cliente',
-        description: 'No se pudo guardar el cliente en la base de datos.',
+        title: 'Error al agregar compañía',
+        description: 'No se pudo guardar la compañía en la base de datos.',
         variant: 'destructive',
       });
     } else if (newClient) {
       setClients(prevClients => [...prevClients, newClient]);
       toast({
-        title: 'Cliente agregado',
-        description: 'El nuevo cliente ha sido guardado exitosamente.',
+        title: 'Compañía agregada',
+        description: 'La nueva compañía ha sido guardada exitosamente.',
       });
       setIsDialogOpen(false);
       form.reset();
@@ -173,10 +173,10 @@ export default function ClientsPage() {
       <div className="flex items-center">
         <div className="flex-1">
           <h1 className="font-headline text-2xl font-bold tracking-tight">
-            Clientes
+            Compañías
           </h1>
           <p className="text-muted-foreground">
-            Gestiona tus clientes y sus integraciones ERP.
+            Gestiona tus compañías y sus integraciones ERP.
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -184,15 +184,15 @@ export default function ClientsPage() {
             <Button size="sm" className="h-8 gap-1">
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Agregar Cliente
+                Agregar Compañía
               </span>
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
+              <DialogTitle>Agregar Nueva Compañía</DialogTitle>
               <DialogDescription>
-                Incorpora un nuevo cliente y configura sus ajustes de integración.
+                Incorpora una nueva compañía y configura sus ajustes de integración.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -202,7 +202,7 @@ export default function ClientsPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Nombre del Cliente</FormLabel>
+                      <FormLabel className="text-right">Nombre de la Compañía</FormLabel>
                       <div className="col-span-3">
                         <FormControl>
                           <Input placeholder="Acme Inc." {...field} />
@@ -266,7 +266,7 @@ export default function ClientsPage() {
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Seleccionar Ambiente" />
-                              </SelectTrigger>
+                              </Trigger>
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="Production">Producción</SelectItem>
@@ -280,7 +280,7 @@ export default function ClientsPage() {
                   )}
                 />
                 <DialogFooter>
-                  <Button type="submit">Guardar Cliente</Button>
+                  <Button type="submit">Guardar Compañía</Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -291,14 +291,14 @@ export default function ClientsPage() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Lista de Clientes</CardTitle>
-              <CardDescription>Una lista de todos los clientes incorporados.</CardDescription>
+              <CardTitle>Lista de Compañías</CardTitle>
+              <CardDescription>Una lista de todas las compañías incorporadas.</CardDescription>
             </div>
             <div className="relative w-full max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Buscar clientes..."
+                    placeholder="Buscar compañías..."
                     className="w-full bg-background pl-8"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -317,7 +317,7 @@ export default function ClientsPage() {
               <TableRow>
                 <TableHead>
                   <Button variant="ghost" onClick={() => handleSort('name')}>
-                    Cliente
+                    Compañía
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>

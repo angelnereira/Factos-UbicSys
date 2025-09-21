@@ -21,9 +21,9 @@ import type {
   IntelligentErrorExplanationOutput,
 } from '@/ai/flows/intelligent-error-explanation';
 import { intelligentErrorExplanation } from '@/ai/flows/intelligent-error-explanation';
-import type { Document } from '@/lib/types';
+import type { FiscalDocument } from '@/lib/types';
 
-export default function ErrorExplainer({ document }: { document: Document }) {
+export default function ErrorExplainer({ document }: { document: FiscalDocument }) {
   const [explanation, setExplanation] =
     useState<IntelligentErrorExplanationOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,7 @@ export default function ErrorExplainer({ document }: { document: Document }) {
 
     const input: IntelligentErrorExplanationInput = {
       documentId: document.id,
-      clientId: document.clientId,
+      clientId: document.companyId,
       erpType: document.erpType,
       errorDetails: document.errorDetails,
     };

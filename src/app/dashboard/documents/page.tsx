@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { getDocuments, getClients, addDocument } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
-import type { Document, Client } from '@/lib/types';
+import type { FiscalDocument, Company } from '@/lib/types';
 import { Loader2, ArrowUpDown, Search, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,13 +52,16 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
-const statusStyles: { [key in Document['status']]: string } = {
-  Processed: 'text-chart-2 border-chart-2 bg-chart-2/10',
-  Pending: 'text-chart-4 border-chart-4 bg-chart-4/10',
-  Error: 'text-destructive border-destructive bg-destructive/10',
+const statusStyles: { [key in FiscalDocument['status']]: string } = {
+  approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
+  pending: 'text-chart-4 border-chart-4 bg-chart-4/10',
+  rejected: 'text-destructive border-destructive bg-destructive/10',
+  processing: 'text-blue-500 border-blue-500 bg-blue-500/10',
+  sent_to_pac: 'text-indigo-500 border-indigo-500 bg-indigo-500/10',
+  cancelled: 'text-gray-500 border-gray-500 bg-gray-500/10',
 };
 
-type SortKey = keyof Document | '';
+type SortKey = keyof FiscalDocument | '';
 
 function DocumentsTable({ 
   documents, 
@@ -66,9 +69,9 @@ function DocumentsTable({
   status,
   searchQuery,
 }: { 
-  documents: Document[], 
+  documents: FiscalDocument[], 
   isLoading: boolean, 
-  status?: Document['status'],
+  status?: FiscalDocument['status'],
   searchQuery: string,
 }) {
   const [sortKey, setSortKey] = useState<SortKey>('date');
@@ -144,7 +147,7 @@ function DocumentsTable({
               </TableHead>
               <TableHead className="hidden sm:table-cell">
                  <Button variant="ghost" onClick={() => handleSort('client')}>
-                    Cliente
+                    Compañía
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
               </TableHead>
@@ -204,7 +207,7 @@ function DocumentsTable({
 }
 
 const documentSchema = z.object({
-  clientId: z.string().min(1, "Debes seleccionar un cliente"),
+  companyId: z.string().min(1, "Debes seleccionar una compañía"),
   amount: z.coerce.number().min(0.01, "El monto debe ser mayor que cero"),
   currency: z.enum(['USD', 'EUR', 'GBP']),
 });
@@ -213,8 +216,8 @@ type DocumentFormValues = z.infer<typeof documentSchema>;
 
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  const [documents, setDocuments] = useState<FiscalDocument[]>([]);
+  const [clients, setClients] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -231,7 +234,7 @@ export default function DocumentsPage() {
         getDocuments(),
         getClients(),
       ]);
-      setDocuments(fetchedDocuments);
+      setDocuments(fetchedDocuments as FiscalDocument[]);
       setClients(fetchedClients);
       setIsLoading(false);
     }
@@ -239,20 +242,23 @@ export default function DocumentsPage() {
   }, []);
   
   const onSubmit = async (values: DocumentFormValues) => {
-    const selectedClient = clients.find(c => c.id === values.clientId);
+    const selectedClient = clients.find(c => c.id === values.companyId);
     if (!selectedClient) {
-        toast({ title: "Error", description: "Cliente no encontrado", variant: "destructive"});
+        toast({ title: "Error", description: "Compañía no encontrada", variant: "destructive"});
         return;
     }
 
     const newDocumentData = {
         client: selectedClient.name,
-        clientId: selectedClient.id,
-        erpType: selectedClient.erpType,
+        companyId: selectedClient.id,
+        erpType: selectedClient.integrationConfig.erpType,
         amount: values.amount,
         currency: values.currency,
         date: new Date().toISOString().split('T')[0],
-        status: 'Pending' as const,
+        status: 'pending' as const,
+        documentType: 'factura' as const,
+        statusHistory: [],
+        originalData: {},
     };
 
     const { newDocument, error } = await addDocument(newDocumentData);
@@ -260,7 +266,7 @@ export default function DocumentsPage() {
     if (error) {
         toast({ title: "Error", description: "No se pudo agregar el documento.", variant: "destructive" });
     } else if (newDocument) {
-        setDocuments(prev => [...prev, newDocument]);
+        setDocuments(prev => [...prev, newDocument as FiscalDocument]);
         toast({ title: "Éxito", description: "Documento agregado exitosamente." });
         setIsDialogOpen(false);
         form.reset();
@@ -291,14 +297,14 @@ export default function DocumentsPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
                  <FormField
                   control={form.control}
-                  name="clientId"
+                  name="companyId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cliente</FormLabel>
+                      <FormLabel>Compañía</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar Cliente" />
+                            <SelectValue placeholder="Seleccionar Compañía" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -361,14 +367,14 @@ export default function DocumentsPage() {
           <TabsList>
             <TabsTrigger value="all">Todos</TabsTrigger>
             <TabsTrigger value="pending">Pendientes</TabsTrigger>
-            <TabsTrigger value="processed">Procesados</TabsTrigger>
-            <TabsTrigger value="error">Error</TabsTrigger>
+            <TabsTrigger value="approved">Aprobados</TabsTrigger>
+            <TabsTrigger value="rejected">Rechazados</TabsTrigger>
           </TabsList>
            <div className="relative w-full max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Buscar por cliente..."
+                    placeholder="Buscar por compañía..."
                     className="w-full bg-background pl-8"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -379,17 +385,15 @@ export default function DocumentsPage() {
           <DocumentsTable documents={documents} isLoading={isLoading} searchQuery={searchQuery} />
         </TabsContent>
         <TabsContent value="pending">
-          <DocumentsTable documents={documents} isLoading={isLoading} status="Pending" searchQuery={searchQuery} />
+          <DocumentsTable documents={documents} isLoading={isLoading} status="pending" searchQuery={searchQuery} />
         </TabsContent>
-        <TabsContent value="processed">
-          <DocumentsTable documents={documents} isLoading={isLoading} status="Processed" searchQuery={searchQuery} />
+        <TabsContent value="approved">
+          <DocumentsTable documents={documents} isLoading={isLoading} status="approved" searchQuery={searchQuery} />
         </TabsContent>
-        <TabsContent value="error">
-          <DocumentsTable documents={documents} isLoading={isLoading} status="Error" searchQuery={searchQuery} />
+        <TabsContent value="rejected">
+          <DocumentsTable documents={documents} isLoading={isLoading} status="rejected" searchQuery={searchQuery} />
         </TabsContent>
       </Tabs>
     </>
   );
 }
-
-    
