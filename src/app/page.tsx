@@ -97,9 +97,9 @@ export default function AuthPage() {
 
   const onSignUpSubmit = async (values: SignUpFormValues) => {
     setIsLoading(true);
-    const { email, password } = values;
+    const { email, password, name } = values;
     const { user, error } = await signUpWithEmailAndPassword(email, password);
-
+  
     if (error) {
       toast({
         title: 'Registro fallido',
@@ -107,15 +107,13 @@ export default function AuthPage() {
         variant: 'destructive',
       });
       setIsLoading(false);
-    } else {
+    } else if (user) {
       toast({
-        title: '¡Registro exitoso!',
-        description: 'Serás redirigido al panel de control.',
+        title: '¡Cuenta creada!',
+        description: 'Ahora completa tu perfil.',
       });
-      console.log('User signed up:', user);
-       setTimeout(() => {
-        router.push('/dashboard');
-      }, 1000);
+      // Pass user info to the next step
+      router.push(`/signup/complete-profile?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`);
     }
   };
 
@@ -228,7 +226,7 @@ export default function AuthPage() {
                     )}
                   />
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="animate-spin" /> : 'Registrarse'}
+                    {isLoading ? <Loader2 className="animate-spin" /> : 'Siguiente'}
                   </Button>
                 </form>
               </Form>
