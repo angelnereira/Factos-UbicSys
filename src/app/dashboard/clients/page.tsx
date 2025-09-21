@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { PlusCircle, Loader2 } from 'lucide-react';
+import { PlusCircle, Loader2, ArrowUpDown, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -67,11 +67,15 @@ const clientSchema = z.object({
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
+type SortKey = keyof Client | '';
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,6 +95,45 @@ export default function ClientsPage() {
       email: '',
     },
   });
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedAndFilteredClients = useMemo(() => {
+    let result = [...clients];
+
+    if (searchQuery) {
+      result = result.filter(client =>
+        client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.email.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (sortKey) {
+      result.sort((a, b) => {
+        const aValue = a[sortKey];
+        const bValue = b[sortKey];
+
+        if (aValue === undefined || bValue === undefined) return 0;
+
+        if (aValue < bValue) {
+          return sortDirection === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortDirection === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return result;
+  }, [clients, searchQuery, sortKey, sortDirection]);
 
   const onSubmit = async (values: ClientFormValues) => {
     const newClientData = {
@@ -116,6 +159,14 @@ export default function ClientsPage() {
       form.reset();
     }
   };
+  
+  const renderSortArrow = (key: SortKey) => {
+    if (sortKey === key) {
+      return sortDirection === 'asc' ? ' 🔼' : ' 🔽';
+    }
+    return null;
+  };
+
 
   return (
     <>
@@ -238,8 +289,22 @@ export default function ClientsPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Clientes</CardTitle>
-          <CardDescription>Una lista de todos los clientes incorporados.</CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Lista de Clientes</CardTitle>
+              <CardDescription>Una lista de todos los clientes incorporados.</CardDescription>
+            </div>
+            <div className="relative w-full max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Buscar clientes..."
+                    className="w-full bg-background pl-8"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -250,14 +315,34 @@ export default function ClientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Tipo de ERP</TableHead>
-                <TableHead>Ambiente</TableHead>
-                <TableHead>Incorporado</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('name')}>
+                    Cliente
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('erpType')}>
+                    Tipo de ERP
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('status')}>
+                    Ambiente
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('onboarded')}>
+                    Incorporado
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clients.map(client => (
+              {sortedAndFilteredClients.map(client => (
                 <TableRow key={client.id}>
                   <TableCell>
                     <div className="font-medium">{client.name}</div>
