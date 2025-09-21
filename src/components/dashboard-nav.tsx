@@ -3,7 +3,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, Home, Users, Settings } from 'lucide-react';
+import {
+  Home,
+  Users,
+  Settings,
+  History,
+  Activity,
+  Landmark,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -15,6 +22,9 @@ import {
 const navItems = [
   { href: '/dashboard/documents', label: 'Inicio', icon: Home },
   { href: '/dashboard/clients', label: 'Compañías', icon: Users },
+  { href: '/dashboard/logs', label: 'Registros', icon: History },
+  { href: '/dashboard/monitoring', label: 'Monitoreo', icon: Activity },
+  { href: '/dashboard/finance', label: 'Finanzas', icon: Landmark },
   { href: '/dashboard/settings', label: 'Ajustes', icon: Settings },
 ];
 
