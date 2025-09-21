@@ -36,6 +36,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { clients } from '@/lib/data';
 import { cn } from '@/lib/utils';
+import type { Client } from '@/lib/types';
+
+const statusStyles: { [key in Client['status']]: string } = {
+  Production: 'text-chart-2 border-chart-2 bg-chart-2/10',
+  Development: 'text-chart-4 border-chart-4 bg-chart-4/10',
+  Demo: 'text-muted-foreground border-dashed',
+};
 
 export default function ClientsPage() {
   return (
@@ -97,7 +104,23 @@ export default function ClientsPage() {
                     <SelectItem value="microsoft-dynamics">
                       Microsoft Dynamics
                     </SelectItem>
+                    <SelectItem value="claris-filemaker">Claris FileMaker</SelectItem>
                     <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Environment
+                </Label>
+                <Select>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select Environment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Production">Production</SelectItem>
+                    <SelectItem value="Development">Development</SelectItem>
+                    <SelectItem value="Demo">Demo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -119,7 +142,7 @@ export default function ClientsPage() {
               <TableRow>
                 <TableHead>Client</TableHead>
                 <TableHead>ERP Type</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Environment</TableHead>
                 <TableHead>Onboarded</TableHead>
               </TableRow>
             </TableHeader>
@@ -134,7 +157,7 @@ export default function ClientsPage() {
                   </TableCell>
                   <TableCell>{client.erpType}</TableCell>
                   <TableCell>
-                    <Badge variant={client.status === 'Active' ? 'outline' : 'secondary'} className={cn(client.status === 'Active' ? 'text-chart-2 border-chart-2 bg-chart-2/10' : '')}>
+                    <Badge variant={'outline'} className={cn(statusStyles[client.status])}>
                       {client.status}
                     </Badge>
                   </TableCell>

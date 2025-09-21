@@ -14,9 +14,9 @@ export type Client = {
   id:string;
   name: string;
   email: string;
-  erpType: 'SAP' | 'Oracle' | 'Microsoft Dynamics' | 'Custom';
+  erpType: 'SAP' | 'Oracle' | 'Microsoft Dynamics' | 'Custom' | 'Claris FileMaker';
   onboarded: string;
-  status: 'Active' | 'Inactive';
+  status: 'Production' | 'Development' | 'Demo';
 };
 
 export type Analytics = {

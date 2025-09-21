@@ -1,11 +1,13 @@
 import { Client, Document, Analytics } from '@/lib/types';
 
 export const clients: Client[] = [
-  { id: 'CLI001', name: 'Innovate Corp', email: 'contact@innovatecorp.com', erpType: 'SAP', onboarded: '2023-01-15', status: 'Active' },
-  { id: 'CLI002', name: 'Solutions Inc.', email: 'accounts@solutionsinc.com', erpType: 'Oracle', onboarded: '2023-02-20', status: 'Active' },
-  { id: 'CLI003', name: 'Tech Giants LLC', email: 'billing@techgiants.com', erpType: 'Microsoft Dynamics', onboarded: '2023-03-10', status: 'Active' },
-  { id: 'CLI004', name: 'Eco Goods', email: 'finance@ecogoods.com', erpType: 'Custom', onboarded: '2023-04-05', status: 'Inactive' },
-  { id: 'CLI005', name: 'HealthFirst', email: 'invoices@healthfirst.com', erpType: 'SAP', onboarded: '2023-05-21', status: 'Active' },
+  { id: 'CLI001', name: 'Innovate Corp', email: 'contact@innovatecorp.com', erpType: 'SAP', onboarded: '2023-01-15', status: 'Production' },
+  { id: 'CLI002', name: 'Solutions Inc.', email: 'accounts@solutionsinc.com', erpType: 'Oracle', onboarded: '2023-02-20', status: 'Production' },
+  { id: 'CLI003', name: 'Tech Giants LLC', email: 'billing@techgiants.com', erpType: 'Microsoft Dynamics', onboarded: '2023-03-10', status: 'Development' },
+  { id: 'CLI004', name: 'Eco Goods', email: 'finance@ecogoods.com', erpType: 'Custom', onboarded: '2023-04-05', status: 'Demo' },
+  { id: 'CLI005', name: 'HealthFirst', email: 'invoices@healthfirst.com', erpType: 'SAP', onboarded: '2023-05-21', status: 'Production' },
+  { id: 'CLI006', name: 'Claris Solutions', email: 'support@clarissolutions.com', erpType: 'Claris FileMaker', onboarded: '2023-06-12', status: 'Development' },
+  { id: 'CLI007', name: 'FM Innovators', email: 'contact@fminnovators.com', erpType: 'Claris FileMaker', onboarded: '2023-07-01', status: 'Production' },
 ];
 
 export const documents: Document[] = [
@@ -19,6 +21,8 @@ export const documents: Document[] = [
   { id: 'INV008', client: 'Innovate Corp', clientId: 'CLI001', erpType: 'SAP', amount: 1800, currency: 'USD', date: '2023-10-06', status: 'Error', errorDetails: 'Missing required field: `purchaseOrderNumber`. The invoice must include a purchase order number for this client.' },
   { id: 'INV009', client: 'Tech Giants LLC', clientId: 'CLI003', erpType: 'Microsoft Dynamics', amount: 2200, currency: 'USD', date: '2023-10-07', status: 'Processed' },
   { id: 'INV010', client: 'HealthFirst', clientId: 'CLI005', erpType: 'SAP', amount: 3100, currency: 'USD', date: '2023-10-08', status: 'Pending' },
+  { id: 'INV011', client: 'Claris Solutions', clientId: 'CLI006', erpType: 'Claris FileMaker', amount: 1800, currency: 'USD', date: '2023-10-09', status: 'Pending' },
+  { id: 'INV012', client: 'FM Innovators', clientId: 'CLI007', erpType: 'Claris FileMaker', amount: 4200, currency: 'USD', date: '2023-10-10', status: 'Processed' },
 ];
 
 const processedCount = documents.filter(d => d.status === 'Processed').length;
