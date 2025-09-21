@@ -59,8 +59,8 @@ const statusStyles: { [key in Client['status']]: string } = {
 };
 
 const clientSchema = z.object({
-  name: z.string().min(1, 'Client name is required'),
-  email: z.string().email('Invalid email address'),
+  name: z.string().min(1, 'El nombre del cliente es requerido'),
+  email: z.string().email('Dirección de correo electrónico inválida'),
   erpType: z.enum(['SAP', 'Oracle', 'Microsoft Dynamics', 'Claris FileMaker', 'Custom']),
   status: z.enum(['Production', 'Development', 'Demo']),
 });
@@ -95,10 +95,10 @@ export default function ClientsPage() {
       <div className="flex items-center">
         <div className="flex-1">
           <h1 className="font-headline text-2xl font-bold tracking-tight">
-            Clients
+            Clientes
           </h1>
           <p className="text-muted-foreground">
-            Manage your clients and their ERP integrations.
+            Gestiona tus clientes y sus integraciones ERP.
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -106,15 +106,15 @@ export default function ClientsPage() {
             <Button size="sm" className="h-8 gap-1">
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Add Client
+                Agregar Cliente
               </span>
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Client</DialogTitle>
+              <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
               <DialogDescription>
-                Onboard a new client and configure their integration settings.
+                Incorpora un nuevo cliente y configura sus ajustes de integración.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -124,7 +124,7 @@ export default function ClientsPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Client Name</FormLabel>
+                      <FormLabel className="text-right">Nombre del Cliente</FormLabel>
                       <div className="col-span-3">
                         <FormControl>
                           <Input placeholder="Acme Inc." {...field} />
@@ -139,7 +139,7 @@ export default function ClientsPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Contact Email</FormLabel>
+                      <FormLabel className="text-right">Email de Contacto</FormLabel>
                        <div className="col-span-3">
                         <FormControl>
                           <Input type="email" placeholder="contact@acme.com" {...field} />
@@ -154,12 +154,12 @@ export default function ClientsPage() {
                   name="erpType"
                   render={({ field }) => (
                     <FormItem className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">ERP Type</FormLabel>
+                      <FormLabel className="text-right">Tipo de ERP</FormLabel>
                       <div className="col-span-3">
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select ERP" />
+                              <SelectValue placeholder="Seleccionar ERP" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -169,7 +169,7 @@ export default function ClientsPage() {
                               Microsoft Dynamics
                             </SelectItem>
                             <SelectItem value="Claris FileMaker">Claris FileMaker</SelectItem>
-                            <SelectItem value="Custom">Custom</SelectItem>
+                            <SelectItem value="Custom">Personalizado</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -182,17 +182,17 @@ export default function ClientsPage() {
                   name="status"
                   render={({ field }) => (
                     <FormItem className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Environment</FormLabel>
+                      <FormLabel className="text-right">Ambiente</FormLabel>
                       <div className="col-span-3">
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select Environment" />
+                                <SelectValue placeholder="Seleccionar Ambiente" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Production">Production</SelectItem>
-                              <SelectItem value="Development">Development</SelectItem>
+                              <SelectItem value="Production">Producción</SelectItem>
+                              <SelectItem value="Development">Desarrollo</SelectItem>
                               <SelectItem value="Demo">Demo</SelectItem>
                             </SelectContent>
                         </Select>
@@ -202,7 +202,7 @@ export default function ClientsPage() {
                   )}
                 />
                 <DialogFooter>
-                  <Button type="submit">Save Client</Button>
+                  <Button type="submit">Guardar Cliente</Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -211,17 +211,17 @@ export default function ClientsPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Client List</CardTitle>
-          <CardDescription>A list of all onboarded clients.</CardDescription>
+          <CardTitle>Lista de Clientes</CardTitle>
+          <CardDescription>Una lista de todos los clientes incorporados.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>ERP Type</TableHead>
-                <TableHead>Environment</TableHead>
-                <TableHead>Onboarded</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Tipo de ERP</TableHead>
+                <TableHead>Ambiente</TableHead>
+                <TableHead>Incorporado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -249,5 +249,3 @@ export default function ClientsPage() {
     </>
   );
 }
-
-    

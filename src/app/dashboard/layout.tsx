@@ -39,14 +39,14 @@ export default function DashboardLayout({
           <div className="mt-auto p-4">
             <Card>
               <CardHeader className="p-2 pt-0 md:p-4">
-                <CardTitle>Need Help?</CardTitle>
+                <CardTitle>¿Necesitas ayuda?</CardTitle>
                 <CardDescription>
-                  Contact support for any questions about integrations.
+                  Contacta a soporte para cualquier pregunta sobre integraciones.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
                 <Button size="sm" className="w-full">
-                  Contact Support
+                  Contactar Soporte
                 </Button>
               </CardContent>
             </Card>
@@ -63,7 +63,7 @@ export default function DashboardLayout({
                 className="shrink-0 md:hidden"
               >
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+                <span className="sr-only">Alternar menú de navegación</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
@@ -79,14 +79,14 @@ export default function DashboardLayout({
               <div className="mt-auto">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Need Help?</CardTitle>
+                    <CardTitle>¿Necesitas ayuda?</CardTitle>
                     <CardDescription>
-                      Contact support for any questions about integrations.
+                      Contacta a soporte para cualquier pregunta sobre integraciones.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Button size="sm" className="w-full">
-                       Contact Support
+                       Contactar Soporte
                     </Button>
                   </CardContent>
                 </Card>

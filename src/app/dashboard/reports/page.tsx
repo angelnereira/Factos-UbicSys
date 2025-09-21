@@ -28,15 +28,15 @@ import { analytics } from '@/lib/data';
 
 const chartConfig = {
   total: {
-    label: 'Documents',
+    label: 'Documentos',
     color: 'hsl(var(--primary))',
   },
   processed: {
-    label: 'Processed',
+    label: 'Procesados',
     color: 'hsl(var(--chart-2))',
   },
   pending: {
-    label: 'Pending',
+    label: 'Pendientes',
     color: 'hsl(var(--chart-4))',
   },
   error: {
@@ -50,17 +50,17 @@ export default function ReportsPage() {
     <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
        <div className="flex items-center">
         <div>
-          <h1 className="font-headline text-2xl font-bold tracking-tight">Analytics</h1>
+          <h1 className="font-headline text-2xl font-bold tracking-tight">Analíticas</h1>
           <p className="text-muted-foreground">
-            Insights into your electronic invoicing activity.
+            Información sobre tu actividad de facturación electrónica.
           </p>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Total Documents</CardTitle>
-            <CardDescription>All documents processed this month.</CardDescription>
+            <CardTitle>Total de Documentos</CardTitle>
+            <CardDescription>Todos los documentos procesados este mes.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">{analytics.totalDocuments}</div>
@@ -68,8 +68,8 @@ export default function ReportsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Pending Documents</CardTitle>
-            <CardDescription>Documents currently in the processing queue.</CardDescription>
+            <CardTitle>Documentos Pendientes</CardTitle>
+            <CardDescription>Documentos actualmente en la cola de procesamiento.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">{analytics.pendingDocuments}</div>
@@ -77,8 +77,8 @@ export default function ReportsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Error Rate</CardTitle>
-            <CardDescription>Percentage of documents with errors this month.</CardDescription>
+            <CardTitle>Tasa de Error</CardTitle>
+            <CardDescription>Porcentaje de documentos con errores este mes.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">{analytics.errorRate.toFixed(1)}%</div>
@@ -88,8 +88,8 @@ export default function ReportsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Document Volume</CardTitle>
-            <CardDescription>Total documents processed over the last 6 months.</CardDescription>
+            <CardTitle>Volumen de Documentos</CardTitle>
+            <CardDescription>Total de documentos procesados en los últimos 6 meses.</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -115,9 +115,9 @@ export default function ReportsPage() {
         </Card>
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Documents by Status</CardTitle>
+            <CardTitle>Documentos por Estado</CardTitle>
             <CardDescription>
-              Distribution of document statuses for the current month.
+              Distribución de los estados de los documentos para el mes actual.
             </CardDescription>
           </CardHeader>
           <CardContent>

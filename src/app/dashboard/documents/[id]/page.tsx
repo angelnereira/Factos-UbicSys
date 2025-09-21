@@ -37,10 +37,10 @@ export default function DocumentDetailPage({
       <div className="flex items-center gap-4">
         <Link href="/dashboard/documents" className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
             <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Back</span>
+            <span className="sr-only">Atrás</span>
         </Link>
         <h1 className="font-headline flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-          Document {document.id}
+          Documento {document.id}
         </h1>
         <Badge variant="outline" className={cn("ml-auto sm:ml-0 capitalize", statusStyles[document.status])}>
           {document.status}
@@ -50,15 +50,15 @@ export default function DocumentDetailPage({
         <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
           <Card>
             <CardHeader>
-              <CardTitle>Document Details</CardTitle>
+              <CardTitle>Detalles del Documento</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-6">
                 <div className="grid gap-3">
-                  <div className="font-semibold">Invoice Information</div>
+                  <div className="font-semibold">Información de la Factura</div>
                   <ul className="grid gap-3">
                     <li className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Amount</span>
+                      <span className="text-muted-foreground">Monto</span>
                       <span>
                         {new Intl.NumberFormat('en-US', {
                           style: 'currency',
@@ -67,7 +67,7 @@ export default function DocumentDetailPage({
                       </span>
                     </li>
                     <li className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Date</span>
+                      <span className="text-muted-foreground">Fecha</span>
                       <span>{document.date}</span>
                     </li>
                   </ul>
@@ -79,9 +79,9 @@ export default function DocumentDetailPage({
           {document.status === 'Error' && document.errorDetails && (
             <Card>
               <CardHeader>
-                <CardTitle>Error Details</CardTitle>
+                <CardTitle>Detalles del Error</CardTitle>
                 <CardDescription>
-                  The following error occurred during processing.
+                  Ocurrió el siguiente error durante el procesamiento.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -95,13 +95,13 @@ export default function DocumentDetailPage({
         <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
           <Card>
             <CardHeader>
-              <CardTitle>Client Information</CardTitle>
+              <CardTitle>Información del Cliente</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="grid gap-3">
                     <div className="font-semibold">{document.client}</div>
                     <dl className="grid gap-1">
-                        <dt className="text-muted-foreground">ERP Type</dt>
+                        <dt className="text-muted-foreground">Tipo de ERP</dt>
                         <dd>{document.erpType}</dd>
                     </dl>
                 </div>

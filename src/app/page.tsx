@@ -36,14 +36,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('Correo electrónico inválido'),
+  password: z.string().min(1, 'La contraseña es requerida'),
 });
 
 const signUpSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().min(1, 'El nombre es requerido'),
+  email: z.string().email('Correo electrónico inválido'),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -78,15 +78,15 @@ export default function AuthPage() {
 
     if (error) {
       toast({
-        title: 'Login failed',
-        description: error.message,
+        title: 'Inicio de sesión fallido',
+        description: 'El correo electrónico o la contraseña son incorrectos.',
         variant: 'destructive',
       });
       setIsLoading(false);
     } else {
       toast({
-        title: 'Login successful!',
-        description: 'You will be redirected to the dashboard.',
+        title: '¡Inicio de sesión exitoso!',
+        description: 'Serás redirigido al panel de control.',
       });
        setTimeout(() => {
         router.push('/dashboard');
@@ -101,15 +101,15 @@ export default function AuthPage() {
 
     if (error) {
       toast({
-        title: 'Sign-up failed',
-        description: error.message,
+        title: 'Registro fallido',
+        description: 'Este correo electrónico ya está en uso.',
         variant: 'destructive',
       });
       setIsLoading(false);
     } else {
       toast({
-        title: 'Sign-up successful!',
-        description: 'You will be redirected to the dashboard.',
+        title: '¡Registro exitoso!',
+        description: 'Serás redirigido al panel de control.',
       });
       console.log('User signed up:', user);
        setTimeout(() => {
@@ -125,15 +125,15 @@ export default function AuthPage() {
         </div>
       <Tabs defaultValue="login" className="w-[400px]">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="login">Login</TabsTrigger>
-          <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+          <TabsTrigger value="signup">Registrarse</TabsTrigger>
         </TabsList>
         <TabsContent value="login">
           <Card>
             <CardHeader>
-              <CardTitle>Login</CardTitle>
+              <CardTitle>Iniciar Sesión</CardTitle>
               <CardDescription>
-                Enter your credentials to access your account.
+                Ingresa tus credenciales para acceder a tu cuenta.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -144,9 +144,9 @@ export default function AuthPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Correo Electrónico</FormLabel>
                         <FormControl>
-                          <Input placeholder="user@example.com" {...field} />
+                          <Input placeholder="usuario@ejemplo.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -157,7 +157,7 @@ export default function AuthPage() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel>Contraseña</FormLabel>
                         <FormControl>
                           <Input type="password" placeholder="••••••••" {...field} />
                         </FormControl>
@@ -166,7 +166,7 @@ export default function AuthPage() {
                     )}
                   />
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="animate-spin" /> : 'Login'}
+                    {isLoading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
                   </Button>
                 </form>
               </Form>
@@ -176,9 +176,9 @@ export default function AuthPage() {
         <TabsContent value="signup">
           <Card>
             <CardHeader>
-              <CardTitle>Sign Up</CardTitle>
+              <CardTitle>Registrarse</CardTitle>
               <CardDescription>
-                Create an account to get started.
+                Crea una cuenta para comenzar.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -189,9 +189,9 @@ export default function AuthPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Name</FormLabel>
+                        <FormLabel>Nombre</FormLabel>
                         <FormControl>
-                          <Input placeholder="Your Name" {...field} />
+                          <Input placeholder="Tu Nombre" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -202,9 +202,9 @@ export default function AuthPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Correo Electrónico</FormLabel>
                         <FormControl>
-                          <Input placeholder="user@example.com" {...field} />
+                          <Input placeholder="usuario@ejemplo.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -215,7 +215,7 @@ export default function AuthPage() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel>Contraseña</FormLabel>
                         <FormControl>
                           <Input type="password" placeholder="••••••••" {...field} />
                         </FormControl>
@@ -224,7 +224,7 @@ export default function AuthPage() {
                     )}
                   />
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="animate-spin" /> : 'Sign Up'}
+                    {isLoading ? <Loader2 className="animate-spin" /> : 'Registrarse'}
                   </Button>
                 </form>
               </Form>

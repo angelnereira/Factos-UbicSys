@@ -48,7 +48,7 @@ export default function ErrorExplainer({ document }: { document: Document }) {
       setExplanation(result);
     } catch (e) {
       console.error(e);
-      setError('Failed to get explanation from AI. Please try again.');
+      setError('No se pudo obtener la explicación de la IA. Por favor, inténtalo de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -59,10 +59,10 @@ export default function ErrorExplainer({ document }: { document: Document }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Lightbulb className="text-primary" />
-          Intelligent Error Handling
+          Manejo Inteligente de Errores
         </CardTitle>
         <CardDescription>
-          Use AI to understand the root cause and get suggested actions.
+          Usa IA para entender la causa raíz y obtener acciones sugeridas.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -71,12 +71,12 @@ export default function ErrorExplainer({ document }: { document: Document }) {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing...
+                Analizando...
               </>
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Explain Error
+                Explicar Error
               </>
             )}
           </Button>
@@ -85,7 +85,7 @@ export default function ErrorExplainer({ document }: { document: Document }) {
         {isLoading && (
           <div className="flex items-center gap-2 text-muted-foreground">
              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-             <span>AI is analyzing the error...</span>
+             <span>La IA está analizando el error...</span>
           </div>
         )}
 
@@ -94,30 +94,30 @@ export default function ErrorExplainer({ document }: { document: Document }) {
         {explanation && (
           <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
             <AccordionItem value="item-1">
-              <AccordionTrigger>Root Cause Explanation</AccordionTrigger>
+              <AccordionTrigger>Explicación de la Causa Raíz</AccordionTrigger>
               <AccordionContent className="prose dark:prose-invert max-w-none">
                 <p>{explanation.rootCauseExplanation}</p>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2">
-              <AccordionTrigger>Suggested Actions</AccordionTrigger>
+              <AccordionTrigger>Acciones Sugeridas</AccordionTrigger>
               <AccordionContent className="prose dark:prose-invert max-w-none">
                 <p>{explanation.suggestedActions}</p>
               </AccordionContent>
             </AccordionItem>
             {explanation.relevantDocumentation && (
                 <AccordionItem value="item-3">
-                    <AccordionTrigger>Relevant Documentation</AccordionTrigger>
+                    <AccordionTrigger>Documentación Relevante</AccordionTrigger>
                     <AccordionContent className="prose dark:prose-invert max-w-none">
                         <a href={explanation.relevantDocumentation} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                            View Documentation
+                            Ver Documentación
                         </a>
                     </AccordionContent>
                 </AccordionItem>
             )}
             {explanation.relevantCodeSnippet && (
                 <AccordionItem value="item-4">
-                    <AccordionTrigger>Relevant Code Snippet</AccordionTrigger>
+                    <AccordionTrigger>Fragmento de Código Relevante</AccordionTrigger>
                     <AccordionContent className="prose dark:prose-invert max-w-none">
                         <pre className="bg-muted p-4 rounded-md text-foreground overflow-x-auto"><code>{explanation.relevantCodeSnippet}</code></pre>
                     </AccordionContent>

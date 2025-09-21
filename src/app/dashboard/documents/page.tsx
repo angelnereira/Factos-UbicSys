@@ -36,21 +36,21 @@ function DocumentsTable({ status }: { status?: Document['status'] }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Document ID</TableHead>
-              <TableHead className="hidden sm:table-cell">Client</TableHead>
-              <TableHead className="hidden sm:table-cell">Status</TableHead>
-              <TableHead className="hidden md:table-cell">Date</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>ID de Documento</TableHead>
+              <TableHead className="hidden sm:table-cell">Cliente</TableHead>
+              <TableHead className="hidden sm:table-cell">Estado</TableHead>
+              <TableHead className="hidden md:table-cell">Fecha</TableHead>
+              <TableHead className="text-right">Monto</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredDocuments.map(doc => (
-              <TableRow key={doc.id} className="cursor-pointer">
+              <TableRow key={doc.id}>
                 <TableCell className="font-medium">
-                  <Link href={`/dashboard/documents/${doc.id}`}>{doc.id}</Link>
+                  <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">{doc.id}</Link>
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
-                  <Link href={`/dashboard/documents/${doc.id}`}>{doc.client}</Link>
+                  <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">{doc.client}</Link>
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   <Link href={`/dashboard/documents/${doc.id}`}>
@@ -63,10 +63,10 @@ function DocumentsTable({ status }: { status?: Document['status'] }) {
                   </Link>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  <Link href={`/dashboard/documents/${doc.id}`}>{doc.date}</Link>
+                  <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">{doc.date}</Link>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/dashboard/documents/${doc.id}`}>
+                  <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: doc.currency,
@@ -86,13 +86,13 @@ export default function DocumentsPage() {
   return (
     <>
       <div className="flex items-center">
-        <h1 className="font-headline text-2xl font-bold tracking-tight">Documents</h1>
+        <h1 className="font-headline text-2xl font-bold tracking-tight">Documentos</h1>
       </div>
       <Tabs defaultValue="all">
         <div className="flex items-center">
           <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="all">Todos</TabsTrigger>
+            <TabsTrigger value="pending">Pendientes</TabsTrigger>
             <TabsTrigger value="error">Error</TabsTrigger>
           </TabsList>
         </div>

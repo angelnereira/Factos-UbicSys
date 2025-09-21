@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/tooltip';
 
 const navItems = [
-  { href: '/dashboard', label: 'Overview', icon: Home },
-  { href: '/dashboard/documents', label: 'Documents', icon: FileText },
-  { href: '/dashboard/clients', label: 'Clients', icon: Users },
-  { href: '/dashboard/reports', label: 'Analytics', icon: BarChart3 },
+  { href: '/dashboard', label: 'Resumen', icon: Home },
+  { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
+  { href: '/dashboard/clients', label: 'Clientes', icon: Users },
+  { href: '/dashboard/reports', label: 'Analíticas', icon: BarChart3 },
 ];
 
 export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
