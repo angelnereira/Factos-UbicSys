@@ -6,6 +6,9 @@ import Link from 'next/link';
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
 } from '@/components/ui/card';
 import {
   Table,
@@ -15,42 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { getDocuments, getCompanies, addDocument } from '@/lib/firebase/firestore';
+import { getDocuments, getCompanies } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument, Company } from '@/lib/types';
-import { Loader2, ArrowUpDown, Search, PlusCircle } from 'lucide-react';
+import { Loader2, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { OverviewChart } from './_components/overview-chart';
 import type { Timestamp } from 'firebase/firestore';
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
@@ -62,344 +36,155 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
   cancelled: 'text-gray-500 border-gray-500 bg-gray-500/10',
 };
 
-type SortKey = keyof FiscalDocument | '';
-
-function DocumentsTable({ 
-  documents, 
-  isLoading, 
-  status,
-  searchQuery,
-}: { 
-  documents: FiscalDocument[], 
-  isLoading: boolean, 
-  status?: FiscalDocument['status'],
-  searchQuery: string,
-}) {
-  const [sortKey, setSortKey] = useState<SortKey>('date');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDirection('asc');
-    }
-  };
-
-  const sortedAndFilteredDocuments = useMemo(() => {
-    let result = status ? documents.filter(doc => doc.status === status) : documents;
-
-    if (searchQuery) {
-        result = result.filter(doc =>
-            doc.client.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }
-
-    if (sortKey) {
-        result.sort((a, b) => {
-            const aValue = a[sortKey as keyof FiscalDocument];
-            const bValue = b[sortKey as keyof FiscalDocument];
-
-            if (aValue === undefined || bValue === undefined) return 0;
-            
-            // Handle Timestamp objects for date sorting
-            const valA = aValue instanceof Object && 'seconds' in aValue ? (aValue as Timestamp).seconds : aValue;
-            const valB = bValue instanceof Object && 'seconds' in bValue ? (bValue as Timestamp).seconds : bValue;
-
-
-            if (valA < valB) {
-                return sortDirection === 'asc' ? -1 : 1;
-            }
-            if (valA > valB) {
-                return sortDirection === 'asc' ? 1 : -1;
-            }
-            return 0;
-        });
-    }
-
-    return result;
-  }, [documents, status, searchQuery, sortKey, sortDirection]);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-  
-  if (sortedAndFilteredDocuments.length === 0) {
-    return (
-        <Card>
-            <CardContent className="p-6 text-center text-muted-foreground">
-                No se encontraron documentos.
-            </CardContent>
-        </Card>
-    )
-  }
-
-  return (
-    <Card>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                 <Button variant="ghost" onClick={() => handleSort('id')}>
-                    ID de Documento
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-              </TableHead>
-              <TableHead className="hidden sm:table-cell">
-                 <Button variant="ghost" onClick={() => handleSort('client')}>
-                    Compañía
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-              </TableHead>
-              <TableHead className="hidden sm:table-cell">
-                <Button variant="ghost" onClick={() => handleSort('status')}>
-                    Estado
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-              </TableHead>
-              <TableHead className="hidden md:table-cell">
-                <Button variant="ghost" onClick={() => handleSort('date')}>
-                    Fecha
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-              </TableHead>
-              <TableHead className="text-right">
-                <Button variant="ghost" onClick={() => handleSort('amount')}>
-                    Monto
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedAndFilteredDocuments.map(doc => (
-              <TableRow key={doc.id}>
-                <TableCell className="font-medium">
-                  <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">{doc.id}</Link>
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  {doc.client}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                    <Badge
-                      className={cn('capitalize', statusStyles[doc.status])}
-                      variant="outline"
-                    >
-                      {doc.status}
-                    </Badge>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {new Date((doc.date as Timestamp).seconds * 1000).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="text-right">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: doc.currency,
-                    }).format(doc.amount)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
-}
-
-const documentSchema = z.object({
-  companyId: z.string().min(1, "Debes seleccionar una compañía"),
-  amount: z.coerce.number().min(0.01, "El monto debe ser mayor que cero"),
-  currency: z.enum(['USD', 'EUR', 'GBP']),
-});
-
-type DocumentFormValues = z.infer<typeof documentSchema>;
-
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<FiscalDocument[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
-
-  const form = useForm<DocumentFormValues>({
-    resolver: zodResolver(documentSchema),
-  });
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      const [fetchedDocuments, fetchedCompanies] = await Promise.all([
+      const [fetchedDocuments] = await Promise.all([
         getDocuments(),
-        getCompanies(),
       ]);
       setDocuments(fetchedDocuments as FiscalDocument[]);
-      setCompanies(fetchedCompanies);
       setIsLoading(false);
     }
     fetchData();
   }, []);
-  
-  const onSubmit = async (values: DocumentFormValues) => {
-    const selectedCompany = companies.find(c => c.id === values.companyId);
-    if (!selectedCompany) {
-        toast({ title: "Error", description: "Compañía no encontrada", variant: "destructive"});
-        return;
-    }
 
-    const newDocumentData: Partial<FiscalDocument> = {
-        client: selectedCompany.name,
-        companyId: selectedCompany.id,
-        erpType: selectedCompany.integrationConfig.erpType,
-        amount: values.amount,
-        currency: values.currency,
-        date: new Date(),
-        status: 'pending',
-        documentType: 'factura',
-        statusHistory: [],
-        originalData: {},
+  const documentMetrics = useMemo(() => {
+    return {
+      total: documents.length,
+      pending: documents.filter(d => d.status === 'pending').length,
+      approved: documents.filter(d => d.status === 'approved').length,
+      rejected: documents.filter(d => d.status === 'rejected').length,
     };
+  }, [documents]);
 
-    const { newDocument, error } = await addDocument(newDocumentData);
+  const recentDocuments = useMemo(() => {
+    return [...documents]
+      .sort((a, b) => {
+          const dateA = a.createdAt as Timestamp;
+          const dateB = b.createdAt as Timestamp;
+          return dateB.seconds - dateA.seconds;
+      })
+      .slice(0, 5);
+  }, [documents]);
 
-    if (error) {
-        toast({ title: "Error", description: "No se pudo agregar el documento.", variant: "destructive" });
-    } else if (newDocument) {
-        setDocuments(prev => [...prev, newDocument as FiscalDocument]);
-        toast({ title: "Éxito", description: "Documento agregado exitosamente." });
-        setIsDialogOpen(false);
-        form.reset();
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Loader2 className="h-16 w-16 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <>
-      <div className="flex items-center">
-        <h1 className="font-headline flex-1 text-2xl font-bold tracking-tight">Documentos</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="h-8 gap-1">
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Agregar Documento
-              </span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Agregar Nuevo Documento</DialogTitle>
-              <DialogDescription>
-                Ingrese los detalles para crear un nuevo documento.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-                <FormField
-                  control={form.control}
-                  name="companyId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Compañía</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar Compañía" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {companies.map(company => (
-                            <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Monto</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="100.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Moneda</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar Moneda" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="GBP">GBP</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : "Guardar Documento"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+      <div className="flex-1 space-y-4">
+          <div className="flex items-center justify-between space-y-2">
+            <h1 className="font-headline text-3xl font-bold tracking-tight">Dashboard</h1>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Documentos Totales
+                  </CardTitle>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{documentMetrics.total}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Aprobados
+                  </CardTitle>
+                  <CheckCircle className="h-4 w-4 text-chart-2" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{documentMetrics.approved}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
+                  <Clock className="h-4 w-4 text-chart-4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{documentMetrics.pending}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Rechazados</CardTitle>
+                  <XCircle className="h-4 w-4 text-destructive" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{documentMetrics.rejected}</div>
+                </CardContent>
+              </Card>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+              <Card className="col-span-4">
+                  <CardHeader>
+                      <CardTitle>Visión General</CardTitle>
+                      <CardDescription>Volumen de documentos procesados por mes.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pl-2">
+                      <OverviewChart documents={documents} />
+                  </CardContent>
+              </Card>
+              <Card className="col-span-4 lg:col-span-3">
+                  <CardHeader>
+                      <CardTitle>Documentos Recientes</CardTitle>
+                      <CardDescription>
+                          Los últimos 5 documentos procesados.
+                      </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                       <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Compañía</TableHead>
+                              <TableHead>Estado</TableHead>
+                              <TableHead>Monto</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {recentDocuments.map(doc => (
+                              <TableRow key={doc.id}>
+                                <TableCell>
+                                    <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">
+                                        <div className="font-medium">{doc.client}</div>
+                                        <div className="text-sm text-muted-foreground">ID: {doc.id.substring(0, 6)}...</div>
+                                    </Link>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge
+                                        className={cn('capitalize', statusStyles[doc.status])}
+                                        variant="outline"
+                                    >
+                                        {doc.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    {new Intl.NumberFormat('en-US', {
+                                        style: 'currency',
+                                        currency: doc.currency,
+                                    }).format(doc.amount)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                  </CardContent>
+              </Card>
+          </div>
       </div>
-      <Tabs defaultValue="all">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="all">Todos</TabsTrigger>
-            <TabsTrigger value="pending">Pendientes</TabsTrigger>
-            <TabsTrigger value="approved">Aprobados</TabsTrigger>
-            <TabsTrigger value="rejected">Rechazados</TabsTrigger>
-          </TabsList>
-           <div className="relative w-full max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                    type="search"
-                    placeholder="Buscar por compañía..."
-                    className="w-full bg-background pl-8"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-            </div>
-        </div>
-        <TabsContent value="all">
-          <DocumentsTable documents={documents} isLoading={isLoading} searchQuery={searchQuery} />
-        </TabsContent>
-        <TabsContent value="pending">
-          <DocumentsTable documents={documents} isLoading={isLoading} status="pending" searchQuery={searchQuery} />
-        </TabsContent>
-        <TabsContent value="approved">
-          <DocumentsTable documents={documents} isLoading={isLoading} status="approved" searchQuery={searchQuery} />
-        </TabsContent>
-        <TabsContent value="rejected">
-          <DocumentsTable documents={documents} isLoading={isLoading} status="rejected" searchQuery={searchQuery} />
-        </TabsContent>
-      </Tabs>
     </>
   );
 }
