@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Home,
+  FileText,
   Users,
   Settings,
   History,
@@ -20,10 +20,10 @@ import {
 } from '@/components/ui/tooltip';
 
 const navItems = [
-  { href: '/dashboard/documents', label: 'Inicio', icon: Home },
+  { href: '/dashboard/monitoring', label: 'Monitoreo', icon: Activity },
+  { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
   { href: '/dashboard/clients', label: 'Compañías', icon: Users },
   { href: '/dashboard/logs', label: 'Registros', icon: History },
-  { href: '/dashboard/monitoring', label: 'Monitoreo', icon: Activity },
   { href: '/dashboard/finance', label: 'Finanzas', icon: Landmark },
   { href: '/dashboard/settings', label: 'Ajustes', icon: Settings },
 ];
@@ -77,7 +77,7 @@ export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
           href={item.href}
           className={cn(
             'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-            (basePath === item.href || (pathname === '/dashboard' && item.href.includes('documents'))) && 'bg-accent text-primary'
+            (basePath === item.href || (pathname === '/dashboard' && item.href.includes('monitoring'))) && 'bg-accent text-primary'
           )}
         >
           <item.icon className="h-4 w-4" />

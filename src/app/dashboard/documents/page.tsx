@@ -19,13 +19,22 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { getDocuments, getCompanies } from '@/lib/firebase/firestore';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { getDocuments } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
-import type { FiscalDocument, Company } from '@/lib/types';
-import { Loader2, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { OverviewChart } from './_components/overview-chart';
+import type { FiscalDocument } from '@/lib/types';
+import { Loader2, Search } from 'lucide-react';
 import type { Timestamp } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
+import { ArrowUpDown } from 'lucide-react';
+
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
   approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -36,155 +45,217 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
   cancelled: 'text-gray-500 border-gray-500 bg-gray-500/10',
 };
 
+type SortKey = keyof FiscalDocument | '';
 
-export default function DocumentsPage() {
+export default function DocumentsListPage() {
   const [documents, setDocuments] = useState<FiscalDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      const [fetchedDocuments] = await Promise.all([
-        getDocuments(),
-      ]);
+      const fetchedDocuments = await getDocuments();
       setDocuments(fetchedDocuments as FiscalDocument[]);
       setIsLoading(false);
     }
     fetchData();
   }, []);
 
-  const documentMetrics = useMemo(() => {
-    return {
-      total: documents.length,
-      pending: documents.filter(d => d.status === 'pending').length,
-      approved: documents.filter(d => d.status === 'approved').length,
-      rejected: documents.filter(d => d.status === 'rejected').length,
-    };
-  }, [documents]);
-
-  const recentDocuments = useMemo(() => {
-    return [...documents]
-      .sort((a, b) => {
-          const dateA = a.createdAt as Timestamp;
-          const dateB = b.createdAt as Timestamp;
-          return dateB.seconds - dateA.seconds;
-      })
-      .slice(0, 5);
-  }, [documents]);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <Loader2 className="h-16 w-16 animate-spin text-muted-foreground" />
-      </div>
-    );
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+  
+  const getDateFromTimestamp = (date: Date | Timestamp) => {
+      if (date && 'seconds' in date) {
+        return new Date((date as Timestamp).seconds * 1000);
+      }
+      return date as Date;
   }
+
+  const sortedAndFilteredDocuments = useMemo(() => {
+    let result = [...documents];
+
+    if (searchQuery) {
+      result = result.filter(doc =>
+        doc.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (doc.cufe && doc.cufe.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      result = result.filter(doc => doc.status === statusFilter);
+    }
+
+    if (sortKey) {
+       result.sort((a, b) => {
+        const aValue = a[sortKey];
+        const bValue = b[sortKey];
+
+        if (aValue === undefined || bValue === undefined) return 0;
+
+        let valA = aValue;
+        let valB = bValue;
+        
+        if (sortKey === 'createdAt' || sortKey === 'date') {
+            valA = getDateFromTimestamp(aValue as Date | Timestamp).getTime();
+            valB = getDateFromTimestamp(bValue as Date | Timestamp).getTime();
+        }
+
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+
+        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+        
+        return 0;
+      });
+    }
+
+    return result;
+  }, [documents, searchQuery, statusFilter, sortKey, sortDirection]);
+
+  const uniqueStatuses = useMemo(() => {
+    const statuses = new Set(documents.map(doc => doc.status));
+    return ['all', ...Array.from(statuses)];
+  }, [documents]);
 
   return (
     <>
-      <div className="flex-1 space-y-4">
-          <div className="flex items-center justify-between space-y-2">
-            <h1 className="font-headline text-3xl font-bold tracking-tight">Dashboard</h1>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Documentos Totales
-                  </CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{documentMetrics.total}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Aprobados
-                  </CardTitle>
-                  <CheckCircle className="h-4 w-4 text-chart-2" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{documentMetrics.approved}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-                  <Clock className="h-4 w-4 text-chart-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{documentMetrics.pending}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Rechazados</CardTitle>
-                  <XCircle className="h-4 w-4 text-destructive" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{documentMetrics.rejected}</div>
-                </CardContent>
-              </Card>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-              <Card className="col-span-4">
-                  <CardHeader>
-                      <CardTitle>Visión General</CardTitle>
-                      <CardDescription>Volumen de documentos procesados por mes.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                      <OverviewChart documents={documents} />
-                  </CardContent>
-              </Card>
-              <Card className="col-span-4 lg:col-span-3">
-                  <CardHeader>
-                      <CardTitle>Documentos Recientes</CardTitle>
-                      <CardDescription>
-                          Los últimos 5 documentos procesados.
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                       <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Compañía</TableHead>
-                              <TableHead>Estado</TableHead>
-                              <TableHead>Monto</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {recentDocuments.map(doc => (
-                              <TableRow key={doc.id}>
-                                <TableCell>
-                                    <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">
-                                        <div className="font-medium">{doc.client}</div>
-                                        <div className="text-sm text-muted-foreground">ID: {doc.id.substring(0, 6)}...</div>
-                                    </Link>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge
-                                        className={cn('capitalize', statusStyles[doc.status])}
-                                        variant="outline"
-                                    >
-                                        {doc.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    {new Intl.NumberFormat('en-US', {
-                                        style: 'currency',
-                                        currency: doc.currency,
-                                    }).format(doc.amount)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                  </CardContent>
-              </Card>
-          </div>
+      <div className="flex items-center">
+        <div className="flex-1">
+          <h1 className="font-headline text-2xl font-bold tracking-tight">
+            Documentos Fiscales
+          </h1>
+          <p className="text-muted-foreground">
+            Explora y gestiona todos los documentos procesados.
+          </p>
+        </div>
       </div>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex-1">
+              <CardTitle>Todos los Documentos</CardTitle>
+              <CardDescription>
+                Busca y filtra a través de todos los documentos.
+              </CardDescription>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-initial">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Buscar por cliente, ID o CUFE..."
+                  className="w-full bg-background pl-8"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueStatuses.map(status => (
+                    <SelectItem key={status} value={status} className="capitalize">
+                      {status === 'all' ? 'Todos los Estados' : status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                      <Button variant="ghost" onClick={() => handleSort('client')}>
+                        Cliente
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      </Button>
+                  </TableHead>
+                  <TableHead>
+                      <Button variant="ghost" onClick={() => handleSort('status')}>
+                        Estado
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      </Button>
+                  </TableHead>
+                  <TableHead>
+                      <Button variant="ghost" onClick={() => handleSort('amount')}>
+                        Monto
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      </Button>
+                  </TableHead>
+                  <TableHead>
+                      <Button variant="ghost" onClick={() => handleSort('createdAt')}>
+                        Fecha Creación
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      </Button>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedAndFilteredDocuments.length > 0 ? (
+                  sortedAndFilteredDocuments.map((doc) => (
+                    <TableRow key={doc.id}>
+                      <TableCell>
+                        <Link
+                          href={`/dashboard/documents/${doc.id}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {doc.client}
+                        </Link>
+                        <div className="text-sm text-muted-foreground">ID: {doc.id.substring(0, 10)}...</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn('capitalize', statusStyles[doc.status])}
+                        >
+                          {doc.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: doc.currency,
+                        }).format(doc.amount)}
+                      </TableCell>
+                      <TableCell>
+                        { getDateFromTimestamp(doc.createdAt).toLocaleDateString() }
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No se encontraron documentos que coincidan con tus filtros.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 }
