@@ -13,6 +13,7 @@ import {
   Eye,
   EyeOff,
   PlusCircle,
+  ArrowLeft,
 } from "lucide-react"
 import {
   Card,
@@ -25,6 +26,16 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+
 
 const settingsNav = [
     {
@@ -100,17 +111,110 @@ function AppearanceSettings() {
     );
 }
 
+type SecretCollection = {
+    id: string;
+    demoUser: string;
+    demoPass: string;
+    prodUser: string;
+    prodPass: string;
+    status: 'active' | 'inactive';
+};
+
 function CredentialsSettings() {
+    const [view, setView] = useState<'list' | 'form'>('list');
+    const [collections, setCollections] = useState<SecretCollection[]>([
+        { id: 'col-1', demoUser: 'walgofugiitj_ws_tfhka', demoPass: 'Tfhka.P4n4m4.2023', prodUser: '', prodPass: '', status: 'active' }
+    ]);
     const [showDemoPass, setShowDemoPass] = useState(false);
     const [showProdPass, setShowProdPass] = useState(false);
+    
+    // Form state
+    const [demoUser, setDemoUser] = useState('walgofugiitj_ws_tfhka');
+    const [demoPass, setDemoPass] = useState('Tfhka.P4n4m4.2023');
+    const [prodUser, setProdUser] = useState('');
+    const [prodPass, setProdPass] = useState('');
+
+    const handleSaveCollection = () => {
+        const newCollection: SecretCollection = {
+            id: `col-${collections.length + 1}`,
+            demoUser,
+            demoPass,
+            prodUser,
+            prodPass,
+            status: 'inactive',
+        };
+        setCollections(prev => [...prev, newCollection]);
+        setView('list');
+    };
+    
+    const handleCreateNewCollection = () => {
+        // Reset form fields
+        setDemoUser('');
+        setDemoPass('');
+        setProdUser('');
+        setProdPass('');
+        setView('form');
+    }
+
+    if (view === 'list') {
+        return (
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <KeyRound /> Bóveda de Secretos
+                            </CardTitle>
+                            <CardDescription>
+                                Colecciones de credenciales para The Factory HKA.
+                            </CardDescription>
+                        </div>
+                        <Button onClick={handleCreateNewCollection}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Crear Colección
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Usuario Demo</TableHead>
+                                <TableHead>Usuario Producción</TableHead>
+                                <TableHead>Estado</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {collections.map((col) => (
+                                <TableRow key={col.id}>
+                                    <TableCell>{col.demoUser}</TableCell>
+                                    <TableCell>{col.prodUser || 'No configurado'}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={col.status === 'active' ? 'default' : 'outline'}>
+                                            {col.status === 'active' ? 'Activa' : 'Inactiva'}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        );
+    }
+
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <KeyRound /> Bóveda de Secretos
+                <Button variant="ghost" size="sm" onClick={() => setView('list')} className="w-fit p-1 h-auto">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Volver a la lista
+                </Button>
+                <CardTitle className="flex items-center gap-2 pt-2">
+                     <PlusCircle /> Nueva Colección de Secretos
                 </CardTitle>
                 <CardDescription>
-                    Gestiona las credenciales de API para la conexión con The Factory HKA. Estos datos son sensibles y están encriptados.
+                    Añade las credenciales de API para los ambientes de Demo y Producción.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -119,12 +223,12 @@ function CredentialsSettings() {
                     <h3 className="font-semibold">Ambiente de Demo / Pruebas</h3>
                      <div className="space-y-2">
                         <Label htmlFor="demo-user">Username</Label>
-                        <Input id="demo-user" defaultValue="walgofugiitj_ws_tfhka" />
+                        <Input id="demo-user" value={demoUser} onChange={e => setDemoUser(e.target.value)} />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="demo-pass">Password</Label>
                         <div className="relative">
-                            <Input id="demo-pass" type={showDemoPass ? 'text' : 'password'} defaultValue="Tfhka.P4n4m4.2023" />
+                            <Input id="demo-pass" type={showDemoPass ? 'text' : 'password'} value={demoPass} onChange={e => setDemoPass(e.target.value)} />
                             <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowDemoPass(!showDemoPass)}>
                                 {showDemoPass ? <EyeOff /> : <Eye />}
                             </Button>
@@ -137,12 +241,12 @@ function CredentialsSettings() {
                     <h3 className="font-semibold">Ambiente de Producción</h3>
                      <div className="space-y-2">
                         <Label htmlFor="prod-user">Username</Label>
-                        <Input id="prod-user" placeholder="Aún no configurado" />
+                        <Input id="prod-user" placeholder="Aún no configurado" value={prodUser} onChange={e => setProdUser(e.target.value)} />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="prod-pass">Password</Label>
                          <div className="relative">
-                            <Input id="prod-pass" type={showProdPass ? 'text' : 'password'} placeholder="Aún no configurado" />
+                            <Input id="prod-pass" type={showProdPass ? 'text' : 'password'} placeholder="Aún no configurado" value={prodPass} onChange={e => setProdPass(e.target.value)} />
                              <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowProdPass(!showProdPass)}>
                                 {showProdPass ? <EyeOff /> : <Eye />}
                             </Button>
@@ -151,12 +255,8 @@ function CredentialsSettings() {
                 </div>
 
             </CardContent>
-            <CardContent className="flex items-center gap-2">
-                 <Button>Guardar Colección</Button>
-                 <Button variant="outline">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Nuevo Secreto
-                 </Button>
+            <CardContent>
+                 <Button onClick={handleSaveCollection}>Guardar Colección</Button>
             </CardContent>
         </Card>
     );
@@ -236,3 +336,5 @@ export default function SettingsPage() {
     </div>
   )
 }
+
+    
