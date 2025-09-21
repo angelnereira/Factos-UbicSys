@@ -1,6 +1,6 @@
 
 import { db } from './firebase';
-import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query, updateDoc } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
 import type { DocumentData, Timestamp } from 'firebase/firestore';
 
@@ -122,3 +122,34 @@ export const getDocumentById = async (companyId: string, documentId: string): Pr
         return null;
     }
 }
+
+
+/**
+ * Updates a document in a company's 'documents' sub-collection.
+ * @param companyId The ID of the company.
+ * @param documentId The ID of the document to update.
+ * @param data The data to update.
+ * @returns An object indicating success or an error.
+ */
+export const updateDocument = async (
+  companyId: string,
+  documentId: string,
+  data: Partial<FiscalDocument>
+): Promise<{ success: boolean; error?: any }> => {
+  if (!companyId || !documentId) {
+    const error = new Error("companyId and documentId must be provided.");
+    console.error(error);
+    return { success: false, error };
+  }
+  try {
+    const docRef = doc(db, 'companies', companyId, 'documents', documentId);
+    await updateDoc(docRef, {
+      ...data,
+      updatedAt: Timestamp.now(),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error(`Error updating document ${documentId}:`, error);
+    return { success: false, error };
+  }
+};
