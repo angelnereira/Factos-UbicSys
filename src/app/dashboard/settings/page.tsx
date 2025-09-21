@@ -12,6 +12,7 @@ import {
   KeyRound,
   Eye,
   EyeOff,
+  PlusCircle,
 } from "lucide-react"
 import {
   Card,
@@ -150,8 +151,12 @@ function CredentialsSettings() {
                 </div>
 
             </CardContent>
-            <CardContent>
-                 <Button>Guardar Credenciales</Button>
+            <CardContent className="flex items-center gap-2">
+                 <Button>Guardar Colección</Button>
+                 <Button variant="outline">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Nuevo Secreto
+                 </Button>
             </CardContent>
         </Card>
     );
