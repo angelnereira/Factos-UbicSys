@@ -24,7 +24,7 @@ export interface Company {
   // Integration Settings
   integrationConfig: {
     webhookUrl?: string;
-    erpType: 'quickbooks' | 'sap' | 'custom' | 'api';
+    erpType: 'quickbooks' | 'sap' | 'custom' | 'api' | 'oracle' | 'microsoft-dynamics' | 'claris-filemaker';
     // apiCredentials?: EncryptedCredentials; // Assuming EncryptedCredentials would be defined elsewhere
     notificationSettings: {
       emailNotifications: boolean;
@@ -42,6 +42,8 @@ export interface Company {
   
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  status?: 'Production' | 'Development' | 'Demo';
+  onboarded?: string;
 }
 
 // Documents Collection (Sub-collection under each company)
@@ -90,7 +92,7 @@ export interface FiscalDocument {
   client: string;
   amount: number;
   currency: string;
-  date: string;
+  date: Date | Timestamp;
   errorDetails?: string;
   erpType: string;
 }
@@ -137,3 +139,5 @@ export type Analytics = {
   documentsByStatus: Array<{ name: string; value: number; fill: string }>;
   volumeLast6Months: Array<{ name: string; total: number }>;
 };
+
+    

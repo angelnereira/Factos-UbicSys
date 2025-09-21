@@ -97,15 +97,20 @@ function DocumentsTable({
 
     if (sortKey) {
         result.sort((a, b) => {
-            const aValue = a[sortKey];
-            const bValue = b[sortKey];
+            const aValue = a[sortKey as keyof FiscalDocument];
+            const bValue = b[sortKey as keyof FiscalDocument];
 
             if (aValue === undefined || bValue === undefined) return 0;
+            
+            // Handle Timestamp objects for date sorting
+            const valA = aValue instanceof Object && 'seconds' in aValue ? (aValue as any).seconds : aValue;
+            const valB = bValue instanceof Object && 'seconds' in bValue ? (bValue as any).seconds : bValue;
 
-            if (aValue < bValue) {
+
+            if (valA < valB) {
                 return sortDirection === 'asc' ? -1 : 1;
             }
-            if (aValue > bValue) {
+            if (valA > valB) {
                 return sortDirection === 'asc' ? 1 : -1;
             }
             return 0;
@@ -189,7 +194,7 @@ function DocumentsTable({
                     </Badge>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {doc.date}
+                  {new Date((doc.date as any).seconds * 1000).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right">
                     {new Intl.NumberFormat('en-US', {
@@ -254,7 +259,7 @@ export default function DocumentsPage() {
         erpType: selectedClient.integrationConfig.erpType,
         amount: values.amount,
         currency: values.currency,
-        date: new Date().toISOString().split('T')[0],
+        date: new Date(),
         status: 'pending' as const,
         documentType: 'factura' as const,
         statusHistory: [],
@@ -295,7 +300,7 @@ export default function DocumentsPage() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-                 <FormField
+                <FormField
                   control={form.control}
                   name="companyId"
                   render={({ field }) => (
@@ -330,17 +335,17 @@ export default function DocumentsPage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name="currency"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Moneda</FormLabel>
-                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar Moneda" />
-                          </Trigger>
+                          </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="USD">USD</SelectItem>

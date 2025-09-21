@@ -50,10 +50,10 @@ import {
 } from '@/components/ui/form';
 import { addClient, getClients } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
-import type { Client } from '@/lib/types';
+import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
-const statusStyles: { [key in Client['status']]: string } = {
+const statusStyles: { [key in Company['status']]: string } = {
   Production: 'text-chart-2 border-chart-2 bg-chart-2/10',
   Development: 'text-chart-4 border-chart-4 bg-chart-4/10',
   Demo: 'text-muted-foreground border-dashed',
@@ -62,15 +62,15 @@ const statusStyles: { [key in Client['status']]: string } = {
 const clientSchema = z.object({
   name: z.string().min(1, 'El nombre de la compañía es requerido'),
   email: z.string().email('Dirección de correo electrónico inválida'),
-  erpType: z.enum(['SAP', 'Oracle', 'Microsoft Dynamics', 'Claris FileMaker', 'Custom']),
+  erpType: z.enum(['sap', 'oracle', 'microsoft-dynamics', 'custom', 'api', 'quickbooks', 'claris-filemaker']),
   status: z.enum(['Production', 'Development', 'Demo']),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
-type SortKey = keyof Client | '';
+type SortKey = keyof Company | '';
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,11 +121,15 @@ export default function ClientsPage() {
         const bValue = b[sortKey];
 
         if (aValue === undefined || bValue === undefined) return 0;
+        
+        const valA = aValue instanceof Object && 'seconds' in aValue ? (aValue as any).seconds : aValue;
+        const valB = bValue instanceof Object && 'seconds' in bValue ? (bValue as any).seconds : bValue;
 
-        if (aValue < bValue) {
+
+        if (valA < valB) {
           return sortDirection === 'asc' ? -1 : 1;
         }
-        if (aValue > bValue) {
+        if (valA > valB) {
           return sortDirection === 'asc' ? 1 : -1;
         }
         return 0;
@@ -137,10 +141,11 @@ export default function ClientsPage() {
 
   const onSubmit = async (values: ClientFormValues) => {
     const newClientData = {
-      onboarded: new Date().toISOString().split('T')[0],
+      onboarded: new Date(),
       ...values,
     };
 
+    // @ts-ignore
     const { newClient, error } = await addClient(newClientData);
 
     if (error) {
@@ -241,13 +246,15 @@ export default function ClientsPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="SAP">SAP</SelectItem>
-                            <SelectItem value="Oracle">Oracle</SelectItem>
-                            <SelectItem value="Microsoft Dynamics">
+                            <SelectItem value="sap">SAP</SelectItem>
+                            <SelectItem value="oracle">Oracle</SelectItem>
+                            <SelectItem value="microsoft-dynamics">
                               Microsoft Dynamics
                             </SelectItem>
-                            <SelectItem value="Claris FileMaker">Claris FileMaker</SelectItem>
-                            <SelectItem value="Custom">Personalizado</SelectItem>
+                             <SelectItem value="quickbooks">Quickbooks</SelectItem>
+                             <SelectItem value="api">API</SelectItem>
+                            <SelectItem value="claris-filemaker">Claris FileMaker</SelectItem>
+                            <SelectItem value="custom">Personalizado</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -322,7 +329,7 @@ export default function ClientsPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('erpType')}>
+                  <Button variant="ghost" onClick={() => handleSort('integrationConfig.erpType')}>
                     Tipo de ERP
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -350,13 +357,13 @@ export default function ClientsPage() {
                       {client.email}
                     </div>
                   </TableCell>
-                  <TableCell>{client.erpType}</TableCell>
+                  <TableCell>{client.integrationConfig.erpType}</TableCell>
                   <TableCell>
-                    <Badge variant={'outline'} className={cn(statusStyles[client.status])}>
+                    <Badge variant={'outline'} className={cn(statusStyles[client.status!])}>
                       {client.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{client.onboarded}</TableCell>
+                  <TableCell>{new Date((client.onboarded as any).seconds * 1000).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -367,3 +374,5 @@ export default function ClientsPage() {
     </>
   );
 }
+
+    
