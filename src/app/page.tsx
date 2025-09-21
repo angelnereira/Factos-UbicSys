@@ -22,7 +22,6 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import {
   Form,
@@ -32,7 +31,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { signUpWithEmailAndPassword } from '@/lib/firebase/auth';
+import { signUpWithEmailAndPassword, loginWithEmailAndPassword } from '@/lib/firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -53,7 +52,7 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 export default function AuthPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -72,15 +71,31 @@ export default function AuthPage() {
     },
   });
 
-  const onLoginSubmit = (values: LoginFormValues) => {
-    console.log('Login values:', values);
-    // Here you would typically handle authentication
-    // For now, we'll just redirect to the dashboard
-    router.push('/dashboard');
+  const onLoginSubmit = async (values: LoginFormValues) => {
+    setIsLoading(true);
+    const { email, password } = values;
+    const { user, error } = await loginWithEmailAndPassword(email, password);
+
+    if (error) {
+      toast({
+        title: 'Login failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+    } else {
+      toast({
+        title: 'Login successful!',
+        description: 'You will be redirected to the dashboard.',
+      });
+       setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
+    }
   };
 
   const onSignUpSubmit = async (values: SignUpFormValues) => {
-    setIsSigningUp(true);
+    setIsLoading(true);
     const { email, password } = values;
     const { user, error } = await signUpWithEmailAndPassword(email, password);
 
@@ -90,17 +105,16 @@ export default function AuthPage() {
         description: error.message,
         variant: 'destructive',
       });
-      setIsSigningUp(false);
+      setIsLoading(false);
     } else {
       toast({
         title: 'Sign-up successful!',
         description: 'You will be redirected to the dashboard.',
       });
       console.log('User signed up:', user);
-      // Redirect to the dashboard after a short delay
        setTimeout(() => {
         router.push('/dashboard');
-      }, 2000);
+      }, 1000);
     }
   };
 
@@ -151,8 +165,8 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full">
-                    Login
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="animate-spin" /> : 'Login'}
                   </Button>
                 </form>
               </Form>
@@ -209,12 +223,8 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full" disabled={isSigningUp}>
-                    {isSigningUp ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      'Sign Up'
-                    )}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="animate-spin" /> : 'Sign Up'}
                   </Button>
                 </form>
               </Form>
