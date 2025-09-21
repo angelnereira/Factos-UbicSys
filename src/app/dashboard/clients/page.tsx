@@ -47,7 +47,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { addCompany, getCompanies } from '@/lib/firebase/firestore';
+// import { addCompany, getCompanies } from '@/lib/firebase/firestore';
+import { mockCompanies } from '@/lib/mock-data'; // Using mock data
 import { cn } from '@/lib/utils';
 import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -82,7 +83,8 @@ export default function ClientsPage() {
   useEffect(() => {
     async function fetchClients() {
       setIsLoading(true);
-      const fetchedCompanies = await getCompanies();
+      // const fetchedCompanies = await getCompanies();
+      const fetchedCompanies = mockCompanies; // Using mock data
       setCompanies(fetchedCompanies);
       setIsLoading(false);
     }
@@ -125,8 +127,8 @@ export default function ClientsPage() {
 
         if (aValue === undefined || bValue === undefined) return 0;
         
-        const valA = aValue instanceof Object && 'seconds' in aValue ? (aValue as Timestamp).seconds : aValue;
-        const valB = bValue instanceof Object && 'seconds' in bValue ? (bValue as Timestamp).seconds : bValue;
+        const valA = aValue instanceof Date ? aValue.getTime() : aValue;
+        const valB = bValue instanceof Date ? bValue.getTime() : bValue;
 
         if (typeof valA === 'string' && typeof valB === 'string') {
           return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
@@ -143,7 +145,10 @@ export default function ClientsPage() {
   }, [companies, searchQuery, sortKey, sortDirection]);
 
   const onSubmit = async (values: ClientFormValues) => {
-    const newCompanyData: Partial<Company> = {
+    // This is now a mock implementation
+    const newCompany: Company = {
+      id: `comp-${Math.random().toString(36).substring(7)}`,
+      authUid: `user-${Math.random().toString(36).substring(7)}`,
       name: values.name,
       email: values.email,
       status: values.status,
@@ -153,36 +158,28 @@ export default function ClientsPage() {
       },
       factoryHkaConfig: {
         demo: {
-          username: "user_demo", // Placeholder
+          username: "user_demo",
           isActive: true,
           maxDocumentsPerMonth: 1000,
           documentsUsedThisMonth: 0,
         },
         production: {
-          username: "user_prod", // Placeholder
+          username: "user_prod",
           isActive: false,
         }
       },
       onboarded: new Date(),
+      createdAt: new Date() as any, // Using Date for mock, firestore uses Timestamp
+      updatedAt: new Date() as any,
     };
 
-    const { newCompany, error } = await addCompany(newCompanyData);
-
-    if (error) {
-      toast({
-        title: 'Error al agregar compañía',
-        description: 'No se pudo guardar la compañía en la base de datos.',
-        variant: 'destructive',
-      });
-    } else if (newCompany) {
-      setCompanies(prevCompanies => [...prevCompanies, newCompany]);
-      toast({
-        title: 'Compañía agregada',
-        description: 'La nueva compañía ha sido guardada exitosamente en modo Demo.',
-      });
-      setIsDialogOpen(false);
-      form.reset();
-    }
+    setCompanies(prevCompanies => [...prevCompanies, newCompany]);
+    toast({
+      title: 'Compañía agregada (simulado)',
+      description: 'La nueva compañía ha sido guardada en la lista de prueba.',
+    });
+    setIsDialogOpen(false);
+    form.reset();
   };
   
   const renderSortArrow = (key: SortKey) => {
@@ -390,7 +387,7 @@ export default function ClientsPage() {
                       {company.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{company.onboarded ? new Date((company.onboarded as any).seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
+                  <TableCell>{company.onboarded ? new Date(company.onboarded as any).toLocaleDateString() : 'N/A'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -401,3 +398,5 @@ export default function ClientsPage() {
     </>
   );
 }
+
+    
