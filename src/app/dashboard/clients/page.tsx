@@ -1,3 +1,10 @@
+
+'use client';
+
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,7 +32,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -34,7 +40,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { clients } from '@/lib/data';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { clients as initialClients } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import type { Client } from '@/lib/types';
 
@@ -44,7 +58,38 @@ const statusStyles: { [key in Client['status']]: string } = {
   Demo: 'text-muted-foreground border-dashed',
 };
 
+const clientSchema = z.object({
+  name: z.string().min(1, 'Client name is required'),
+  email: z.string().email('Invalid email address'),
+  erpType: z.enum(['SAP', 'Oracle', 'Microsoft Dynamics', 'Claris FileMaker', 'Custom']),
+  status: z.enum(['Production', 'Development', 'Demo']),
+});
+
+type ClientFormValues = z.infer<typeof clientSchema>;
+
 export default function ClientsPage() {
+  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const form = useForm<ClientFormValues>({
+    resolver: zodResolver(clientSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+    },
+  });
+
+  const onSubmit = (values: ClientFormValues) => {
+    const newClient: Client = {
+      id: `CLI${(clients.length + 1).toString().padStart(3, '0')}`,
+      onboarded: new Date().toISOString().split('T')[0],
+      ...values,
+    };
+    setClients(prevClients => [...prevClients, newClient]);
+    setIsDialogOpen(false);
+    form.reset();
+  };
+
   return (
     <>
       <div className="flex items-center">
@@ -56,7 +101,7 @@ export default function ClientsPage() {
             Manage your clients and their ERP integrations.
           </p>
         </div>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="h-8 gap-1">
               <PlusCircle className="h-3.5 w-3.5" />
@@ -72,62 +117,95 @@ export default function ClientsPage() {
                 Onboard a new client and configure their integration settings.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Client Name
-                </Label>
-                <Input id="name" placeholder="Acme Inc." className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Contact Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="contact@acme.com"
-                  className="col-span-3"
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Client Name</FormLabel>
+                      <div className="col-span-3">
+                        <FormControl>
+                          <Input placeholder="Acme Inc." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="erp-type" className="text-right">
-                  ERP Type
-                </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select ERP" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sap">SAP</SelectItem>
-                    <SelectItem value="oracle">Oracle</SelectItem>
-                    <SelectItem value="microsoft-dynamics">
-                      Microsoft Dynamics
-                    </SelectItem>
-                    <SelectItem value="claris-filemaker">Claris FileMaker</SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">
-                  Environment
-                </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select Environment" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Production">Production</SelectItem>
-                    <SelectItem value="Development">Development</SelectItem>
-                    <SelectItem value="Demo">Demo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit">Save Client</Button>
-            </DialogFooter>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Contact Email</FormLabel>
+                       <div className="col-span-3">
+                        <FormControl>
+                          <Input type="email" placeholder="contact@acme.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="erpType"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">ERP Type</FormLabel>
+                      <div className="col-span-3">
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select ERP" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="SAP">SAP</SelectItem>
+                            <SelectItem value="Oracle">Oracle</SelectItem>
+                            <SelectItem value="Microsoft Dynamics">
+                              Microsoft Dynamics
+                            </SelectItem>
+                            <SelectItem value="Claris FileMaker">Claris FileMaker</SelectItem>
+                            <SelectItem value="Custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Environment</FormLabel>
+                      <div className="col-span-3">
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Environment" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Production">Production</SelectItem>
+                              <SelectItem value="Development">Development</SelectItem>
+                              <SelectItem value="Demo">Demo</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit">Save Client</Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -171,3 +249,5 @@ export default function ClientsPage() {
     </>
   );
 }
+
+    
