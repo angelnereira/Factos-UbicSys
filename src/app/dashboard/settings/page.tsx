@@ -86,6 +86,12 @@ function AccountSettings() {
                         <Input type="email" name="email" id="email" defaultValue="admin@factos-ubicsys.com" readOnly />
                     </div>
                 </div>
+                 <div>
+                    <Label htmlFor="role">Rol de la Cuenta</Label>
+                    <div className="mt-2">
+                        <Input type="text" name="role" id="role" defaultValue="Administrador" readOnly />
+                    </div>
+                </div>
             </CardContent>
             <CardContent>
                 <Button>Guardar Cambios</Button>
