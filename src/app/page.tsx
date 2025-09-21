@@ -34,6 +34,7 @@ import {
 import { signUpWithEmailAndPassword, loginWithEmailAndPassword } from '@/lib/firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const loginSchema = z.object({
   email: z.string().email('Correo electrónico inválido'),
@@ -122,6 +123,9 @@ export default function AuthPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
         <div className="absolute top-8 left-8">
             <Logo />
+        </div>
+        <div className="absolute top-8 right-8">
+            <ThemeToggle />
         </div>
       <Tabs defaultValue="login" className="w-[400px]">
         <TabsList className="grid w-full grid-cols-2">
