@@ -1,0 +1,211 @@
+
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { getDocuments } from '@/lib/firebase/firestore';
+import { cn } from '@/lib/utils';
+import type { FiscalDocument, ProcessingStep } from '@/lib/types';
+import { Loader2, Search } from 'lucide-react';
+import Link from 'next/link';
+import type { Timestamp } from 'firebase/firestore';
+
+interface LogEntry extends ProcessingStep {
+  documentId: string;
+  companyId: string;
+}
+
+const statusStyles: { [key in ProcessingStep['status']]: string } = {
+  success: 'text-chart-2 border-chart-2 bg-chart-2/10',
+  error: 'text-destructive border-destructive bg-destructive/10',
+  warning: 'text-chart-4 border-chart-4 bg-chart-4/10',
+};
+
+export default function LogsPage() {
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [stepFilter, setStepFilter] = useState('all');
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      const fetchedDocuments = await getDocuments();
+      const allLogs: LogEntry[] = [];
+      fetchedDocuments.forEach((doc: FiscalDocument) => {
+        if (doc.statusHistory && Array.isArray(doc.statusHistory)) {
+          doc.statusHistory.forEach(step => {
+            allLogs.push({
+              ...step,
+              documentId: doc.id,
+              companyId: doc.companyId,
+            });
+          });
+        }
+      });
+      // Sort logs by most recent timestamp
+      allLogs.sort((a, b) => (b.timestamp as Timestamp).seconds - (a.timestamp as Timestamp).seconds);
+      setLogs(allLogs);
+      setIsLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  const filteredLogs = useMemo(() => {
+    return logs.filter(log => {
+      const searchMatch =
+        log.documentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        log.message.toLowerCase().includes(searchQuery.toLowerCase());
+      const statusMatch = statusFilter === 'all' || log.status === statusFilter;
+      const stepMatch = stepFilter === 'all' || log.step === stepFilter;
+      return searchMatch && statusMatch && stepMatch;
+    });
+  }, [logs, searchQuery, statusFilter, stepFilter]);
+
+  const uniqueSteps = useMemo(() => {
+    const steps = new Set(logs.map(log => log.step));
+    return ['all', ...Array.from(steps)];
+  }, [logs]);
+
+  return (
+    <>
+      <div className="flex items-center">
+        <div className="flex-1">
+          <h1 className="font-headline text-2xl font-bold tracking-tight">
+            Registros del Sistema
+          </h1>
+          <p className="text-muted-foreground">
+            Un registro de auditoría de todos los eventos de procesamiento de documentos.
+          </p>
+        </div>
+      </div>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex-1">
+              <CardTitle>Historial de Eventos</CardTitle>
+              <CardDescription>
+                Busca y filtra a través de todos los registros del sistema.
+              </CardDescription>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-initial">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Buscar por ID o mensaje..."
+                  className="w-full bg-background pl-8"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Select value={stepFilter} onValueChange={setStepFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Filtrar por Paso" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueSteps.map(step => (
+                    <SelectItem key={step} value={step} className="capitalize">
+                      {step === 'all' ? 'Todos los Pasos' : step}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Filtrar por Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los Estados</SelectItem>
+                  <SelectItem value="success">Éxito</SelectItem>
+                  <SelectItem value="error">Error</SelectItem>
+                  <SelectItem value="warning">Advertencia</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Documento ID</TableHead>
+                  <TableHead>Paso</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Mensaje</TableHead>
+                  <TableHead>Fecha</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredLogs.length > 0 ? (
+                  filteredLogs.map((log, index) => (
+                    <TableRow key={`${log.documentId}-${index}`}>
+                      <TableCell>
+                        <Link
+                          href={`/dashboard/documents/${log.documentId}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {log.documentId.substring(0, 15)}...
+                        </Link>
+                      </TableCell>
+                      <TableCell className="capitalize">{log.step}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn('capitalize', statusStyles[log.status])}
+                        >
+                          {log.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{log.message}</TableCell>
+                      <TableCell>
+                        {new Date(
+                          (log.timestamp as Timestamp).seconds * 1000
+                        ).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No se encontraron registros que coincidan con tus filtros.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </>
+  );
+}
