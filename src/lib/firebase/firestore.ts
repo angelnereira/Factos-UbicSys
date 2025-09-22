@@ -1,7 +1,11 @@
-import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query, updateDoc, Timestamp } from 'firebase/firestore';
-import { getFirebaseServices } from './firebase-client';
+import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query, updateDoc, Timestamp, getFirestore } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
 import type { DocumentData } from 'firebase/firestore';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import { firebaseConfig } from './firebase';
+
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
 
 
 /**
@@ -10,7 +14,6 @@ import type { DocumentData } from 'firebase/firestore';
  * @returns An object with the new company data (including id) or an error.
  */
 export const addCompany = async (companyData: Partial<Omit<Company, 'id'>>): Promise<{ newCompany?: Company, error?: any }> => {
-  const { db } = getFirebaseServices();
   try {
     const dataWithTimestamps = {
       ...companyData,
@@ -34,7 +37,6 @@ export const addCompany = async (companyData: Partial<Omit<Company, 'id'>>): Pro
  * @returns A promise that resolves to an array of companies.
  */
 export const getCompanies = async (): Promise<Company[]> => {
-  const { db } = getFirebaseServices();
   try {
     const querySnapshot = await getDocs(collection(db, "companies"));
     const companies: Company[] = [];
@@ -54,7 +56,6 @@ export const getCompanies = async (): Promise<Company[]> => {
  * @returns An object with the new document data (including id) or an error.
  */
 export const addDocument = async (documentData: Partial<Omit<FiscalDocument, 'id'>>): Promise<{ newDocument?: FiscalDocument, error?: any }> => {
-  const { db } = getFirebaseServices();
   if (!documentData.companyId) {
     const error = new Error("companyId is required to add a document.");
     console.error(error);
@@ -84,7 +85,6 @@ export const addDocument = async (documentData: Partial<Omit<FiscalDocument, 'id
  * @returns A promise that resolves to an array of all fiscal documents.
  */
 export const getDocuments = async (): Promise<FiscalDocument[]> => {
-    const { db } = getFirebaseServices();
     try {
         const documentsQuery = query(collectionGroup(db, 'documents'));
         const querySnapshot = await getDocs(documentsQuery);
@@ -106,7 +106,6 @@ export const getDocuments = async (): Promise<FiscalDocument[]> => {
  * @returns A promise that resolves to the document data or null if not found.
  */
 export const getDocumentById = async (companyId: string, documentId: string): Promise<FiscalDocument | null> => {
-    const { db } = getFirebaseServices();
     try {
         if (!companyId || !documentId) {
             console.error("companyId and documentId must be provided.");
@@ -140,7 +139,6 @@ export const updateDocument = async (
   documentId: string,
   data: Partial<FiscalDocument>
 ): Promise<{ success: boolean; error?: any }> => {
-  const { db } = getFirebaseServices();
   if (!companyId || !documentId) {
     const error = new Error("companyId and documentId must be provided.");
     console.error(error);
