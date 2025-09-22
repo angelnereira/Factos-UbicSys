@@ -1,9 +1,9 @@
 
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Link from "next/link"
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronRight,
   ShieldCheck,
@@ -285,9 +285,19 @@ function DataSettings() {
 
 
 function SettingsPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const tab = searchParams.get('tab') || 'account';
-  const [activeTab, setActiveTab] = useState(tab);
+  const currentTab = searchParams.get('tab') || 'account';
+  const [activeTab, setActiveTab] = useState(currentTab);
+
+  useEffect(() => {
+    setActiveTab(currentTab);
+  }, [currentTab]);
+  
+  const handleTabChange = (tabId: string) => {
+      setActiveTab(tabId);
+      router.push(`/dashboard/settings?tab=${tabId}`, { scroll: false });
+  }
 
   return (
     <div className="flex-1 space-y-4">
@@ -307,7 +317,7 @@ function SettingsPageContent() {
                   {settingsNav.map((item) => (
                       <li key={item.name}>
                           <button
-                              onClick={() => setActiveTab(item.id)}
+                              onClick={() => handleTabChange(item.id)}
                               className={cn(
                                   activeTab === item.id
                                       ? "bg-accent text-primary"
@@ -350,5 +360,3 @@ export default function SettingsPage() {
         </Suspense>
     );
 }
-
-    
