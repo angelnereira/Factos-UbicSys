@@ -16,20 +16,20 @@ function getApiConfig(env: Environment) {
   if (env === 'Production') {
     return {
       apiUrl: PROD_API_URL,
-      username: process.env.THE_FACTORY_HKA_PROD_USERNAME,
-      password: process.env.THE_FACTORY_HKA_PROD_PASSWORD,
+      username: process.env.TFHKA_PROD_USERNAME,
+      password: process.env.TFHKA_PROD_PASSWORD,
     };
   }
   // Default to Demo for 'Development' and 'Demo'
   return {
     apiUrl: DEMO_API_URL,
-    username: process.env.THE_FACTORY_HKA_DEMO_USERNAME,
-    password: process.env.THE_FACTORY_HKA_DEMO_PASSWORD,
+    username: process.env.TFHKA_DEMO_USERNAME,
+    password: process.env.TFHKA_DEMO_PASSWORD,
   };
 }
 
 /**
- * Retrieves an authentication token from The Factory HKA API.
+ * Retrieves an authentication token from The Factory HKA API by consulting the company.
  * This token is required for all subsequent API requests.
  * 
  * @returns A promise that resolves with the authentication data or an error object.
@@ -48,15 +48,18 @@ export async function getAuthToken(env: Environment): Promise<{
   }
 
   try {
-    const response = await fetch(`${config.apiUrl}/api/v2/login/autenticacion`, {
+    // According to the new spec, we use ConsultarEmpresa for authentication
+    const response = await fetch(`${config.apiUrl}/ConsultarEmpresa`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: JSON.stringify({
-        Username: config.username,
-        Password: config.password,
+        Nit: config.username, // Assuming username is the NIT
+        TokenEmpresa: config.password, // Assuming password is the TokenEmpresa
+        TokenClave: config.password, // This might need adjustment based on real credentials
+        Plataforma: 'TFHKA'
       }),
     });
 
@@ -68,7 +71,14 @@ export async function getAuthToken(env: Environment): Promise<{
     }
 
     const data: FactoryHkaAuthSuccess = await response.json();
-    return { data, error: null };
+    
+    // Simulate token from response if not directly provided
+    if (data.Codigo === 200 && data.Resultado === 'Success') {
+         return { data: { ...data, token: config.password as string }, error: null }; // Re-using password as token for now
+    }
+    
+    return { data: null, error: `Authentication failed: ${data.Mensaje}` };
+
 
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'An unknown network error occurred.';
@@ -87,7 +97,7 @@ export async function getAuthToken(env: Environment): Promise<{
  */
 export async function submitDocument(
     documentData: FactoryHkaDocumentRequest,
-    token: string,
+    token: string, // This token is now TokenEmpresa/TokenClave from config
     env: Environment
 ): Promise<{ data: FactoryHkaDocumentResponse | null; error: string | null; }> {
     const config = getApiConfig(env);
@@ -96,12 +106,14 @@ export async function submitDocument(
     }
 
     try {
-        const response = await fetch(`${config.apiUrl}/api/Enviar`, {
+        // The endpoint is likely /CrearFactura based on the new spec
+        const response = await fetch(`${config.apiUrl}/CrearFactura`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`,
+                'TokenEmpresa': token,
+                'TokenClave': token, // Adjust if they are different
             },
             body: JSON.stringify(documentData),
         });

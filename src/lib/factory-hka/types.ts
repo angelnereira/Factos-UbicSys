@@ -5,14 +5,33 @@
  */
 
 /**
- * Represents the successful response from The Factory HKA authentication endpoint.
+ * Represents the successful response from The Factory HKA /ConsultarEmpresa endpoint.
+ */
+export interface TfhkaConsultarEmpresaResponse {
+  Codigo: number;
+  Resultado: 'Success' | 'Error';
+  Mensaje: string;
+  Nit: string;
+  idEmpresa: string;
+  Contribuyente: TfhkaContribuyente;
+}
+
+export interface TfhkaContribuyente {
+  // Define contributor properties based on API documentation
+  [key: string]: any;
+}
+
+
+/**
+ * Represents a simulated auth success object, as the token is reused from config.
  */
 export interface FactoryHkaAuthSuccess {
-  codigo: string;
-  mensaje: string;
+  Codigo: number;
+  Resultado: string;
+  Mensaje: string;
   token: string;
-  expiracion: string; // Expiration date string, e.g., "2025-09-22T15:26:55.2510335Z"
 }
+
 
 /**
  * Represents an error response from The Factory HKA API.
@@ -104,7 +123,7 @@ export interface Cliente {
   correoElectronico2: string;
   correoElectronico3: string;
   pais: string;
-paisOtro: string;
+  paisOtro: string;
 }
 
 export interface DatosFacturaExportacion {
