@@ -1,8 +1,9 @@
+
 'use client';
 
 import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query, updateDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
-import { db } from './firebase-client'; // Updated import
+import { db } from './firebase-client';
 
 
 /**
