@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -35,43 +35,46 @@ export default function DocumentDetailPage() {
   const companyId = params.companyId as string; // Assuming companyId is in the route or passed as prop
   const [document, setDocument] = useState<FiscalDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchDocument() {
-      if (!id || !companyId) {
-          // A more robust solution might be needed to get companyId if not in URL
-          // For now, this is a placeholder to demonstrate the issue
-          console.error("Document ID or Company ID is missing.");
-          setIsLoading(false);
-          // Temporary workaround: fetch from all documents to find companyId
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+          // This logic is complex because companyId is not part of the standard route.
+          // This is a workaround to find the document.
           const { getDocuments } = await import('@/lib/firebase/firestore');
           const allDocs = await getDocuments();
-          const targetDoc = allDocs.find(d => d.id === id);
-          if (targetDoc) {
-             const fetchedDocument = await getDocumentById(targetDoc.companyId, id);
+          const targetDocInfo = allDocs.find(d => d.id === id);
+
+          if (targetDocInfo && targetDocInfo.companyId) {
+             const fetchedDocument = await getDocumentById(targetDocInfo.companyId, id);
              if (fetchedDocument) {
                 setDocument(fetchedDocument as FiscalDocument);
              } else {
-                notFound();
+                setError("Documento no encontrado. Puede que el enlace sea incorrecto o el documento haya sido eliminado.");
              }
           } else {
-            notFound();
+            setError("Documento no encontrado o información de compañía faltante.");
           }
+      } catch (e) {
+          console.error("Failed to fetch document:", e);
+          setError("Ocurrió un error al cargar el documento.");
+      } finally {
           setIsLoading(false);
-          return;
       }
-      
-      setIsLoading(true);
-      const fetchedDocument = await getDocumentById(companyId, id);
-      if (fetchedDocument) {
-          setDocument(fetchedDocument as FiscalDocument);
-      } else {
-          notFound();
-      }
-      setIsLoading(false);
     }
-    fetchDocument();
-  }, [id, companyId]);
+    
+    if (id) {
+        fetchDocument();
+    } else {
+        setError("No se proporcionó un ID de documento.");
+        setIsLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
 
   if (isLoading) {
@@ -82,10 +85,23 @@ export default function DocumentDetailPage() {
     );
   }
 
+  if (error) {
+    return (
+        <div className="flex flex-col justify-center items-center h-40 text-center">
+            <p className="text-destructive font-semibold">Error</p>
+            <p>{error}</p>
+            <Button asChild variant="link">
+                <Link href="/dashboard/documents">Volver a la lista de documentos</Link>
+            </Button>
+        </div>
+    );
+  }
+
   if (!document) {
+    // This case should ideally be covered by the error state, but as a fallback:
     return (
         <div className="flex justify-center items-center h-40">
-            <p>Document not found. The link may be incorrect or the document was deleted.</p>
+            <p>No se encontró el documento.</p>
         </div>
     );
   }
