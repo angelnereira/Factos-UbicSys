@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase/firebase-client'; // Updated import
+import { getFirebaseAuth } from '@/lib/firebase/firebase';
 import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
@@ -18,6 +18,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // getFirebaseAuth() ensures Firebase is initialized on the client.
+    const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
