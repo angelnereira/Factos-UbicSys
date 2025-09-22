@@ -13,12 +13,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { getDocumentById } from '@/lib/firebase/firestore';
 import ErrorExplainer from './_components/error-explainer';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
-import type { Timestamp } from 'firebase/firestore';
+import { Timestamp, doc, getDoc, collectionGroup, getDocs, query } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/auth-context';
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
   approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -32,6 +32,7 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
 
 export default function DocumentDetailPage() {
   const params = useParams();
+  const { db } = useAuth();
   const id = params.id as string;
   const [document, setDocument] = useState<FiscalDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,20 +40,27 @@ export default function DocumentDetailPage() {
 
   useEffect(() => {
     async function fetchDocument() {
+      if (!db) {
+        setIsLoading(false);
+        setError("La conexión con la base de datos no está disponible.");
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
       
       try {
-          // This logic is complex because companyId is not part of the standard route.
-          // This is a workaround to find the document.
-          const { getDocuments } = await import('@/lib/firebase/firestore');
-          const allDocs = await getDocuments();
+          const documentsQuery = query(collectionGroup(db, 'documents'));
+          const querySnapshot = await getDocs(documentsQuery);
+          const allDocs = querySnapshot.docs.map(d => ({...d.data(), id: d.id, companyId: d.ref.parent.parent?.id })) as (FiscalDocument & { companyId: string })[];
+          
           const targetDocInfo = allDocs.find(d => d.id === id);
 
           if (targetDocInfo && targetDocInfo.companyId) {
-             const fetchedDocument = await getDocumentById(targetDocInfo.companyId, id);
-             if (fetchedDocument) {
-                setDocument(fetchedDocument as FiscalDocument);
+             const docRef = doc(db, "companies", targetDocInfo.companyId, "documents", id);
+             const docSnap = await getDoc(docRef);
+             if (docSnap.exists()) {
+                setDocument({ id: docSnap.id, ...docSnap.data() } as FiscalDocument);
              } else {
                 setError("Documento no encontrado. Puede que el enlace sea incorrecto o el documento haya sido eliminado.");
              }
@@ -74,7 +82,7 @@ export default function DocumentDetailPage() {
         setIsLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, db]);
 
 
   if (isLoading) {
@@ -98,7 +106,6 @@ export default function DocumentDetailPage() {
   }
 
   if (!document) {
-    // This case should ideally be covered by the error state, but as a fallback:
     return (
         <div className="flex justify-center items-center h-40">
             <p>No se encontró el documento.</p>

@@ -47,8 +47,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-// import { addCompany, getCompanies } from '@/lib/firebase/firestore';
-import { mockCompanies } from '@/lib/mock-data'; // Using mock data
+import { mockCompanies } from '@/lib/mock-data'; 
 import { cn } from '@/lib/utils';
 import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -83,8 +82,9 @@ export default function ClientsPage() {
   useEffect(() => {
     async function fetchClients() {
       setIsLoading(true);
-      // const fetchedCompanies = await getCompanies();
-      const fetchedCompanies = mockCompanies; // Using mock data
+      // In a real app, this would be a Firestore query.
+      // For now, we continue using mock data as the firestore helper was removed.
+      const fetchedCompanies = mockCompanies; 
       setCompanies(fetchedCompanies);
       setIsLoading(false);
     }
@@ -127,6 +127,7 @@ export default function ClientsPage() {
 
         if (aValue === undefined || bValue === undefined) return 0;
         
+        // Firestore Timestamps are objects, but JS Dates work here for sorting
         const valA = aValue instanceof Date ? aValue.getTime() : aValue;
         const valB = bValue instanceof Date ? bValue.getTime() : bValue;
 
@@ -145,7 +146,7 @@ export default function ClientsPage() {
   }, [companies, searchQuery, sortKey, sortDirection]);
 
   const onSubmit = async (values: ClientFormValues) => {
-    // This is now a mock implementation
+    // This is a mock implementation
     const newCompany: Company = {
       id: `comp-${Math.random().toString(36).substring(7)}`,
       authUid: `user-${Math.random().toString(36).substring(7)}`,
@@ -182,14 +183,6 @@ export default function ClientsPage() {
     form.reset();
   };
   
-  const renderSortArrow = (key: SortKey) => {
-    if (sortKey === key) {
-      return sortDirection === 'asc' ? ' 🔼' : ' 🔽';
-    }
-    return null;
-  };
-
-
   return (
     <>
       <div className="flex items-center">
@@ -398,5 +391,3 @@ export default function ClientsPage() {
     </>
   );
 }
-
-    

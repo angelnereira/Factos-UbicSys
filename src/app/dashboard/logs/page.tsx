@@ -26,12 +26,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getDocuments } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument, ProcessingStep } from '@/lib/types';
 import { Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
-import type { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
+import { getAllLogs } from '@/lib/firebase/firestore';
+import { useAuth } from '@/contexts/auth-context';
 
 interface LogEntry extends ProcessingStep {
   documentId: string;
@@ -45,6 +46,7 @@ const statusStyles: { [key in ProcessingStep['status']]: string } = {
 };
 
 export default function LogsPage() {
+  const { db } = useAuth();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,15 +55,17 @@ export default function LogsPage() {
 
   useEffect(() => {
     async function fetchData() {
+      if (!db) return;
       setIsLoading(true);
-      const fetchedDocuments = await getDocuments();
+      const querySnapshot = await getAllLogs(db);
       const allLogs: LogEntry[] = [];
-      fetchedDocuments.forEach((doc: FiscalDocument) => {
+      querySnapshot.forEach((docSnap) => {
+        const doc = docSnap.data() as FiscalDocument;
         if (doc.statusHistory && Array.isArray(doc.statusHistory)) {
           doc.statusHistory.forEach(step => {
             allLogs.push({
               ...step,
-              documentId: doc.id,
+              documentId: docSnap.id,
               companyId: doc.companyId,
             });
           });
@@ -73,7 +77,7 @@ export default function LogsPage() {
       setIsLoading(false);
     }
     fetchData();
-  }, []);
+  }, [db]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {

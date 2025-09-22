@@ -10,11 +10,58 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getDocumentById, updateDocument } from '@/lib/firebase/firestore';
 import { getAuthToken, submitDocument } from '@/lib/factory-hka/api-client';
 import type { FactoryHkaDocumentRequest } from '@/lib/factory-hka/types';
 import type { Company, FiscalDocument } from '@/lib/types';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, getDoc, doc, updateDoc, getFirestore } from 'firebase/firestore';
+
+
+async function getDocumentById(companyId: string, documentId: string): Promise<FiscalDocument | null> {
+    const db = getFirestore();
+    try {
+        if (!companyId || !documentId) {
+            console.error("companyId and documentId must be provided.");
+            return null;
+        }
+        const docRef = doc(db, "companies", companyId, "documents", documentId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return { id: docSnap.id, ...docSnap.data() } as FiscalDocument;
+        } else {
+            console.log("No such document!");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error getting document by ID: ", error);
+        return null;
+    }
+}
+
+async function updateDocumentInFlow(
+  companyId: string,
+  documentId: string,
+  data: Partial<FiscalDocument>
+): Promise<{ success: boolean; error?: any }> => {
+  const db = getFirestore();
+  if (!companyId || !documentId) {
+    const error = new Error("companyId and documentId must be provided.");
+    console.error(error);
+    return { success: false, error };
+  }
+  try {
+    const docRef = doc(db, 'companies', companyId, 'documents', documentId);
+    await updateDoc(docRef, {
+      ...data,
+      updatedAt: Timestamp.now(),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error(`Error updating document ${documentId}:`, error);
+    return { success: false, error };
+  }
+};
+
 
 const SubmitDocumentInputSchema = z.object({
   documentId: z.string().describe('The ID of the fiscal document to submit.'),
@@ -47,7 +94,7 @@ const submitDocumentFlow = ai.defineFlow(
     }
 
     // 2. Add 'processing' to status history
-    await updateDocument(companyId, documentId, {
+    await updateDocumentInFlow(companyId, documentId, {
       status: 'processing',
       statusHistory: [
         ...document.statusHistory,
@@ -64,7 +111,7 @@ const submitDocumentFlow = ai.defineFlow(
     const env = (document as any).status === 'Production' ? 'Production' : 'Demo';
     const authResponse = await getAuthToken(env);
     if (authResponse.error || !authResponse.data) {
-        await updateDocument(companyId, documentId, {
+        await updateDocumentInFlow(companyId, documentId, {
             status: 'rejected',
             errorDetails: `Error de autenticación con HKA: ${authResponse.error}`,
             statusHistory: [
@@ -77,8 +124,6 @@ const submitDocumentFlow = ai.defineFlow(
     const { token } = authResponse.data;
 
     // 4. Submit the document to HKA
-    // The document.originalData should be transformed into the correct format here.
-    // For now, we assume it's already in the correct format as a placeholder.
     const submissionData = document.originalData as unknown as FactoryHkaDocumentRequest;
 
     const submitResponse = await submitDocument(submissionData, token, env);
@@ -86,7 +131,7 @@ const submitDocumentFlow = ai.defineFlow(
     // 5. Handle the response and update Firestore
     if (submitResponse.error || !submitResponse.data) {
       const errorMessage = `Error al enviar documento a HKA: ${submitResponse.error}`;
-      await updateDocument(companyId, documentId, {
+      await updateDocumentInFlow(companyId, documentId, {
         status: 'rejected',
         errorDetails: errorMessage,
         statusHistory: [
@@ -97,10 +142,9 @@ const submitDocumentFlow = ai.defineFlow(
       return { success: false, message: errorMessage };
     }
     
-    // If successful
     const { cufe, message } = submitResponse.data;
-    await updateDocument(companyId, documentId, {
-      status: 'sent_to_pac', // Or 'approved' if HKA gives final confirmation
+    await updateDocumentInFlow(companyId, documentId, {
+      status: 'sent_to_pac',
       cufe: cufe,
       processedAt: Timestamp.now(),
       statusHistory: [

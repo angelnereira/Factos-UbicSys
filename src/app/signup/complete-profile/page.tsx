@@ -15,9 +15,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { addCompany } from '@/lib/firebase/firestore';
 import type { Company } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
+import { addCompany } from '@/lib/firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
+
 
 const profileSchema = z.object({
   taxId: z.string().optional(),
@@ -32,7 +34,7 @@ function CompleteProfileForm() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const { user, loading } = useAuth();
+  const { user, loading, db } = useAuth();
 
 
   const name = searchParams.get('name') || '';
@@ -40,8 +42,6 @@ function CompleteProfileForm() {
   const uid = searchParams.get('uid') || '';
   
   useEffect(() => {
-    // If the user is already logged in and the UIDs match, they can complete the profile
-    // Or if the URL contains a UID from the signup process
     if (!loading && !user && !uid) {
       toast({
         title: 'Acceso no autorizado',
@@ -62,6 +62,14 @@ function CompleteProfileForm() {
   });
 
   const onSubmit = async (values: ProfileFormValues) => {
+    if (!db) {
+        toast({
+            title: 'Error de base de datos',
+            description: 'No se pudo conectar a la base de datos.',
+            variant: 'destructive'
+        });
+        return;
+    }
     setIsLoading(true);
     
     const userUid = user?.uid || uid;
@@ -77,15 +85,14 @@ function CompleteProfileForm() {
         return;
     }
 
-    // Se construye el objeto de la compañía que se guardará en Firestore.
-    // El campo `authUid` es crucial, ya que vincula el registro de autenticación de Firebase
-    // con el perfil de la compañía en la base de datos de Firestore.
-    const companyData: Partial<Company> = {
+    const companyData: Omit<Company, 'id'> = {
       name,
       email,
       authUid: userUid,
       status: 'Demo',
-      onboarded: new Date(),
+      onboarded: Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
       integrationConfig: {
         erpType: 'custom',
         notificationSettings: {
@@ -106,29 +113,29 @@ function CompleteProfileForm() {
             isActive: false,
         }
       },
-      ...values,
+      taxId: values.taxId,
+      phone: values.phone,
+      address: values.address,
     };
 
-    const { error } = await addCompany(companyData);
-    
-    if (error) {
+    try {
+        await addCompany(db, companyData);
+        toast({
+          title: '¡Registro completado!',
+          description: 'Tu perfil ha sido creado exitosamente.',
+        });
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
+    } catch (error) {
+        console.error("Error adding company: ", error);
         toast({
             title: 'Error al completar el perfil',
             description: 'No se pudo guardar la información de la compañía.',
             variant: 'destructive',
         });
         setIsLoading(false);
-        return;
     }
-
-    toast({
-      title: '¡Registro completado!',
-      description: 'Tu perfil ha sido creado exitosamente.',
-    });
-
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 1500);
   };
   
   if (loading) {
@@ -200,7 +207,7 @@ function CompleteProfileForm() {
                  <Button variant="ghost" onClick={() => router.push('/dashboard')}>
                     Omitir
                 </Button>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading || !db}>
                     {isLoading ? <Loader2 className="animate-spin" /> : 'Finalizar Registro'}
                 </Button>
               </div>

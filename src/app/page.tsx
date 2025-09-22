@@ -31,11 +31,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { signUpWithEmailAndPassword, loginWithEmailAndPassword } from '@/lib/firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuth } from '@/contexts/auth-context';
+import { signUpWithEmailAndPassword, loginWithEmailAndPassword } from '@/lib/firebase/auth';
+import type { AuthError } from 'firebase/auth';
+
 
 const loginSchema = z.object({
   email: z.string().email('Correo electrónico inválido'),
@@ -54,7 +56,7 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 export default function AuthPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, loading, auth } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -82,12 +84,13 @@ export default function AuthPage() {
   });
 
   const onLoginSubmit = async (values: LoginFormValues) => {
+    if (!auth) return;
     setIsLoading(true);
     const { email, password } = values;
-    const { user, error } = await loginWithEmailAndPassword(email, password);
+    const { error } = await loginWithEmailAndPassword(auth, email, password);
 
     if (error) {
-      toast({
+       toast({
         title: 'Inicio de sesión fallido',
         description: 'El correo electrónico o la contraseña son incorrectos.',
         variant: 'destructive',
@@ -105,24 +108,26 @@ export default function AuthPage() {
   };
 
   const onSignUpSubmit = async (values: SignUpFormValues) => {
+    if (!auth) return;
     setIsLoading(true);
     const { email, password, name } = values;
-    const { user, error } = await signUpWithEmailAndPassword(email, password);
-  
+    
+    const { user: newUser, error } = await signUpWithEmailAndPassword(auth, email, password);
+
     if (error) {
+      const authError = error as AuthError;
       toast({
         title: 'Registro fallido',
-        description: error.message,
+        description: authError.message,
         variant: 'destructive',
       });
       setIsLoading(false);
-    } else if (user) {
+    } else if (newUser) {
       toast({
         title: '¡Cuenta creada!',
         description: 'Ahora completa tu perfil.',
       });
-      // Pass user info to the next step
-      router.push(`/signup/complete-profile?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&uid=${user.uid}`);
+      router.push(`/signup/complete-profile?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&uid=${newUser.uid}`);
     }
   };
   
@@ -184,7 +189,7 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || !auth}>
                     {isLoading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
                   </Button>
                 </form>
@@ -242,7 +247,7 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || !auth}>
                     {isLoading ? <Loader2 className="animate-spin" /> : 'Siguiente'}
                   </Button>
                 </form>

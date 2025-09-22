@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuth, signOut } from 'firebase/auth';
-import { getFirebaseAuth } from './lib/firebase/firebase';
 
 export function UserNav() {
   const router = useRouter();
@@ -24,7 +23,7 @@ export function UserNav() {
   const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar-1');
 
   const handleLogout = async () => {
-    const auth = getFirebaseAuth();
+    const auth = getAuth();
     await signOut(auth);
     router.push('/');
   };

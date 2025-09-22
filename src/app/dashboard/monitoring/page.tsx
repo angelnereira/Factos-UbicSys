@@ -19,12 +19,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { getDocuments } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
 import { Loader2, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { OverviewChart } from '../documents/_components/overview-chart';
-import type { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
+import { getAllDocuments } from '@/lib/firebase/firestore';
+import { useAuth } from '@/contexts/auth-context';
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
   approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -37,18 +38,20 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
 
 
 export default function MonitoringPage() {
+  const { db } = useAuth();
   const [documents, setDocuments] = useState<FiscalDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
+      if (!db) return;
       setIsLoading(true);
-      const fetchedDocuments = await getDocuments();
-      setDocuments(fetchedDocuments as FiscalDocument[]);
+      const fetchedDocuments = await getAllDocuments(db);
+      setDocuments(fetchedDocuments);
       setIsLoading(false);
     }
     fetchData();
-  }, []);
+  }, [db]);
 
   const documentMetrics = useMemo(() => {
     return {

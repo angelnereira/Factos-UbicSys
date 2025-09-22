@@ -27,13 +27,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getDocuments } from '@/lib/firebase/firestore';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, ArrowUpDown } from 'lucide-react';
 import type { Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { ArrowUpDown } from 'lucide-react';
+import { getAllDocuments } from '@/lib/firebase/firestore';
+import { useAuth } from '@/contexts/auth-context';
 
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
@@ -48,6 +48,7 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
 type SortKey = keyof FiscalDocument | '';
 
 export default function DocumentsListPage() {
+  const { db } = useAuth();
   const [documents, setDocuments] = useState<FiscalDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,13 +58,14 @@ export default function DocumentsListPage() {
 
   useEffect(() => {
     async function fetchData() {
+      if (!db) return;
       setIsLoading(true);
-      const fetchedDocuments = await getDocuments();
-      setDocuments(fetchedDocuments as FiscalDocument[]);
+      const fetchedDocuments = await getAllDocuments(db);
+      setDocuments(fetchedDocuments);
       setIsLoading(false);
     }
     fetchData();
-  }, []);
+  }, [db]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
