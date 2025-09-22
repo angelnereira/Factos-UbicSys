@@ -77,6 +77,9 @@ function CompleteProfileForm() {
         return;
     }
 
+    // Se construye el objeto de la compañía que se guardará en Firestore.
+    // El campo `authUid` es crucial, ya que vincula el registro de autenticación de Firebase
+    // con el perfil de la compañía en la base de datos de Firestore.
     const companyData: Partial<Company> = {
       name,
       email,
