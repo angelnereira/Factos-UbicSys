@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from "next/link"
+import { useSearchParams } from 'next/navigation';
 import {
   ChevronRight,
   ShieldCheck,
@@ -283,8 +284,10 @@ function DataSettings() {
 }
 
 
-export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('account');
+function SettingsPageContent() {
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('tab') || 'account';
+  const [activeTab, setActiveTab] = useState(tab);
 
   return (
     <div className="flex-1 space-y-4">
@@ -338,6 +341,14 @@ export default function SettingsPage() {
       </main>
     </div>
   )
+}
+
+export default function SettingsPage() {
+    return (
+        <Suspense fallback={<div>Cargando...</div>}>
+            <SettingsPageContent />
+        </Suspense>
+    );
 }
 
     

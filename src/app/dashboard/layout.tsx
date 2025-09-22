@@ -61,7 +61,7 @@ export default function DashboardLayout({
               </CardHeader>
               <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
                 <Button size="sm" className="w-full" asChild>
-                  <Link href="/dashboard/settings">
+                  <Link href="/dashboard/settings?tab=credentials">
                     <Settings className="mr-2 h-4 w-4" />
                     Configurar API
                   </Link>
