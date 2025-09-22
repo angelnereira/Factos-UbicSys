@@ -39,6 +39,7 @@ import { signUpWithEmailAndPassword, loginWithEmailAndPassword, signInWithGoogle
 import type { AuthError } from 'firebase/auth';
 import { GoogleIcon } from '@/components/google-icon';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 const loginSchema = z.object({
@@ -60,6 +61,9 @@ export default function AuthPage() {
   const { toast } = useToast();
   const { user, loading: authLoading, auth } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // This state will be true if Firebase config is missing in the environment.
+  const isAuthServiceUnavailable = !auth && !authLoading;
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -205,54 +209,63 @@ export default function AuthPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting || !auth}>
-                  {isSubmitting ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
-                </Button>
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
+              {isAuthServiceUnavailable ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>Error de Configuración</AlertTitle>
+                    <AlertDescription>
+                      El servicio de autenticación no está disponible. Asegúrate de haber configurado las variables de entorno de Firebase en tu plataforma de hosting.
+                    </AlertDescription>
+                  </Alert>
+              ) : (
+                <div className="space-y-4">
+                  <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting || !auth}>
+                    {isSubmitting ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
+                  </Button>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        O continuar con
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      O continuar con
-                    </span>
-                  </div>
+                  <Form {...loginForm}>
+                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                      <FormField
+                        control={loginForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Correo Electrónico</FormLabel>
+                            <FormControl>
+                              <Input placeholder="usuario@ejemplo.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={loginForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contraseña</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="••••••••" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full" disabled={isSubmitting || !auth}>
+                        {isSubmitting ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
+                      </Button>
+                    </form>
+                  </Form>
                 </div>
-                <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                    <FormField
-                      control={loginForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Correo Electrónico</FormLabel>
-                          <FormControl>
-                            <Input placeholder="usuario@ejemplo.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={loginForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Contraseña</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" className="w-full" disabled={isSubmitting || !auth}>
-                      {isSubmitting ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
-                    </Button>
-                  </form>
-                </Form>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -265,67 +278,76 @@ export default function AuthPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="space-y-4">
-                    <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting || !auth}>
-                        {isSubmitting ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
-                    </Button>
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">
-                                O registrarse con email
-                            </span>
-                        </div>
-                    </div>
-                    <Form {...signUpForm}>
-                        <form onSubmit={signUpForm.handleSubmit(onSignUpSubmit)} className="space-y-4">
-                        <FormField
-                            control={signUpForm.control}
-                            name="name"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nombre de la Compañía</FormLabel>
-                                <FormControl>
-                                <Input placeholder="Tu Compañía S.A." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={signUpForm.control}
-                            name="email"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Correo Electrónico de Contacto</FormLabel>
-                                <FormControl>
-                                <Input placeholder="contacto@tucompania.com" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={signUpForm.control}
-                            name="password"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Contraseña</FormLabel>
-                                <FormControl>
-                                <Input type="password" placeholder="Mínimo 8 caracteres" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <Button type="submit" className="w-full" disabled={isSubmitting || !auth}>
-                            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Siguiente'}
-                        </Button>
-                        </form>
-                    </Form>
-                </div>
+                {isAuthServiceUnavailable ? (
+                    <Alert variant="destructive">
+                      <AlertTitle>Error de Configuración</AlertTitle>
+                      <AlertDescription>
+                        El servicio de autenticación no está disponible. Asegúrate de haber configurado las variables de entorno de Firebase en tu plataforma de hosting.
+                      </AlertDescription>
+                    </Alert>
+                ) : (
+                  <div className="space-y-4">
+                      <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting || !auth}>
+                          {isSubmitting ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
+                      </Button>
+                      <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                              <span className="w-full border-t" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                              <span className="bg-background px-2 text-muted-foreground">
+                                  O registrarse con email
+                              </span>
+                          </div>
+                      </div>
+                      <Form {...signUpForm}>
+                          <form onSubmit={signUpForm.handleSubmit(onSignUpSubmit)} className="space-y-4">
+                          <FormField
+                              control={signUpForm.control}
+                              name="name"
+                              render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Nombre de la Compañía</FormLabel>
+                                  <FormControl>
+                                  <Input placeholder="Tu Compañía S.A." {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                              )}
+                          />
+                          <FormField
+                              control={signUpForm.control}
+                              name="email"
+                              render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Correo Electrónico de Contacto</FormLabel>
+                                  <FormControl>
+                                  <Input placeholder="contacto@tucompania.com" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                              )}
+                          />
+                          <FormField
+                              control={signUpForm.control}
+                              name="password"
+                              render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Contraseña</FormLabel>
+                                  <FormControl>
+                                  <Input type="password" placeholder="Mínimo 8 caracteres" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                              )}
+                          />
+                          <Button type="submit" className="w-full" disabled={isSubmitting || !auth}>
+                              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Siguiente'}
+                          </Button>
+                          </form>
+                      </Form>
+                  </div>
+                )}
             </CardContent>
           </Card>
         </TabsContent>

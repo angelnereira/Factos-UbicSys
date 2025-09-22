@@ -44,8 +44,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     };
 
+    // If the API key is missing, don't attempt to initialize Firebase.
+    // This is crucial for production builds where env vars might not be set.
     if (firebaseConfig.apiKey) {
-      // This code will only run on the client
       const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
       const authInstance = getAuth(app);
       
@@ -55,6 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         // Silently fail if firestore is not enabled.
         // Other parts of the app will handle the null `db` state.
+        console.error("Error initializing Firestore. This may mean the service is not enabled for your project.", error);
       }
 
       setFirebaseApp(app);
@@ -70,7 +72,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return () => unsubscribe();
     } else {
-      console.error("Firebase API Key is missing. Please check your .env.local file.");
+      // If config is missing, stop loading and leave auth services as null.
+      // The UI will then show that the auth service is unavailable.
+      console.warn("Firebase configuration is missing. Authentication will be disabled.");
       setLoading(false);
     }
   }, []);
