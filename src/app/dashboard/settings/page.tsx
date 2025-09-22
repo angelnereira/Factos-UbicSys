@@ -276,29 +276,12 @@ function CompanyApiKeys() {
                 description: "La clave de API ha sido copiada al portapapeles.",
             });
         } catch (err) {
-            console.error('Failed to copy: ', err);
-            // Fallback for non-secure contexts
-            const textArea = document.createElement("textarea");
-            textArea.value = apiKey;
-            textArea.style.position = "absolute";
-            textArea.style.left = "-9999px";
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                toast({
-                    title: "Copiado (Fallback)",
-                    description: "La clave de API ha sido copiada al portapapeles.",
-                });
-            } catch (execErr) {
-                console.error('Fallback copy failed: ', execErr);
-                toast({
-                    title: "Error",
-                    description: "No se pudo copiar la clave de API.",
-                    variant: "destructive",
-                });
-            }
-            document.body.removeChild(textArea);
+            console.error('Failed to copy using navigator.clipboard:', err);
+             toast({
+                title: "Error al Copiar",
+                description: "No se pudo copiar la clave debido a los permisos del navegador. Inténtelo manualmente.",
+                variant: "destructive",
+            });
         }
     };
 
