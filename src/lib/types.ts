@@ -1,4 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
+import type { FactoryHkaDocumentRequest } from './integrations/tfhka/tfhka-types';
 
 // Based on The Factory HKA integration document
 
@@ -70,7 +71,7 @@ export interface FiscalDocument {
   originalData: Record<string, unknown>;
   
   // Transformed Data (sent to The Factory HKA)
-  // transformedData?: FactoryHkaDocumentRequest;
+  transformedData?: FactoryHkaDocumentRequest;
   
   // Responses
   // factoryHkaResponse?: FactoryHkaResponse;
