@@ -1,11 +1,8 @@
 'use client';
 
-import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query, updateDoc, Timestamp, getFirestore, type Firestore } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query, updateDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
-import type { DocumentData } from 'firebase/firestore';
-import { app } from './firebase';
-
-const db: Firestore = getFirestore(app);
+import { db } from './firebase-client'; // Updated import
 
 
 /**

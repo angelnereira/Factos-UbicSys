@@ -1,9 +1,7 @@
 'use client';
 
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, getAuth, type Auth, type AuthError } from 'firebase/auth';
-import { app } from './firebase';
-
-const auth = getAuth(app);
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, type AuthError } from 'firebase/auth';
+import { auth } from './firebase-client'; // Updated import
 
 export const signUpWithEmailAndPassword = async (email: string, password: string) => {
   try {
