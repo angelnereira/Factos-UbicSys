@@ -9,7 +9,7 @@ let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 
-// Singleton pattern to ensure single instance
+// Singleton pattern to ensure single instance on the client
 function getFirebaseServices() {
   if (!app) {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
