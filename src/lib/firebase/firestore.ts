@@ -1,8 +1,7 @@
-
-import { db } from './firebase';
-import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query, updateDoc } from 'firebase/firestore';
+import { db } from './firebase-client';
+import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query, updateDoc, Timestamp } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
-import type { DocumentData, Timestamp } from 'firebase/firestore';
+import type { DocumentData } from 'firebase/firestore';
 
 
 /**
