@@ -72,28 +72,26 @@ function CompleteProfileForm() {
     },
   });
 
-  const onSubmit = async (values: ProfileFormValues) => {
+  const saveCompanyProfile = async (values: ProfileFormValues) => {
     if (!db) {
-        toast({
-            title: 'Error de base de datos',
-            description: 'No se pudo conectar a la base de datos. Asegúrate de que Firestore está habilitado en tu proyecto.',
-            variant: 'destructive'
-        });
-        return;
+      toast({
+        title: 'Error de base de datos',
+        description: 'No se pudo conectar a la base de datos. Asegúrate de que Firestore está habilitado en tu proyecto.',
+        variant: 'destructive'
+      });
+      return false;
     }
-    setIsLoading(true);
-    
+
     const userUid = user?.uid || uid;
 
     if (!userUid) {
-        toast({
-            title: 'Error de Registro',
-            description: 'No se encontró el ID de usuario. Por favor, intenta registrarte de nuevo.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
-        router.push('/');
-        return;
+      toast({
+        title: 'Error de Registro',
+        description: 'No se encontró el ID de usuario. Por favor, intenta registrarte de nuevo.',
+        variant: 'destructive',
+      });
+      router.push('/');
+      return false;
     }
 
     // Creates the company profile in Firestore.
@@ -109,21 +107,21 @@ function CompleteProfileForm() {
       integrationConfig: {
         erpType: 'custom',
         notificationSettings: {
-            emailNotifications: true,
-            webhookNotifications: false,
-            smsNotifications: false,
+          emailNotifications: true,
+          webhookNotifications: false,
+          smsNotifications: false,
         }
       },
       factoryHkaConfig: {
         demo: {
-            username: "user_demo", // Placeholder
-            isActive: true,
-            maxDocumentsPerMonth: 1000,
-            documentsUsedThisMonth: 0,
+          username: "user_demo", // Placeholder
+          isActive: true,
+          maxDocumentsPerMonth: 1000,
+          documentsUsedThisMonth: 0,
         },
         production: {
-            username: "user_prod", // Placeholder
-            isActive: false,
+          username: "user_prod", // Placeholder
+          isActive: false,
         }
       },
       taxId: values.taxId,
@@ -132,25 +130,50 @@ function CompleteProfileForm() {
     };
 
     try {
-        await addCompany(db, companyData);
-        toast({
-          title: '¡Registro completado!',
-          description: 'Tu perfil ha sido creado exitosamente. Serás redirigido al dashboard.',
-        });
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1500);
+      await addCompany(db, companyData);
+      return true;
     } catch (error) {
-        console.error("Error adding company: ", error);
-        toast({
-            title: 'Error al completar el perfil',
-            description: 'No se pudo guardar la información de la compañía.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
+      console.error("Error adding company: ", error);
+      toast({
+        title: 'Error al completar el perfil',
+        description: 'No se pudo guardar la información de la compañía.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+
+  const onSubmit = async (values: ProfileFormValues) => {
+    setIsLoading(true);
+    const success = await saveCompanyProfile(values);
+    if (success) {
+      toast({
+        title: '¡Registro completado!',
+        description: 'Tu perfil ha sido creado exitosamente. Serás redirigido al dashboard.',
+      });
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1500);
+    } else {
+      setIsLoading(false);
     }
   };
   
+  const handleSkip = async () => {
+     setIsLoading(true);
+     const success = await saveCompanyProfile({ taxId: '', phone: '', address: '' });
+     if (success) {
+       toast({
+         title: 'Perfil básico creado',
+         description: 'Serás redirigido al dashboard. Puedes completar tu perfil más tarde.',
+       });
+       router.push('/dashboard');
+     } else {
+       setIsLoading(false);
+     }
+  }
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -184,7 +207,7 @@ function CompleteProfileForm() {
                   <FormItem>
                     <FormLabel>RUC (Registro Único de Contribuyente)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: 123456-7-890123 DV 45" {...field} disabled={!db} />
+                      <Input placeholder="Ej: 123456-7-890123 DV 45" {...field} disabled={!db || isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -197,7 +220,7 @@ function CompleteProfileForm() {
                   <FormItem>
                     <FormLabel>Número de Contacto</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: +507 123-4567" {...field} disabled={!db} />
+                      <Input placeholder="Ej: +507 123-4567" {...field} disabled={!db || isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -210,14 +233,14 @@ function CompleteProfileForm() {
                   <FormItem>
                     <FormLabel>Dirección Física</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Ciudad de Panamá, Panamá" {...field} disabled={!db} />
+                      <Input placeholder="Ej: Ciudad de Panamá, Panamá" {...field} disabled={!db || isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <div className="flex justify-end space-x-2 pt-4">
-                 <Button variant="ghost" onClick={() => router.push('/dashboard')}>
+                 <Button variant="ghost" type="button" onClick={handleSkip} disabled={isLoading || !db}>
                     Omitir por ahora
                 </Button>
                 <Button type="submit" disabled={isLoading || !db}>
