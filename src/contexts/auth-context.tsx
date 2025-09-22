@@ -53,7 +53,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         dbInstance = getFirestore(app);
       } catch (error) {
-        console.error("Error initializing Firestore. This may mean the service is not enabled for your project.", error);
+        // Silently fail if firestore is not enabled.
+        // Other parts of the app will handle the null `db` state.
       }
 
       setFirebaseApp(app);

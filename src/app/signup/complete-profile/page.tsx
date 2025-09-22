@@ -52,6 +52,17 @@ function CompleteProfileForm() {
     }
   }, [user, loading, router, uid, toast]);
 
+  useEffect(() => {
+    if (!db) {
+       toast({
+        title: 'Base de Datos no disponible',
+        description: 'Por favor, habilita Firestore en tu consola de Firebase para continuar.',
+        variant: 'destructive',
+        duration: Infinity
+      });
+    }
+  }, [db, toast]);
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -65,7 +76,7 @@ function CompleteProfileForm() {
     if (!db) {
         toast({
             title: 'Error de base de datos',
-            description: 'No se pudo conectar a la base de datos.',
+            description: 'No se pudo conectar a la base de datos. Asegúrate de que Firestore está habilitado en tu proyecto.',
             variant: 'destructive'
         });
         return;
@@ -173,7 +184,7 @@ function CompleteProfileForm() {
                   <FormItem>
                     <FormLabel>RUC (Registro Único de Contribuyente)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: 123456-7-890123 DV 45" {...field} />
+                      <Input placeholder="Ej: 123456-7-890123 DV 45" {...field} disabled={!db} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -186,7 +197,7 @@ function CompleteProfileForm() {
                   <FormItem>
                     <FormLabel>Número de Contacto</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: +507 123-4567" {...field} />
+                      <Input placeholder="Ej: +507 123-4567" {...field} disabled={!db} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -199,7 +210,7 @@ function CompleteProfileForm() {
                   <FormItem>
                     <FormLabel>Dirección Física</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Ciudad de Panamá, Panamá" {...field} />
+                      <Input placeholder="Ej: Ciudad de Panamá, Panamá" {...field} disabled={!db} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
