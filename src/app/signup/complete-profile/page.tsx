@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +17,7 @@ import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { addCompany } from '@/lib/firebase/firestore';
 import type { Company } from '@/lib/types';
+import { useAuth } from '@/contexts/auth-context';
 
 const profileSchema = z.object({
   taxId: z.string().optional(),
@@ -31,10 +32,25 @@ function CompleteProfileForm() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { user, loading } = useAuth();
+
 
   const name = searchParams.get('name') || '';
   const email = searchParams.get('email') || '';
   const uid = searchParams.get('uid') || '';
+  
+  useEffect(() => {
+    // If the user is already logged in and the UIDs match, they can complete the profile
+    // Or if the URL contains a UID from the signup process
+    if (!loading && !user && !uid) {
+      toast({
+        title: 'Acceso no autorizado',
+        description: 'Por favor, regístrate primero.',
+        variant: 'destructive',
+      });
+      router.push('/');
+    }
+  }, [user, loading, router, uid, toast]);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -47,8 +63,10 @@ function CompleteProfileForm() {
 
   const onSubmit = async (values: ProfileFormValues) => {
     setIsLoading(true);
+    
+    const userUid = user?.uid || uid;
 
-    if (!uid) {
+    if (!userUid) {
         toast({
             title: 'Error de Registro',
             description: 'No se encontró el ID de usuario. Por favor, intenta registrarte de nuevo.',
@@ -62,7 +80,7 @@ function CompleteProfileForm() {
     const companyData: Partial<Company> = {
       name,
       email,
-      authUid: uid,
+      authUid: userUid,
       status: 'Demo',
       onboarded: new Date(),
       integrationConfig: {
@@ -109,6 +127,14 @@ function CompleteProfileForm() {
       router.push('/dashboard');
     }, 1500);
   };
+  
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
@@ -185,7 +211,7 @@ function CompleteProfileForm() {
 
 export default function CompleteProfilePage() {
     return (
-        <Suspense fallback={<div>Cargando...</div>}>
+        <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin" /></div>}>
             <CompleteProfileForm />
         </Suspense>
     )

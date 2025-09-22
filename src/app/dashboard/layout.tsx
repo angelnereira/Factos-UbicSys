@@ -1,4 +1,6 @@
 
+'use client';
+
 import Link from 'next/link';
 import {
   Menu,
@@ -23,8 +25,9 @@ import { DashboardNav } from '@/components/dashboard-nav';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import PrivateRoute from '@/components/private-route';
 
-export default function DashboardLayout({
+function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode;
@@ -165,5 +168,18 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <PrivateRoute>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </PrivateRoute>
   );
 }

@@ -14,14 +14,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/auth-context';
+import { getAuth, signOut } from 'firebase/auth';
 
 export function UserNav() {
   const router = useRouter();
+  const { user } = useAuth();
   const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar-1');
 
-  const handleLogout = () => {
-    // Here you would typically handle clearing user session, tokens, etc.
-    // For now, we'll just redirect to the login page.
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth);
     router.push('/');
   };
 
@@ -30,23 +33,25 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage
-              src={userAvatar?.imageUrl}
-              alt="User avatar"
-              data-ai-hint={userAvatar?.imageHint}
-              width={40}
-              height={40}
-            />
-            <AvatarFallback>AD</AvatarFallback>
+             {userAvatar?.imageUrl && (
+              <AvatarImage
+                src={userAvatar.imageUrl}
+                alt="User avatar"
+                data-ai-hint={userAvatar.imageHint}
+                width={40}
+                height={40}
+              />
+            )}
+            <AvatarFallback>{user?.email?.[0].toUpperCase() || 'A'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Admin</p>
+            <p className="text-sm font-medium leading-none">{user?.displayName || 'Admin'}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              admin@factos-ubicsys.com
+              {user?.email || 'admin@factos-ubicsys.com'}
             </p>
           </div>
         </DropdownMenuLabel>
