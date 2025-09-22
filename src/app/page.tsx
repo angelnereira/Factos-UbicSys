@@ -58,14 +58,14 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 export default function AuthPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading, auth } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, loading: authLoading, auth } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!authLoading && user) {
       router.push('/dashboard');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
 
   const loginForm = useForm<LoginFormValues>({
@@ -87,7 +87,7 @@ export default function AuthPage() {
 
   const onLoginSubmit = async (values: LoginFormValues) => {
     if (!auth) return;
-    setIsLoading(true);
+    setIsSubmitting(true);
     const { email, password } = values;
     const { error } = await loginWithEmailAndPassword(auth, email, password);
 
@@ -97,7 +97,7 @@ export default function AuthPage() {
         description: 'El correo electrónico o la contraseña son incorrectos.',
         variant: 'destructive',
       });
-      setIsLoading(false);
+      setIsSubmitting(false);
     } else {
       toast({
         title: '¡Inicio de sesión exitoso!',
@@ -111,7 +111,7 @@ export default function AuthPage() {
 
   const onSignUpSubmit = async (values: SignUpFormValues) => {
     if (!auth) return;
-    setIsLoading(true);
+    setIsSubmitting(true);
     const { email, password, name } = values;
     
     const { user: newUser, error } = await signUpWithEmailAndPassword(auth, email, password);
@@ -129,7 +129,7 @@ export default function AuthPage() {
         description: friendlyMessage,
         variant: 'destructive',
       });
-      setIsLoading(false);
+      setIsSubmitting(false);
     } else if (newUser) {
       toast({
         title: '¡Cuenta creada!',
@@ -141,9 +141,9 @@ export default function AuthPage() {
 
   const handleGoogleSignIn = async () => {
     if (!auth) return;
-    setIsLoading(true);
+    setIsSubmitting(true);
     const { result, isNewUser, error } = await signInWithGoogle(auth);
-    setIsLoading(false);
+    setIsSubmitting(false);
 
     if (error) {
       // Handle specific errors if needed
@@ -175,7 +175,7 @@ export default function AuthPage() {
     }
   }
   
-  if (loading || user) {
+  if (authLoading || user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin" />
@@ -206,8 +206,8 @@ export default function AuthPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || !auth}>
-                  {isLoading ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
+                <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting || !auth}>
+                  {isSubmitting ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
                 </Button>
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -247,8 +247,8 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full" disabled={isLoading || !auth}>
-                      {isLoading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
+                    <Button type="submit" className="w-full" disabled={isSubmitting || !auth}>
+                      {isSubmitting ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
                     </Button>
                   </form>
                 </Form>
@@ -266,8 +266,8 @@ export default function AuthPage() {
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
-                    <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || !auth}>
-                        {isLoading ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
+                    <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting || !auth}>
+                        {isSubmitting ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
                     </Button>
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
@@ -320,8 +320,8 @@ export default function AuthPage() {
                             </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full" disabled={isLoading || !auth}>
-                            {isLoading ? <Loader2 className="animate-spin" /> : 'Siguiente'}
+                        <Button type="submit" className="w-full" disabled={isSubmitting || !auth}>
+                            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Siguiente'}
                         </Button>
                         </form>
                     </Form>
