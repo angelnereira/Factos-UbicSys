@@ -7,6 +7,16 @@ import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
+const firebaseConfig = {
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -32,33 +42,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [auth, setAuth] = useState<Auth | null>(null);
   const [db, setDb] = useState<Firestore | null>(null);
 
-  // State to safely hold env vars on the client
-  const [config, setConfig] = useState<{
-    projectId?: string;
-    apiKey?: string;
-    authDomain?: string;
-    storageBucket?: string;
-    messagingSenderId?: string;
-    appId?: string;
-  } | null>(null);
 
-  // Step 1: On component mount, safely read env vars into state.
-  // This runs only on the client, once.
   useEffect(() => {
-    setConfig({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    });
-  }, []);
-
-  // Step 2: Initialize Firebase only after the config state is populated.
-  useEffect(() => {
-    if (config && config.apiKey) {
-      const app = getApps().length === 0 ? initializeApp(config) : getApp();
+    // This check ensures we only initialize on the client and that config is valid.
+    if (firebaseConfig.apiKey) {
+      const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
       const authInstance = getAuth(app);
       const dbInstance = getFirestore(app);
 
@@ -72,13 +60,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       return () => unsubscribe();
-    } else if (config && !config.apiKey) {
-      // If config is set but apiKey is missing, stop loading and show an error.
-      // This is a clear indication that env vars are not configured.
-      console.error("Firebase API Key is missing. Please check your .env file.");
+    } else {
+      // This will now only happen if the .env.local file is not configured correctly.
+      console.error("Firebase API Key is missing. Please check your .env.local file.");
       setLoading(false);
     }
-  }, [config]);
+  }, []);
 
 
   if (loading) {
