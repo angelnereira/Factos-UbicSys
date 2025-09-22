@@ -121,7 +121,7 @@ function CompleteProfileForm() {
     };
 
     try {
-        await addCompany(companyData);
+        await addCompany(db, companyData);
         toast({
           title: '¡Registro completado!',
           description: 'Tu perfil ha sido creado exitosamente. Serás redirigido al dashboard.',

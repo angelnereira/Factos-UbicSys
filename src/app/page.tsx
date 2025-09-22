@@ -87,7 +87,7 @@ export default function AuthPage() {
     if (!auth) return;
     setIsLoading(true);
     const { email, password } = values;
-    const { error } = await loginWithEmailAndPassword(email, password);
+    const { error } = await loginWithEmailAndPassword(auth, email, password);
 
     if (error) {
        toast({
@@ -112,7 +112,7 @@ export default function AuthPage() {
     setIsLoading(true);
     const { email, password, name } = values;
     
-    const { user: newUser, error } = await signUpWithEmailAndPassword(email, password);
+    const { user: newUser, error } = await signUpWithEmailAndPassword(auth, email, password);
 
     if (error) {
       const authError = error as AuthError;

@@ -57,7 +57,7 @@ export default function LogsPage() {
     async function fetchData() {
       if (!db) return;
       setIsLoading(true);
-      const querySnapshot = await getAllLogs();
+      const querySnapshot = await getAllLogs(db);
       const allLogs: LogEntry[] = [];
       querySnapshot.forEach((docSnap) => {
         const doc = docSnap.data() as FiscalDocument;

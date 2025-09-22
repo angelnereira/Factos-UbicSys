@@ -46,7 +46,7 @@ export default function MonitoringPage() {
     async function fetchData() {
       if (!db) return;
       setIsLoading(true);
-      const fetchedDocuments = await getAllDocuments();
+      const fetchedDocuments = await getAllDocuments(db);
       setDocuments(fetchedDocuments);
       setIsLoading(false);
     }
