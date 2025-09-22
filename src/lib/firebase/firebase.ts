@@ -1,3 +1,4 @@
+
 // Your web app's Firebase configuration
 export const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,

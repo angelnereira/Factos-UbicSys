@@ -1,14 +1,22 @@
 'use client';
 
-import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
+import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 import { firebaseConfig } from './firebase';
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-const auth = getAuth(app);
-const functions = getFunctions(app);
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
 
-export { app, db, auth, functions };
+// Singleton pattern to ensure single instance
+function getFirebaseServices() {
+  if (!app) {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+  return { app, auth, db };
+}
+
+export { getFirebaseServices };
