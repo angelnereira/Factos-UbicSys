@@ -7,16 +7,6 @@ import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
-const firebaseConfig = {
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -44,15 +34,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   useEffect(() => {
-    // This check ensures we only initialize on the client and that config is valid.
+    // This check ensures we only initialize on the client.
+    const firebaseConfig = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    };
+
     if (firebaseConfig.apiKey) {
+      // This code will only run on the client
       const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
       const authInstance = getAuth(app);
-      const dbInstance = getFirestore(app);
+      
+      let dbInstance: Firestore | null = null;
+      try {
+        dbInstance = getFirestore(app);
+      } catch (error) {
+        console.error("*******************************************************");
+        console.error("Error initializing Firestore:", error);
+        console.error("This usually means Firestore has not been enabled for your project.");
+        console.error("Please go to the Firebase Console, select your project, and click 'Firestore Database' to create and enable it.");
+        console.error("*******************************************************");
+      }
 
       setFirebaseApp(app);
       setAuth(authInstance);
-      setDb(dbInstance);
+      if (dbInstance) {
+        setDb(dbInstance);
+      }
 
       const unsubscribe = onAuthStateChanged(authInstance, (user) => {
         setUser(user);
@@ -61,7 +73,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return () => unsubscribe();
     } else {
-      // This will now only happen if the .env.local file is not configured correctly.
       console.error("Firebase API Key is missing. Please check your .env.local file.");
       setLoading(false);
     }
