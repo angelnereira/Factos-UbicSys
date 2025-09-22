@@ -36,6 +36,11 @@ export async function POST(request: Request) {
     const validatedData = validation.data;
 
     try {
+        if (!adminDb) {
+            console.error('[API] Firebase Admin SDK is not initialized. Check server environment variables.');
+            return NextResponse.json({ success: false, message: 'Server is not configured to connect to the database.' }, { status: 500 });
+        }
+        
         const documentToSave = mapRequestToFiscalDocument(validatedData, companyId);
         
         const docRef = await adminDb.collection("companies").doc(companyId).collection("documents").add(documentToSave);
