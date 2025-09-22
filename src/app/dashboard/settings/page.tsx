@@ -15,6 +15,7 @@ import {
   EyeOff,
   PlusCircle,
   ArrowLeft,
+  Copy,
 } from "lucide-react"
 import {
   Card,
@@ -36,6 +37,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 
 const settingsNav = [
@@ -53,8 +56,8 @@ const settingsNav = [
     },
     {
         id: 'credentials',
-        name: "Credenciales",
-        description: "Administra tus claves de API.",
+        name: "Credenciales y API",
+        description: "Administra tus claves de API y secretos.",
         icon: ShieldCheck,
     },
     {
@@ -124,7 +127,7 @@ type SecretCollection = {
     status: 'active' | 'inactive';
 };
 
-function CredentialsSettings() {
+function HkaSecretsManager() {
     const [view, setView] = useState<'list' | 'form'>('list');
     const [collections, setCollections] = useState<SecretCollection[]>([
         { id: 'col-1', demoUser: 'walgofugiitj_ws_tfhka', demoPass: 'Tfhka.P4n4m4.2023', prodUser: '', prodPass: '', status: 'active' }
@@ -162,67 +165,63 @@ function CredentialsSettings() {
 
     if (view === 'list') {
         return (
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <CardTitle className="flex items-center gap-2">
-                                <KeyRound /> Bóveda de Secretos
-                            </CardTitle>
-                            <CardDescription>
-                                Colecciones de credenciales para The Factory HKA.
-                            </CardDescription>
-                        </div>
-                        <Button onClick={handleCreateNewCollection}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Crear Colección
-                        </Button>
+            <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h3 className="text-lg font-medium flex items-center gap-2">
+                             <KeyRound /> Bóveda de Secretos (The Factory HKA)
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                            Colecciones de credenciales para conectar con el PAC.
+                        </p>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Usuario Demo</TableHead>
-                                <TableHead>Usuario Producción</TableHead>
-                                <TableHead>Estado</TableHead>
+                    <Button onClick={handleCreateNewCollection}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Crear Colección
+                    </Button>
+                </div>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Usuario Demo</TableHead>
+                            <TableHead>Usuario Producción</TableHead>
+                            <TableHead>Estado</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {collections.map((col) => (
+                            <TableRow key={col.id}>
+                                <TableCell>{col.demoUser}</TableCell>
+                                <TableCell>{col.prodUser || 'No configurado'}</TableCell>
+                                <TableCell>
+                                    <Badge variant={col.status === 'active' ? 'default' : 'outline'}>
+                                        {col.status === 'active' ? 'Activa' : 'Inactiva'}
+                                    </Badge>
+                                </TableCell>
                             </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {collections.map((col) => (
-                                <TableRow key={col.id}>
-                                    <TableCell>{col.demoUser}</TableCell>
-                                    <TableCell>{col.prodUser || 'No configurado'}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={col.status === 'active' ? 'default' : 'outline'}>
-                                            {col.status === 'active' ? 'Activa' : 'Inactiva'}
-                                        </Badge>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
         );
     }
 
-    return (
-        <Card>
-            <CardHeader>
-                <Button variant="ghost" size="sm" onClick={() => setView('list')} className="w-fit p-1 h-auto">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver a la lista
-                </Button>
-                <CardTitle className="flex items-center gap-2 pt-2">
-                     <PlusCircle /> Nueva Colección de Secretos
-                </CardTitle>
-                <CardDescription>
-                    Añade las credenciales de API para los ambientes de Demo y Producción.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                {/* Demo Credentials */}
+    // Form View
+     return (
+        <div className="space-y-4">
+            <Button variant="ghost" size="sm" onClick={() => setView('list')} className="w-fit p-1 h-auto">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver a la lista
+            </Button>
+            <div className="space-y-1 pt-2">
+                 <h3 className="text-lg font-medium flex items-center gap-2">
+                    <PlusCircle /> Nueva Colección de Secretos
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                   Añade las credenciales de API para los ambientes de Demo y Producción de HKA.
+                </p>
+            </div>
+            <div className="space-y-6 pt-4">
                 <div className="space-y-4 rounded-lg border p-4">
                     <h3 className="font-semibold">Ambiente de Demo / Pruebas</h3>
                      <div className="space-y-2">
@@ -240,7 +239,6 @@ function CredentialsSettings() {
                     </div>
                 </div>
                 
-                 {/* Production Credentials */}
                 <div className="space-y-4 rounded-lg border p-4">
                     <h3 className="font-semibold">Ambiente de Producción</h3>
                      <div className="space-y-2">
@@ -257,10 +255,76 @@ function CredentialsSettings() {
                         </div>
                     </div>
                 </div>
+                <div>
+                    <Button onClick={handleSaveCollection}>Guardar Colección</Button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
-            </CardContent>
-            <CardContent>
-                 <Button onClick={handleSaveCollection}>Guardar Colección</Button>
+function CompanyApiKeys() {
+    const { toast } = useToast();
+    const [showKey, setShowKey] = useState(false);
+    const apiKey = "fu_live_sk_ex******************XYZ"; // Example key
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(apiKey);
+        toast({
+            title: "Copiado",
+            description: "La clave de API ha sido copiada al portapapeles.",
+        });
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h3 className="text-lg font-medium">Claves de API de la Compañía</h3>
+                    <p className="text-sm text-muted-foreground">
+                        Usa estas claves para conectar tu ERP o sistemas a Factos UbicSys.
+                    </p>
+                </div>
+                <Button disabled>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Generar Nueva Clave
+                </Button>
+            </div>
+            <div className="border rounded-lg p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="font-mono text-sm">
+                        {showKey ? apiKey : `••••••••••••••••••••••••${apiKey.slice(-4)}`}
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => setShowKey(!showKey)}>
+                        {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        <span className="sr-only">Mostrar/Ocultar clave</span>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+                        <Copy className="h-4 w-4" />
+                        <span className="sr-only">Copiar clave</span>
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+
+function CredentialsSettings() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Credenciales y API</CardTitle>
+                <CardDescription>
+                    Administra tus claves de API para conectar tus sistemas y las credenciales para el proveedor de facturación (PAC).
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+                <CompanyApiKeys />
+                <Separator />
+                <HkaSecretsManager />
             </CardContent>
         </Card>
     );
