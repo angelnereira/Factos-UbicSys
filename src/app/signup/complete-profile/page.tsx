@@ -85,6 +85,8 @@ function CompleteProfileForm() {
         return;
     }
 
+    // Creates the company profile in Firestore.
+    // This connects the authenticated user (authUid) to their company data.
     const companyData: Omit<Company, 'id'> = {
       name,
       email,
@@ -119,10 +121,10 @@ function CompleteProfileForm() {
     };
 
     try {
-        await addCompany(db, companyData);
+        await addCompany(companyData);
         toast({
           title: '¡Registro completado!',
-          description: 'Tu perfil ha sido creado exitosamente.',
+          description: 'Tu perfil ha sido creado exitosamente. Serás redirigido al dashboard.',
         });
         setTimeout(() => {
           router.push('/dashboard');
@@ -156,9 +158,9 @@ function CompleteProfileForm() {
       </div>
       <Card className="w-[450px]">
         <CardHeader>
-          <CardTitle>Completar Perfil</CardTitle>
+          <CardTitle>Completar Perfil de la Compañía</CardTitle>
           <CardDescription>
-            Añade información adicional (opcional) para completar tu registro.
+            Añade información adicional (opcional) para tu compañía.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -169,9 +171,9 @@ function CompleteProfileForm() {
                 name="taxId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>RUC</FormLabel>
+                    <FormLabel>RUC (Registro Único de Contribuyente)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: 1234567890001" {...field} />
+                      <Input placeholder="Ej: 123456-7-890123 DV 45" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -184,7 +186,7 @@ function CompleteProfileForm() {
                   <FormItem>
                     <FormLabel>Número de Contacto</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: 0991234567" {...field} />
+                      <Input placeholder="Ej: +507 123-4567" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -195,9 +197,9 @@ function CompleteProfileForm() {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ubicación</FormLabel>
+                    <FormLabel>Dirección Física</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Quito, Ecuador" {...field} />
+                      <Input placeholder="Ej: Ciudad de Panamá, Panamá" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -205,7 +207,7 @@ function CompleteProfileForm() {
               />
               <div className="flex justify-end space-x-2 pt-4">
                  <Button variant="ghost" onClick={() => router.push('/dashboard')}>
-                    Omitir
+                    Omitir por ahora
                 </Button>
                 <Button type="submit" disabled={isLoading || !db}>
                     {isLoading ? <Loader2 className="animate-spin" /> : 'Finalizar Registro'}

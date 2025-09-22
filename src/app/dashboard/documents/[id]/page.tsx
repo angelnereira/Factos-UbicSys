@@ -75,9 +75,9 @@ export default function DocumentDetailPage() {
       }
     }
     
-    if (id) {
+    if (id && db) {
         fetchDocument();
-    } else {
+    } else if (!id) {
         setError("No se proporcionó un ID de documento.");
         setIsLoading(false);
     }

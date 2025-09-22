@@ -87,7 +87,7 @@ export default function AuthPage() {
     if (!auth) return;
     setIsLoading(true);
     const { email, password } = values;
-    const { error } = await loginWithEmailAndPassword(auth, email, password);
+    const { error } = await loginWithEmailAndPassword(email, password);
 
     if (error) {
        toast({
@@ -112,13 +112,19 @@ export default function AuthPage() {
     setIsLoading(true);
     const { email, password, name } = values;
     
-    const { user: newUser, error } = await signUpWithEmailAndPassword(auth, email, password);
+    const { user: newUser, error } = await signUpWithEmailAndPassword(email, password);
 
     if (error) {
       const authError = error as AuthError;
+      let friendlyMessage = 'Ocurrió un error inesperado. Por favor, inténtalo de nuevo.';
+      if (authError.code === 'auth/email-already-in-use') {
+        friendlyMessage = 'Este correo electrónico ya está registrado. Por favor, inicia sesión.';
+      } else if (authError.code === 'auth/weak-password') {
+        friendlyMessage = 'La contraseña es demasiado débil. Debe tener al menos 6 caracteres.';
+      }
       toast({
         title: 'Registro fallido',
-        description: authError.message,
+        description: friendlyMessage,
         variant: 'destructive',
       });
       setIsLoading(false);
@@ -213,9 +219,9 @@ export default function AuthPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nombre</FormLabel>
+                        <FormLabel>Nombre de la Compañía</FormLabel>
                         <FormControl>
-                          <Input placeholder="Tu Nombre" {...field} />
+                          <Input placeholder="Tu Compañía S.A." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -226,9 +232,9 @@ export default function AuthPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Correo Electrónico</FormLabel>
+                        <FormLabel>Correo Electrónico de Contacto</FormLabel>
                         <FormControl>
-                          <Input placeholder="usuario@ejemplo.com" {...field} />
+                          <Input placeholder="contacto@tucompania.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -241,7 +247,7 @@ export default function AuthPage() {
                       <FormItem>
                         <FormLabel>Contraseña</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input type="password" placeholder="Mínimo 8 caracteres" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

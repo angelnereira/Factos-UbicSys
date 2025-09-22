@@ -3,21 +3,21 @@ import type { Company } from './types';
 export const mockCompanies: Company[] = [
   {
     id: 'comp-1',
-    name: 'Juan Pérez',
-    taxId: '12345678-1',
-    email: 'juan.perez@example.com',
+    name: 'Constructora del Istmo, S.A.',
+    taxId: '12345678-1-2023',
+    email: 'contacto@constructoradistmo.com',
     phone: '555-0101',
     address: 'Ciudad de Panamá, Panamá',
-    authUid: 'auth-uid-juan',
+    authUid: 'auth-uid-istmo',
     factoryHkaConfig: {
       demo: {
-        username: 'juan_demo',
+        username: 'istmo_demo',
         isActive: true,
-        maxDocumentsPerMonth: 100,
-        documentsUsedThisMonth: 12,
+        maxDocumentsPerMonth: 500,
+        documentsUsedThisMonth: 120,
       },
       production: {
-        username: 'juan_prod',
+        username: 'istmo_prod',
         isActive: false,
       },
     },
@@ -36,21 +36,21 @@ export const mockCompanies: Company[] = [
   },
   {
     id: 'comp-2',
-    name: 'Jose Rodriguez',
-    taxId: '87654321-2',
-    email: 'jose.rodriguez@example.com',
+    name: 'Logística Global de Carga',
+    taxId: '87654321-2-2022',
+    email: 'operaciones@logisticaglobal.pa',
     phone: '555-0102',
     address: 'Colón, Panamá',
-    authUid: 'auth-uid-jose',
+    authUid: 'auth-uid-logistica',
     factoryHkaConfig: {
       demo: {
-        username: 'jose_demo',
+        username: 'logistica_demo',
         isActive: false,
-        maxDocumentsPerMonth: 500,
+        maxDocumentsPerMonth: 2000,
         documentsUsedThisMonth: 0,
       },
       production: {
-        username: 'jose_prod',
+        username: 'logistica_prod',
         isActive: true,
       },
     },
@@ -69,21 +69,21 @@ export const mockCompanies: Company[] = [
   },
   {
     id: 'comp-3',
-    name: 'Maria Gonzalez',
-    taxId: '11223344-3',
-    email: 'maria.gonzalez@example.com',
+    name: 'Café de las Cumbres, S.A.',
+    taxId: '11223344-3-2021',
+    email: 'ventas@cafecumbres.com',
     phone: '555-0103',
     address: 'David, Chiriquí',
-    authUid: 'auth-uid-maria',
+    authUid: 'auth-uid-cafe',
     factoryHkaConfig: {
       demo: {
-        username: 'maria_demo',
+        username: 'cafe_demo',
         isActive: true,
         maxDocumentsPerMonth: 1000,
         documentsUsedThisMonth: 250,
       },
       production: {
-        username: 'maria_prod',
+        username: 'cafe_prod',
         isActive: false,
       },
     },
@@ -101,5 +101,3 @@ export const mockCompanies: Company[] = [
     updatedAt: new Date('2023-09-10') as any,
   },
 ];
-
-    

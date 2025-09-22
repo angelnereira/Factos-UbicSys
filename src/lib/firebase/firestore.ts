@@ -11,13 +11,13 @@ import {
   where,
   collectionGroup,
   Timestamp,
-  type Firestore,
 } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
+import { db } from './firebase-client';
 
 
 // Function to get a list of companies
-export async function getCompanies(db: Firestore) {
+export async function getCompanies() {
   const q = collection(db, 'companies');
   const querySnapshot = await getDocs(q);
   const companies: any[] = [];
@@ -28,7 +28,7 @@ export async function getCompanies(db: Firestore) {
 }
 
 // Function to add a company
-export async function addCompany(db: Firestore, companyData: Omit<Company, 'id'>): Promise<{ id: string | null; error: any }> {
+export async function addCompany(companyData: Omit<Company, 'id'>): Promise<{ id: string | null; error: any }> {
     try {
         const docRef = await addDoc(collection(db, "companies"), companyData);
         return { id: docRef.id, error: null };
@@ -39,7 +39,7 @@ export async function addCompany(db: Firestore, companyData: Omit<Company, 'id'>
 }
 
 // Function to get a document by ID (requires knowing companyId)
-export async function getDocumentById(db: Firestore, companyId: string, documentId: string): Promise<FiscalDocument | null> {
+export async function getDocumentById(companyId: string, documentId: string): Promise<FiscalDocument | null> {
   try {
     if (!companyId || !documentId) {
       console.error("companyId and documentId must be provided.");
@@ -62,7 +62,6 @@ export async function getDocumentById(db: Firestore, companyId: string, document
 
 // Function to update a document (used in flows)
 export async function updateDocumentInFlow(
-  db: Firestore,
   companyId: string,
   documentId: string,
   data: Partial<FiscalDocument>
@@ -86,7 +85,7 @@ export async function updateDocumentInFlow(
 };
 
 // Function to get all documents using a collectionGroup query
-export async function getAllDocuments(db: Firestore): Promise<FiscalDocument[]> {
+export async function getAllDocuments(): Promise<FiscalDocument[]> {
   const documentsQuery = query(collectionGroup(db, 'documents'));
   const querySnapshot = await getDocs(documentsQuery);
   const fetchedDocuments: FiscalDocument[] = [];
@@ -96,30 +95,8 @@ export async function getAllDocuments(db: Firestore): Promise<FiscalDocument[]> 
   return fetchedDocuments;
 }
 
-// Function to find a company by API key
-export async function findCompanyByApiKey(db: Firestore, apiKey: string): Promise<{ companyId: string | null; error: string | null }> {
-    if (!apiKey) {
-        return { companyId: null, error: 'Authorization header is missing.' };
-    }
-    const token = apiKey.replace('Bearer ', '');
-    const q = query(collection(db, 'companies'), where('apiKey', '==', token));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-        return { companyId: null, error: 'Invalid API key.' };
-    }
-    const companyDoc = querySnapshot.docs[0];
-    return { companyId: companyDoc.id, error: null };
-}
-
-// Function to save a new fiscal document
-export async function saveNewFiscalDocument(db: Firestore, documentToSave: Partial<Omit<FiscalDocument, 'id'>>, companyId: string) {
-    const docRef = await addDoc(collection(db, "companies", companyId, "documents"), documentToSave);
-    return docRef;
-}
-
 // Function to get all logs (from document status history)
-export async function getAllLogs(db: Firestore) {
+export async function getAllLogs() {
   const documentsQuery = query(collectionGroup(db, 'documents'));
   const querySnapshot = await getDocs(documentsQuery);
   return querySnapshot.docs;
