@@ -18,6 +18,7 @@ import ErrorExplainer from './_components/error-explainer';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
 import type { Timestamp } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
   approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -32,7 +33,6 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
 export default function DocumentDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const companyId = params.companyId as string; // Assuming companyId is in the route or passed as prop
   const [document, setDocument] = useState<FiscalDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
