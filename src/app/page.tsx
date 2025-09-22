@@ -35,8 +35,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuth } from '@/contexts/auth-context';
-import { signUpWithEmailAndPassword, loginWithEmailAndPassword } from '@/lib/firebase/auth';
+import { signUpWithEmailAndPassword, loginWithEmailAndPassword, signInWithGoogle } from '@/lib/firebase/auth';
 import type { AuthError } from 'firebase/auth';
+import { GoogleIcon } from '@/components/google-icon';
+import { Separator } from '@/components/ui/separator';
 
 
 const loginSchema = z.object({
@@ -136,6 +138,42 @@ export default function AuthPage() {
       router.push(`/signup/complete-profile?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&uid=${newUser.uid}`);
     }
   };
+
+  const handleGoogleSignIn = async () => {
+    if (!auth) return;
+    setIsLoading(true);
+    const { result, isNewUser, error } = await signInWithGoogle(auth);
+    setIsLoading(false);
+
+    if (error) {
+      // Handle specific errors if needed
+      if (error.code !== 'auth/popup-closed-by-user') {
+          toast({
+            title: 'Error de inicio de sesión con Google',
+            description: 'No se pudo iniciar sesión. Por favor, inténtalo de nuevo.',
+            variant: 'destructive'
+          });
+      }
+      return;
+    }
+
+    if (result) {
+        if (isNewUser) {
+            toast({
+                title: '¡Cuenta creada con Google!',
+                description: 'Por favor, completa tu perfil de compañía.'
+            });
+            const { displayName, email, uid } = result.user;
+            router.push(`/signup/complete-profile?name=${encodeURIComponent(displayName || '')}&email=${encodeURIComponent(email || '')}&uid=${uid}`);
+        } else {
+            toast({
+                title: '¡Inicio de sesión exitoso!',
+                description: 'Bienvenido de nuevo.'
+            });
+            router.push('/dashboard');
+        }
+    }
+  }
   
   if (loading || user) {
     return (
@@ -167,39 +205,54 @@ export default function AuthPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                  <FormField
-                    control={loginForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Correo Electrónico</FormLabel>
-                        <FormControl>
-                          <Input placeholder="usuario@ejemplo.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={loginForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contraseña</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={isLoading || !auth}>
-                    {isLoading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
-                  </Button>
-                </form>
-              </Form>
+              <div className="space-y-4">
+                <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || !auth}>
+                  {isLoading ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
+                </Button>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      O continuar con
+                    </span>
+                  </div>
+                </div>
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <FormField
+                      control={loginForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Correo Electrónico</FormLabel>
+                          <FormControl>
+                            <Input placeholder="usuario@ejemplo.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contraseña</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full" disabled={isLoading || !auth}>
+                      {isLoading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
+                    </Button>
+                  </form>
+                </Form>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -212,52 +265,67 @@ export default function AuthPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...signUpForm}>
-                <form onSubmit={signUpForm.handleSubmit(onSignUpSubmit)} className="space-y-4">
-                  <FormField
-                    control={signUpForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nombre de la Compañía</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Tu Compañía S.A." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signUpForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Correo Electrónico de Contacto</FormLabel>
-                        <FormControl>
-                          <Input placeholder="contacto@tucompania.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signUpForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contraseña</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Mínimo 8 caracteres" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={isLoading || !auth}>
-                    {isLoading ? <Loader2 className="animate-spin" /> : 'Siguiente'}
-                  </Button>
-                </form>
-              </Form>
+                <div className="space-y-4">
+                    <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || !auth}>
+                        {isLoading ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Continuar con Google</>}
+                    </Button>
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">
+                                O registrarse con email
+                            </span>
+                        </div>
+                    </div>
+                    <Form {...signUpForm}>
+                        <form onSubmit={signUpForm.handleSubmit(onSignUpSubmit)} className="space-y-4">
+                        <FormField
+                            control={signUpForm.control}
+                            name="name"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nombre de la Compañía</FormLabel>
+                                <FormControl>
+                                <Input placeholder="Tu Compañía S.A." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={signUpForm.control}
+                            name="email"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Correo Electrónico de Contacto</FormLabel>
+                                <FormControl>
+                                <Input placeholder="contacto@tucompania.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={signUpForm.control}
+                            name="password"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Contraseña</FormLabel>
+                                <FormControl>
+                                <Input type="password" placeholder="Mínimo 8 caracteres" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <Button type="submit" className="w-full" disabled={isLoading || !auth}>
+                            {isLoading ? <Loader2 className="animate-spin" /> : 'Siguiente'}
+                        </Button>
+                        </form>
+                    </Form>
+                </div>
             </CardContent>
           </Card>
         </TabsContent>
