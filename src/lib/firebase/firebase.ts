@@ -16,16 +16,10 @@ export const firebaseConfig = {
 // Initialize Firebase for client-side
 let app: FirebaseApp;
 
-if (typeof window !== 'undefined') {
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApp();
-  }
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
 } else {
-  // This is a fallback for server-side rendering, though client-side services won't be available.
-  // The main logic is designed to run in the browser.
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  app = getApp();
 }
 
 export { app };

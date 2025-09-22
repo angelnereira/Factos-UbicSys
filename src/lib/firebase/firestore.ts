@@ -1,12 +1,11 @@
+'use client';
+
 import { collection, getDocs, addDoc, doc, getDoc, collectionGroup, query, updateDoc, Timestamp, getFirestore, type Firestore } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
 import type { DocumentData } from 'firebase/firestore';
 import { app } from './firebase';
 
-let db: Firestore;
-if (typeof window !== 'undefined') {
-  db = getFirestore(app);
-}
+const db: Firestore = getFirestore(app);
 
 
 /**
@@ -15,7 +14,6 @@ if (typeof window !== 'undefined') {
  * @returns An object with the new company data (including id) or an error.
  */
 export const addCompany = async (companyData: Partial<Omit<Company, 'id'>>): Promise<{ newCompany?: Company, error?: any }> => {
-  if (!db) throw new Error("Firestore is not initialized.");
   try {
     const dataWithTimestamps = {
       ...companyData,
@@ -39,7 +37,6 @@ export const addCompany = async (companyData: Partial<Omit<Company, 'id'>>): Pro
  * @returns A promise that resolves to an array of companies.
  */
 export const getCompanies = async (): Promise<Company[]> => {
-  if (!db) throw new Error("Firestore is not initialized.");
   try {
     const querySnapshot = await getDocs(collection(db, "companies"));
     const companies: Company[] = [];
@@ -59,7 +56,6 @@ export const getCompanies = async (): Promise<Company[]> => {
  * @returns An object with the new document data (including id) or an error.
  */
 export const addDocument = async (documentData: Partial<Omit<FiscalDocument, 'id'>>): Promise<{ newDocument?: FiscalDocument, error?: any }> => {
-  if (!db) throw new Error("Firestore is not initialized.");
   if (!documentData.companyId) {
     const error = new Error("companyId is required to add a document.");
     console.error(error);
@@ -89,7 +85,6 @@ export const addDocument = async (documentData: Partial<Omit<FiscalDocument, 'id
  * @returns A promise that resolves to an array of all fiscal documents.
  */
 export const getDocuments = async (): Promise<FiscalDocument[]> => {
-    if (!db) throw new Error("Firestore is not initialized.");
     try {
         const documentsQuery = query(collectionGroup(db, 'documents'));
         const querySnapshot = await getDocs(documentsQuery);
@@ -111,7 +106,6 @@ export const getDocuments = async (): Promise<FiscalDocument[]> => {
  * @returns A promise that resolves to the document data or null if not found.
  */
 export const getDocumentById = async (companyId: string, documentId: string): Promise<FiscalDocument | null> => {
-    if (!db) throw new Error("Firestore is not initialized.");
     try {
         if (!companyId || !documentId) {
             console.error("companyId and documentId must be provided.");
@@ -145,7 +139,6 @@ export const updateDocument = async (
   documentId: string,
   data: Partial<FiscalDocument>
 ): Promise<{ success: boolean; error?: any }> => {
-  if (!db) throw new Error("Firestore is not initialized.");
   if (!companyId || !documentId) {
     const error = new Error("companyId and documentId must be provided.");
     console.error(error);
