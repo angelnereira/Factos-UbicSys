@@ -31,7 +31,7 @@ if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
         try {
             db = getFirestore(app);
         } catch (e) {
-            console.error("Firestore is not available. Please enable it in your Firebase project.");
+            console.warn("Firestore is not available. Please enable it in your Firebase project.");
             db = null;
         }
     }
