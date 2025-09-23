@@ -1,0 +1,80 @@
+"""
+Defines a company registered in the system.
+@table(name: "companies")
+"""
+type Company @entity {
+  """
+  The unique identifier for the company.
+  @pk
+  """
+  id: String!
+  name: String!
+  """ RUC """
+  taxId: String
+  email: String!
+  phone: String
+  address: String
+  """ Firebase Auth User ID """
+  authUid: String! @unique
+  status: CompanyStatus!
+  onboarded: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  documents: [FiscalDocument!] @relation(references: ["id"])
+}
+
+"""
+Represents the processing status of a company.
+"""
+enum CompanyStatus {
+  PRODUCTION
+  DEVELOPMENT
+  DEMO
+}
+
+"""
+Defines a fiscal document processed by the system.
+@table(name: "fiscal_documents")
+"""
+type FiscalDocument @entity {
+  """
+  The unique identifier for the document.
+  @pk
+  """
+  id: String!
+  """ The company this document belongs to. """
+  company: Company!
+  documentType: FiscalDocumentType!
+  cufe: String @unique
+  status: FiscalDocumentStatus!
+  clientName: String!
+  amount: Float!
+  currency: String!
+  date: Timestamp!
+  erpType: String
+  errorDetails: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Represents the type of a fiscal document.
+"""
+enum FiscalDocumentType {
+  FACTURA
+  NOTA_CREDITO
+  NOTA_DEBITO
+  FACTURA_EXPORTACION
+}
+
+"""
+Represents the processing status of a fiscal document.
+"""
+enum FiscalDocumentStatus {
+  PENDING
+  PROCESSING
+  SENT_TO_PAC
+  APPROVED
+  REJECTED
+  CANCELLED
+}

@@ -1,4 +1,4 @@
-connectorId: example
+connectorId: ubic-sys
 generate:
   javascriptSdk:
     - outputDir: ../../src/dataconnect-generated
