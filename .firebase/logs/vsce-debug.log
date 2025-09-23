@@ -48,3 +48,5 @@ I0923 17:35:27.682397    1211 collector.go:107] schema extensions wrote into "/h
 Generated sources: prelude.gql [73251B] 
 I0923 17:35:27.682452    1211 load.go:74] Finished reloading
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0923 17:35:27.679671    1211 load.go:31] Reloading schema and connectors...\nE0923 17:35:27.681798    1211 load.go:73] Could not load sources: \nErrors: schema/schema.gql:23:33: Undefined directive relation.\nI0923 17:35:27.682397    1211 collector.go:107] schema extensions wrote into \"/home/user/studio/dataconnect/.dataconnect/schema\"\nGenerated sources: prelude.gql [73251B] \nI0923 17:35:27.682452    1211 load.go:74] Finished reloading\n"}}
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[warn] ⚠  Data Connect Emulator has exited upon receiving signal: SIGINT 

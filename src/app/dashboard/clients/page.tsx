@@ -51,7 +51,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { queries, mutations } from '@/dataconnect-generated/ubic-sys';
+import { queries, mutations } from '@dataconnect/generated';
 import { useQuery, useMutation } from '@dataconnect/generated';
 
 
@@ -374,4 +374,3 @@ export default function ClientsPage() {
     </>
   );
 }
-

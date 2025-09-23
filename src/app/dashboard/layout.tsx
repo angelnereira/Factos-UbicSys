@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import PrivateRoute from '@/components/private-route';
-import { DataConnectProvider, DataConnectError } from '@dataconnect/react';
+import { DataConnectProvider, DataConnectError } from '@dataconnect/generated';
 import { useToast } from '@/hooks/use-toast';
 
 function DashboardLayoutContent({
