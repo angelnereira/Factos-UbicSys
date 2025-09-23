@@ -6,6 +6,12 @@ import { mapRequestToFiscalDocument } from '@/lib/document-mapper';
 import { validateApiKey, adminDb } from './_lib/firebase-admin';
 
 export async function POST(request: Request) {
+    // Check for Admin SDK initialization first.
+    if (!adminDb) {
+        console.error('[API] Firebase Admin SDK is not initialized. This is expected in a local environment without service account keys. The API will not work until deployed.');
+        return NextResponse.json({ success: false, message: 'Server is not configured to connect to the database. This is a server-side configuration issue.' }, { status: 500 });
+    }
+
     const authHeader = request.headers.get('Authorization');
     const { companyId, error: authError } = await validateApiKey(authHeader);
 
@@ -36,11 +42,6 @@ export async function POST(request: Request) {
     const validatedData = validation.data;
 
     try {
-        if (!adminDb) {
-            console.error('[API] Firebase Admin SDK is not initialized. Check server environment variables.');
-            return NextResponse.json({ success: false, message: 'Server is not configured to connect to the database.' }, { status: 500 });
-        }
-        
         const documentToSave = mapRequestToFiscalDocument(validatedData, companyId);
         
         const docRef = await adminDb.collection("companies").doc(companyId).collection("documents").add(documentToSave);

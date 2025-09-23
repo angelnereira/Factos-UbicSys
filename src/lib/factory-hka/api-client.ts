@@ -7,7 +7,7 @@
 import type { FactoryHkaAuthSuccess, FactoryHkaDocumentRequest, FactoryHkaDocumentResponse, FactoryHkaError } from './types';
 
 // The base URLs for The Factory HKA API, configured via environment variables.
-const DEMO_API_URL = process.env.NEXT_PUBLIC_THE_FACTORY_HKA_DEMO_API_URL;
+const DEMO_API_URL = process.env.NEXT_PUBLIC_THE_FACTORY_HKA_API_URL;
 const PROD_API_URL = process.env.NEXT_PUBLIC_THE_FACTORY_HKA_PROD_API_URL;
 
 type Environment = 'Production' | 'Development' | 'Demo';
@@ -41,10 +41,14 @@ export async function getAuthToken(env: Environment): Promise<{
   const config = getApiConfig(env);
 
   if (!config.apiUrl) {
-    return { data: null, error: `The Factory HKA API URL for ${env} is not configured.` };
+    const errorMsg = `The Factory HKA API URL for ${env} environment is not configured in environment variables (NEXT_PUBLIC_THE_FACTORY_HKA_..._API_URL). This is expected if not deployed.`;
+    console.warn(errorMsg);
+    return { data: null, error: errorMsg };
   }
   if (!config.username || !config.password) {
-    return { data: null, error: `The Factory HKA credentials for ${env} are not configured.` };
+    const errorMsg = `The Factory HKA credentials for ${env} environment are not configured in server-side environment variables (TFHKA_..._USERNAME/PASSWORD). This is expected if not deployed.`;
+    console.warn(errorMsg);
+    return { data: null, error: errorMsg };
   }
 
   try {
