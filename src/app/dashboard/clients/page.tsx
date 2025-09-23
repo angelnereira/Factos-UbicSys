@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -47,11 +48,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { mockCompanies } from '@/lib/mock-data'; 
 import { cn } from '@/lib/utils';
 import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import type { Timestamp } from 'firebase/firestore';
+import { queries, mutations } from '@/dataconnect-generated/ubic-sys';
+import { useQuery, useMutation } from '@dataconnect/generated';
 
 
 const statusStyles: { [key in Company['status']]: string } = {
@@ -71,25 +72,14 @@ type ClientFormValues = z.infer<typeof clientSchema>;
 type SortKey = keyof Company | 'erpType' | '';
 
 export default function ClientsPage() {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchClients() {
-      setIsLoading(true);
-      // In a real app, this would be a Firestore query.
-      // For now, we continue using mock data as the firestore helper was removed.
-      const fetchedCompanies = mockCompanies; 
-      setCompanies(fetchedCompanies);
-      setIsLoading(false);
-    }
-    fetchClients();
-  }, []);
+  const { data: companies = [], loading: isLoading } = useQuery(queries.listCompanies);
+  const [createCompany, { loading: isSubmitting }] = useMutation(mutations.createCompany);
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -122,65 +112,55 @@ export default function ClientsPage() {
 
     if (sortKey) {
        result.sort((a, b) => {
-        const aValue = sortKey === 'erpType' ? a.integrationConfig.erpType : a[sortKey as keyof Company];
-        const bValue = sortKey === 'erpType' ? b.integrationConfig.erpType : b[sortKey as keyof Company];
+        // Data Connect fields are not nested like before.
+        const aValue = a[sortKey as keyof Company];
+        const bValue = b[sortKey as keyof Company];
 
         if (aValue === undefined || bValue === undefined) return 0;
         
-        // Firestore Timestamps are objects, but JS Dates work here for sorting
-        const valA = aValue instanceof Date ? aValue.getTime() : aValue;
-        const valB = bValue instanceof Date ? bValue.getTime() : bValue;
+        const valA = aValue;
+        const valB = bValue;
 
         if (typeof valA === 'string' && typeof valB === 'string') {
           return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         }
 
-        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+        if (typeof valA === 'number' && typeof valB === 'number') {
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+        }
         
         return 0;
       });
     }
 
-    return result;
+    return result as Company[];
   }, [companies, searchQuery, sortKey, sortDirection]);
 
   const onSubmit = async (values: ClientFormValues) => {
-    // This is a mock implementation
-    const newCompany: Company = {
-      id: `comp-${Math.random().toString(36).substring(7)}`,
-      authUid: `user-${Math.random().toString(36).substring(7)}`,
-      name: values.name,
-      email: values.email,
-      status: values.status,
-      integrationConfig: {
+    try {
+      await createCompany({
+        name: values.name,
+        email: values.email,
         erpType: values.erpType,
-        notificationSettings: { emailNotifications: true, webhookNotifications: false, smsNotifications: false }
-      },
-      factoryHkaConfig: {
-        demo: {
-          username: "user_demo",
-          isActive: true,
-          maxDocumentsPerMonth: 1000,
-          documentsUsedThisMonth: 0,
-        },
-        production: {
-          username: "user_prod",
-          isActive: false,
-        }
-      },
-      onboarded: new Date(),
-      createdAt: new Date() as any, // Using Date for mock, firestore uses Timestamp
-      updatedAt: new Date() as any,
-    };
-
-    setCompanies(prevCompanies => [...prevCompanies, newCompany]);
-    toast({
-      title: 'Compañía agregada (simulado)',
-      description: 'La nueva compañía ha sido guardada en la lista de prueba.',
-    });
-    setIsDialogOpen(false);
-    form.reset();
+        status: values.status,
+        authUid: `user-${Math.random().toString(36).substring(7)}`, // Placeholder
+      });
+      
+      toast({
+        title: 'Compañía Agregada',
+        description: 'La nueva compañía ha sido guardada en la base de datos.',
+      });
+      setIsDialogOpen(false);
+      form.reset();
+    } catch (error) {
+       console.error("Failed to create company:", error);
+       toast({
+        title: 'Error al crear la compañía',
+        description: 'No se pudo guardar la compañía. Por favor, inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    }
   };
   
   return (
@@ -217,7 +197,7 @@ export default function ClientsPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Nombre de la Compañía</FormLabel>
+                      <FormLabel className="text-right">Nombre</FormLabel>
                       <div className="col-span-3">
                         <FormControl>
                           <Input placeholder="Acme Inc." {...field} />
@@ -232,7 +212,7 @@ export default function ClientsPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Email de Contacto</FormLabel>
+                      <FormLabel className="text-right">Email</FormLabel>
                        <div className="col-span-3">
                         <FormControl>
                           <Input type="email" placeholder="contact@acme.com" {...field} />
@@ -304,7 +284,10 @@ export default function ClientsPage() {
                   }}
                 />
                 <DialogFooter>
-                  <Button type="submit">Guardar Compañía</Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Guardar Compañía
+                  </Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -358,7 +341,7 @@ export default function ClientsPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('onboarded')}>
+                  <Button variant="ghost" onClick={() => handleSort('createdAt')}>
                     Incorporado
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -367,20 +350,20 @@ export default function ClientsPage() {
             </TableHeader>
             <TableBody>
               {sortedAndFilteredClients.map(company => (
-                <TableRow key={company.id}>
+                <TableRow key={company.companyId}>
                   <TableCell>
                     <div className="font-medium">{company.name}</div>
                     <div className="text-sm text-muted-foreground">
                       {company.email}
                     </div>
                   </TableCell>
-                  <TableCell>{company.integrationConfig.erpType}</TableCell>
+                  <TableCell>{company.erpType}</TableCell>
                   <TableCell>
                     <Badge variant={'outline'} className={cn(statusStyles[company.status!])}>
                       {company.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{company.onboarded ? new Date(company.onboarded as any).toLocaleDateString() : 'N/A'}</TableCell>
+                  <TableCell>{company.createdAt ? new Date(company.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -391,3 +374,4 @@ export default function ClientsPage() {
     </>
   );
 }
+

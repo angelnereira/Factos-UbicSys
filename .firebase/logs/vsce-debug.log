@@ -41,3 +41,10 @@ I0923 16:58:57.678099    1211 load.go:109] Finished reloading
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0923 16:58:57.704389    1211 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
 [debug] [2025-09-23T16:58:57.772Z] I0923 16:58:57.770518    1211 engine.go:169] [/emulator/studio-7875732711-2b800-service dff4] ExecuteGraphqlRead IntrospectionQuery: succeeded. 
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0923 16:58:57.770518    1211 engine.go:169] [/emulator/studio-7875732711-2b800-service dff4] ExecuteGraphqlRead IntrospectionQuery: succeeded. \n"}}
+[debug] [2025-09-23T17:35:27.689Z] I0923 17:35:27.679671    1211 load.go:31] Reloading schema and connectors...
+E0923 17:35:27.681798    1211 load.go:73] Could not load sources: 
+Errors: schema/schema.gql:23:33: Undefined directive relation.
+I0923 17:35:27.682397    1211 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
+Generated sources: prelude.gql [73251B] 
+I0923 17:35:27.682452    1211 load.go:74] Finished reloading
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0923 17:35:27.679671    1211 load.go:31] Reloading schema and connectors...\nE0923 17:35:27.681798    1211 load.go:73] Could not load sources: \nErrors: schema/schema.gql:23:33: Undefined directive relation.\nI0923 17:35:27.682397    1211 collector.go:107] schema extensions wrote into \"/home/user/studio/dataconnect/.dataconnect/schema\"\nGenerated sources: prelude.gql [73251B] \nI0923 17:35:27.682452    1211 load.go:74] Finished reloading\n"}}

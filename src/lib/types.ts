@@ -1,108 +1,69 @@
-import type { Timestamp } from 'firebase/firestore';
+
 import type { FactoryHkaDocumentRequest } from './integrations/tfhka/tfhka-types';
 
-// Based on The Factory HKA integration document
+// Based on Data Connect Schema
 
-// Companies Collection
+export type CompanyStatus = 'Production' | 'Development' | 'Demo';
+export type ErpType = 'quickbooks' | 'sap' | 'custom' | 'api' | 'oracle' | 'microsoft-dynamics' | 'claris-filemaker';
+export type SubscriptionPlan = 'basic' | 'professional' | 'enterprise';
+export type SubscriptionStatus = 'active' | 'suspended' | 'cancelled';
+
 export interface Company {
-  id: string;
+  companyId: string;
   name: string;
-  taxId?: string; // RUC
+  taxId?: string;
   email: string;
   phone?: string;
   address?: string;
-  authUid: string; // Firebase Auth User ID
+  authUid: string;
+  erpType: ErpType;
+  status: CompanyStatus;
   
-  // The Factory HKA Credentials & Config
-  factoryHkaConfig: {
-    demo: {
-      username: string;
-      password?: string; // Encrypted
-      isActive: boolean;
-      maxDocumentsPerMonth: number;
-      documentsUsedThisMonth: number;
-    },
-    production: {
-      username: string;
-      password?: string; // Encrypted
-      isActive: boolean;
-    }
-  };
-  
-  // Integration Settings
-  integrationConfig: {
-    webhookUrl?: string;
-    erpType: 'quickbooks' | 'sap' | 'custom' | 'api' | 'oracle' | 'microsoft-dynamics' | 'claris-filemaker';
-    notificationSettings: {
-      emailNotifications: boolean;
-      webhookNotifications: boolean;
-      smsNotifications: boolean;
-    };
-  };
-  
-  subscription?: {
-    plan: 'basic' | 'professional' | 'enterprise';
-    status: 'active' | 'suspended' | 'cancelled';
-    billingEmail: string;
-    nextBillingDate: Timestamp;
-  };
-  
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  status: 'Production' | 'Development' | 'Demo';
-  onboarded: Date | Timestamp;
+  // Timestamps
+  createdAt: string; // ISO 8601 string date
+  updatedAt: string; // ISO 8601 string date
 }
 
-// Documents Collection (Sub-collection under each company)
+
+export type DocumentStatus = 'pending' | 'processing' | 'sent_to_pac' | 'approved' | 'rejected' | 'cancelled';
+export type DocumentType = 'factura' | 'nota_credito' | 'nota_debito' | 'factura_exportacion';
+
 export interface FiscalDocument {
-  id: string;
+  documentId: string;
   companyId: string;
   
-  // Document Information
-  documentType: 'factura' | 'nota_credito' | 'nota_debito' | 'factura_exportacion';
-  documentNumber?: string; // Assigned by The Factory HKA
-  cufe?: string; // Unique fiscal code from DGI
+  documentType: DocumentType;
+  cufe?: string;
+  status: DocumentStatus;
   
-  // Processing Status
-  status: 'pending' | 'processing' | 'sent_to_pac' | 'approved' | 'rejected' | 'cancelled';
-  statusHistory: ProcessingStep[];
+  originalData?: any; // JSONB
   
-  // Original Data (from client ERP)
-  originalData: Record<string, unknown>;
-  
-  // Transformed Data (sent to The Factory HKA)
-  transformedData?: FactoryHkaDocumentRequest;
-  
-  // Responses
-  // factoryHkaResponse?: FactoryHkaResponse;
-  
-  // Generated Documents
-  generatedDocuments?: {
-    pdfUrl?: string;
-    xmlUrl?: string;
-    qrCode?: string;
-  };
-  
-  // Error Information
   errorDetails?: string;
   
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  processedAt?: Timestamp;
+  // Timestamps
+  createdAt: string; // ISO 8601 string date
+  updatedAt: string; // ISO 8601 string date
+  processedAt?: string;
 
   // Properties from old Document type to keep UI working temporarily
   client: string;
   amount: number;
   currency: string;
-  date: Date | Timestamp;
+  date: string; // ISO 8601 string date
   erpType: string;
+
+  // This will be mapped from originalData or another source
+  statusHistory: ProcessingStep[];
 }
+
+export type ProcessingStepStatus = 'success' | 'error' | 'warning';
+export type ProcessingStepName = 'received' | 'validated' | 'transformed' | 'sent_to_pac' | 'pac_response' | 'dgi_response';
 
 // Processing Steps for Audit Trail
 export interface ProcessingStep {
-  step: 'received' | 'validated' | 'transformed' | 'sent_to_pac' | 'pac_response' | 'dgi_response';
-  status: 'success' | 'error' | 'warning';
+  step: ProcessingStepName;
+  status: ProcessingStepStatus;
   message: string;
-  timestamp: Timestamp;
+  timestamp: string; // ISO 8601 string date
   details?: Record<string, unknown>;
 }
