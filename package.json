@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack --port 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "next build",
+    "dataconnect:generate": "dataconnect-sdk-ts-generator",
+    "build": "npm-run-all dataconnect:generate build:next",
+    "build:next": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
@@ -63,6 +65,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "genkit-cli": "^1.14.1",
+    "npm-run-all": "^4.1.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
