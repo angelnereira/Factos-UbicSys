@@ -1,16 +1,8 @@
-I0923 16:58:57.507238    1211 load.go:31] Reloading schema and connectors...
-I0923 16:58:57.591203    1211 control.go:94] [/emulator/studio-7875732711-2b800-service dff4] UpdateResources(): done
-Schema: sources: schema/schema.gql [0B] 
-Connector "example": sources: 
-E0923 16:58:57.674744    1211 load.go:95] Errors generating SDK: [connector "example"]: invalid Data Connect Connector no query found in connector
-I0923 16:58:57.675508    1211 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
-Generated sources: prelude.gql [73251B] 
-I0923 16:58:57.678099    1211 load.go:109] Finished reloading
-I0923 16:58:57.704389    1211 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
-I0923 16:58:57.770518    1211 engine.go:169] [/emulator/studio-7875732711-2b800-service dff4] ExecuteGraphqlRead IntrospectionQuery: succeeded. 
-I0923 17:35:27.679671    1211 load.go:31] Reloading schema and connectors...
-E0923 17:35:27.681798    1211 load.go:73] Could not load sources: 
+I0923 21:37:01.824308   12709 load.go:31] Reloading schema and connectors...
+E0923 21:37:01.828783   12709 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "studio-7875732711-2b800-service". No service has a schema.
+E0923 21:37:01.829216   12709 load.go:73] Could not load sources: 
 Errors: schema/schema.gql:23:33: Undefined directive relation.
-I0923 17:35:27.682397    1211 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
+I0923 21:37:01.831385   12709 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
 Generated sources: prelude.gql [73251B] 
-I0923 17:35:27.682452    1211 load.go:74] Finished reloading
+I0923 21:37:01.831614   12709 load.go:74] Finished reloading
+I0923 21:37:01.927015   12709 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
