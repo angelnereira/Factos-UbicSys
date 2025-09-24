@@ -1,7 +1,8 @@
 
-import type { FactoryHkaDocumentRequest } from './integrations/tfhka/tfhka-types';
 
-// Based on Data Connect Schema
+import type { FactoryHkaDocumentRequest } from './integrations/tfhka/tfhka-types';
+import type { Timestamp } from 'firebase/firestore';
+
 
 export type CompanyStatus = 'Production' | 'Development' | 'Demo';
 export type ErpType = 'quickbooks' | 'sap' | 'custom' | 'api' | 'oracle' | 'microsoft-dynamics' | 'claris-filemaker';
@@ -9,19 +10,24 @@ export type SubscriptionPlan = 'basic' | 'professional' | 'enterprise';
 export type SubscriptionStatus = 'active' | 'suspended' | 'cancelled';
 
 export interface Company {
-  companyId: string;
+  id: string; // Supabase uses 'id' by default
   name: string;
-  taxId?: string;
+  tax_id?: string;
   email: string;
   phone?: string;
   address?: string;
-  authUid: string;
-  erpType: ErpType;
+  auth_uid: string;
+  erp_type: ErpType;
   status: CompanyStatus;
   
-  // Timestamps
-  createdAt: string; // ISO 8601 string date
-  updatedAt: string; // ISO 8601 string date
+  // Timestamps from Supabase are ISO 8601 strings
+  created_at: string; 
+  updated_at: string; 
+
+  // Fields from old type for compatibility, can be removed later
+  companyId?: string; 
+  createdAt?: string | Timestamp;
+  erpType?: ErpType;
 }
 
 

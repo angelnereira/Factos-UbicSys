@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { PlusCircle, Loader2, ArrowUpDown, Search } from 'lucide-react';
+import { PlusCircle, Loader2, ArrowUpDown, Search, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -51,6 +51,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase/client';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 const statusStyles: { [key in Company['status']]: string } = {
@@ -79,11 +81,28 @@ export default function ClientsPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // TODO: Replace with Supabase fetching logic
   useEffect(() => {
-    setIsLoading(false);
-  }, []);
+    async function fetchCompanies() {
+      const { data, error } = await supabase.from('companies').select('*');
+      
+      if (error) {
+        console.error('Error fetching companies:', error);
+        setError('No se pudieron cargar las compañías. Asegúrate de que la conexión a la base de datos esté configurada correctamente.');
+        toast({
+            title: "Error de Conexión",
+            description: "No se pudieron obtener los datos de las compañías desde Supabase.",
+            variant: "destructive"
+        })
+      } else {
+        setCompanies(data || []);
+      }
+      setIsLoading(false);
+    }
+    
+    fetchCompanies();
+  }, [toast]);
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -142,12 +161,13 @@ export default function ClientsPage() {
 
   const onSubmit = async (values: ClientFormValues) => {
     setIsSubmitting(true);
-    // TODO: Implement Supabase mutation
-    console.log(values);
     toast({
-        title: 'Funcionalidad no implementada',
-        description: 'La creación de compañías se conectará a Supabase próximamente.',
+        title: 'Funcionalidad en desarrollo',
+        description: 'La creación de compañías se está migrando a Supabase.',
     });
+    // Placeholder for Supabase mutation
+    // const { data, error } = await supabase.from('companies').insert([{ name: values.name, email: values.email, erp_type: values.erpType, status: values.status, auth_uid: 'temp-auth-uid' }]);
+    // if (error) ...
     setIsSubmitting(false);
     setIsDialogOpen(false);
   };
@@ -307,6 +327,14 @@ export default function ClientsPage() {
             <div className="flex justify-center items-center h-40">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
+          ) : error ? (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error al Cargar Datos</AlertTitle>
+                <AlertDescription>
+                    {error}
+                </AlertDescription>
+            </Alert>
           ) : (
           <Table>
             <TableHeader>
@@ -318,7 +346,7 @@ export default function ClientsPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('erpType')}>
+                  <Button variant="ghost" onClick={() => handleSort('erp_type')}>
                     Tipo de ERP
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -330,7 +358,7 @@ export default function ClientsPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('createdAt')}>
+                  <Button variant="ghost" onClick={() => handleSort('created_at')}>
                     Incorporado
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -339,26 +367,26 @@ export default function ClientsPage() {
             </TableHeader>
             <TableBody>
               {sortedAndFilteredClients.map(company => (
-                <TableRow key={company.companyId}>
+                <TableRow key={company.id}>
                   <TableCell>
                     <div className="font-medium">{company.name}</div>
                     <div className="text-sm text-muted-foreground">
                       {company.email}
                     </div>
                   </TableCell>
-                  <TableCell>{company.erpType}</TableCell>
+                  <TableCell>{company.erp_type}</TableCell>
                   <TableCell>
                     <Badge variant={'outline'} className={cn(statusStyles[company.status!])}>
                       {company.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{company.createdAt ? new Date(company.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
+                  <TableCell>{company.created_at ? new Date(company.created_at).toLocaleDateString() : 'N/A'}</TableCell>
                 </TableRow>
               ))}
-                {sortedAndFilteredClients.length === 0 && (
+                {sortedAndFilteredClients.length === 0 && !error && (
                     <TableRow>
                         <TableCell colSpan={4} className="h-24 text-center">
-                            No hay compañías para mostrar. Conecte Supabase para empezar.
+                            No se encontraron compañías. Puedes agregar una nueva para comenzar.
                         </TableCell>
                     </TableRow>
                 )}

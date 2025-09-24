@@ -30,3 +30,14 @@ E0924 00:33:06.839934    3045 watch.go:31] Failed to load config from "/home/use
 E0924 00:33:16.839205    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
 E0924 00:33:26.839248    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
 E0924 00:33:36.839269    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0924 00:33:46.848330    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:33:56.847352    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:34:06.839752    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:34:16.839117    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:34:26.847787    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:34:36.839647    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:34:46.845576    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:34:56.840530    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:35:06.838929    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:35:16.848085    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0924 00:35:26.847358    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
