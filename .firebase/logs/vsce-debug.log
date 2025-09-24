@@ -317,3 +317,33 @@ I0924 00:28:36.863367    3045 dev.go:102] Listening on address (HTTP + gRPC): 12
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0924 00:35:16.848085    3045 watch.go:31] Failed to load config from \"/home/user/studio/dataconnect\": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`\n"}}
 [debug] [2025-09-24T00:35:26.847Z] E0924 00:35:26.847358    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0924 00:35:26.847358    3045 watch.go:31] Failed to load config from \"/home/user/studio/dataconnect\": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`\n"}}
+[debug] [2025-09-24T00:35:36.839Z] E0924 00:35:36.839545    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0924 00:35:36.839545    3045 watch.go:31] Failed to load config from \"/home/user/studio/dataconnect\": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`\n"}}
+[debug] [2025-09-24T00:35:46.839Z] E0924 00:35:46.839129    3045 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0924 00:35:46.839129    3045 watch.go:31] Failed to load config from \"/home/user/studio/dataconnect\": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`\n"}}
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[warn] ⚠  Data Connect Emulator has exited upon receiving signal: SIGINT 
+[debug] [2025-09-24T00:36:31.009Z] [Firebase Plugin] Activating Firebase extension.
+[debug] [2025-09-24T00:37:00.037Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2025-09-24T00:37:00.040Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-24T00:37:00.042Z] > authorizing via signed-in user (angelnereira15@gmail.com)
+[debug] [2025-09-24T00:37:00.050Z] Checked if tokens are valid: true, expires at: 1758676757179
+[debug] [2025-09-24T00:37:00.051Z] Checked if tokens are valid: true, expires at: 1758676757179
+[debug] [2025-09-24T00:37:00.052Z] [Firebase Plugin] User found:  angelnereira15@gmail.com
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2025-09-24T00:37:00.056Z] Checked if tokens are valid: true, expires at: 1758676757179
+[debug] [2025-09-24T00:37:00.060Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2025-09-24T00:37:00.193Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 2.13.0) on port 50001
+[debug] [2025-09-24T00:37:02.087Z] 'fdc build' failed with error: Unable to build your Data Connect schema and connectors (exit code 1): E0924 00:37:02.083738    4748 cmd.go:43] Error loading data connect config: location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"'fdc build' failed with error: Unable to build your Data Connect schema and connectors (exit code 1): E0924 00:37:02.083738    4748 cmd.go:43] Error loading data connect config: location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`\n"}}
+[debug] [2025-09-24T00:37:02.091Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-09-24T00:37:02.092Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2025-09-24T00:37:02.093Z] Starting Data Connect Emulator with command {"binary":"/home/user/.cache/firebase/emulators/dataconnect-emulator-2.13.0","args":["--logtostderr","-v=2","dev","--listen=localhost:50001","--config_dir=/home/user/studio/dataconnect","--enable_output_schema_extensions=true","--enable_output_generated_sdk=true"],"optionalArgs":["listen","config_dir","enable_output_schema_extensions","enable_output_generated_sdk"],"joinArgs":true,"shell":false,"port":9399} {"metadata":{"emulator":{"name":"dataconnect"},"message":"Starting Data Connect Emulator with command {\"binary\":\"/home/user/.cache/firebase/emulators/dataconnect-emulator-2.13.0\",\"args\":[\"--logtostderr\",\"-v=2\",\"dev\",\"--listen=localhost:50001\",\"--config_dir=/home/user/studio/dataconnect\",\"--enable_output_schema_extensions=true\",\"--enable_output_generated_sdk=true\"],\"optionalArgs\":[\"listen\",\"config_dir\",\"enable_output_schema_extensions\",\"enable_output_generated_sdk\"],\"joinArgs\":true,\"shell\":false,\"port\":9399}"}}
+[info] i  dataconnect: Data Connect Emulator logging to dataconnect-debug.log {"metadata":{"emulator":{"name":"dataconnect"},"message":"Data Connect Emulator logging to dataconnect-debug.log"}}
+[debug] [2025-09-24T00:37:02.555Z] E0924 00:37:02.359659    4754 dev.go:79] Failed to load initial config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+I0924 00:37:02.380014    4754 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0924 00:37:02.359659    4754 dev.go:79] Failed to load initial config from \"/home/user/studio/dataconnect\": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`\nI0924 00:37:02.380014    4754 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
+[error] [Firebase Plugin] error:  {"path":"/home/user/studio/dataconnect/dataconnect.yaml","error":{},"range":[{"line":0,"character":0},{"line":0,"character":0}]}
+[debug] [2025-09-24T00:37:02.623Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-09-24T00:37:02.624Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
