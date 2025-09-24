@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -51,8 +51,6 @@ import {
 import { cn } from '@/lib/utils';
 import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { queries, mutations } from '@dataconnect/generated';
-import { useQuery, useMutation } from '@dataconnect/generated';
 
 
 const statusStyles: { [key in Company['status']]: string } = {
@@ -78,8 +76,14 @@ export default function ClientsPage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { toast } = useToast();
 
-  const { data: companies = [], loading: isLoading } = useQuery(queries.listCompanies);
-  const [createCompany, { loading: isSubmitting }] = useMutation(mutations.createCompany);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // TODO: Replace with Supabase fetching logic
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -112,7 +116,6 @@ export default function ClientsPage() {
 
     if (sortKey) {
        result.sort((a, b) => {
-        // Data Connect fields are not nested like before.
         const aValue = a[sortKey as keyof Company];
         const bValue = b[sortKey as keyof Company];
 
@@ -138,29 +141,15 @@ export default function ClientsPage() {
   }, [companies, searchQuery, sortKey, sortDirection]);
 
   const onSubmit = async (values: ClientFormValues) => {
-    try {
-      await createCompany({
-        name: values.name,
-        email: values.email,
-        erpType: values.erpType,
-        status: values.status,
-        authUid: `user-${Math.random().toString(36).substring(7)}`, // Placeholder
-      });
-      
-      toast({
-        title: 'Compañía Agregada',
-        description: 'La nueva compañía ha sido guardada en la base de datos.',
-      });
-      setIsDialogOpen(false);
-      form.reset();
-    } catch (error) {
-       console.error("Failed to create company:", error);
-       toast({
-        title: 'Error al crear la compañía',
-        description: 'No se pudo guardar la compañía. Por favor, inténtalo de nuevo.',
-        variant: 'destructive',
-      });
-    }
+    setIsSubmitting(true);
+    // TODO: Implement Supabase mutation
+    console.log(values);
+    toast({
+        title: 'Funcionalidad no implementada',
+        description: 'La creación de compañías se conectará a Supabase próximamente.',
+    });
+    setIsSubmitting(false);
+    setIsDialogOpen(false);
   };
   
   return (
@@ -366,6 +355,13 @@ export default function ClientsPage() {
                   <TableCell>{company.createdAt ? new Date(company.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
                 </TableRow>
               ))}
+                {sortedAndFilteredClients.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center">
+                            No hay compañías para mostrar. Conecte Supabase para empezar.
+                        </TableCell>
+                    </TableRow>
+                )}
             </TableBody>
           </Table>
           )}

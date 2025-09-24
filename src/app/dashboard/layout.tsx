@@ -26,7 +26,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import PrivateRoute from '@/components/private-route';
-import { DataConnectProvider, DataConnectError } from '@dataconnect/generated';
 import { useToast } from '@/hooks/use-toast';
 
 function DashboardLayoutContent({
@@ -44,18 +43,7 @@ function DashboardLayoutContent({
     Demo: 'text-chart-4 border-chart-4 bg-chart-4/10',
   };
 
-  const handleDataConnectError = (error: DataConnectError) => {
-    console.error("DataConnect Error:", error);
-    toast({
-      title: 'Error de Conexión',
-      description: 'No se pudo comunicar con la base de datos. Por favor, revisa la consola.',
-      variant: 'destructive',
-    });
-  }
-
-
   return (
-    <DataConnectProvider onError={handleDataConnectError}>
       <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
         <div className="hidden border-r bg-muted/40 md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
@@ -181,7 +169,6 @@ function DashboardLayoutContent({
           </main>
         </div>
       </div>
-    </DataConnectProvider>
   );
 }
 

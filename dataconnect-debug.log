@@ -1,8 +1,9 @@
-I0923 21:51:08.473866   16099 load.go:31] Reloading schema and connectors...
-E0923 21:51:08.479168   16099 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "studio-7875732711-2b800-service". No service has a schema.
-E0923 21:51:08.479276   16099 load.go:73] Could not load sources: 
+I0924 00:19:20.894736     990 load.go:31] Reloading schema and connectors...
+E0924 00:19:20.920850     990 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "studio-7875732711-2b800-service". No service has a schema.
+E0924 00:19:20.920934     990 load.go:73] Could not load sources: 
 Errors: schema/schema.gql:23:33: Undefined directive relation.
-I0923 21:51:08.479722   16099 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
+I0924 00:19:20.925610     990 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
 Generated sources: prelude.gql [73251B] 
-I0923 21:51:08.481755   16099 load.go:74] Finished reloading
-I0923 21:51:08.496011   16099 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+I0924 00:19:20.925900     990 load.go:74] Finished reloading
+I0924 00:19:20.945744     990 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+E0924 00:22:50.928132     990 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`

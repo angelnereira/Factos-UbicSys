@@ -6,15 +6,12 @@
     "dev": "next dev --turbopack --port 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "dataconnect:generate": "dataconnect-sdk-ts-generator",
-    "build": "npm-run-all dataconnect:generate build:next",
-    "build:next": "next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@dataconnect/generated": "file:src/dataconnect-generated",
     "@genkit-ai/googleai": "^1.14.1",
     "@genkit-ai/next": "^1.14.1",
     "@hookform/resolvers": "^4.1.3",
@@ -65,9 +62,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "firebase-tools": "^13.13.2",
     "genkit-cli": "^1.14.1",
-    "npm-run-all": "^4.1.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
