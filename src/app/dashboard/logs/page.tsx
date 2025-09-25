@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -79,14 +80,23 @@ export default function LogsPage() {
   const { db } = useAuth();
   const { toast } = useToast();
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [stepFilter, setStepFilter] = useState('all');
 
   const fetchData = useCallback(async () => {
-    if (!db) return;
+    if (!db) {
+        toast({
+            title: "Error de Conexión",
+            description: "La base de datos no está disponible. No se pueden cargar los registros.",
+            variant: "destructive"
+        });
+        return;
+    };
     setIsLoading(true);
+    setHasSearched(true);
     try {
       const fetchedLogs = await getAllLogs(db);
       setLogs(fetchedLogs);
@@ -101,10 +111,6 @@ export default function LogsPage() {
       setIsLoading(false);
     }
   }, [db, toast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
@@ -155,12 +161,17 @@ export default function LogsPage() {
             </div>
             <div className="flex gap-2 w-full sm:w-auto items-center">
               <Button
-                variant="outline"
+                variant="default"
+                className="bg-chart-4 text-black hover:bg-chart-4/90 dark:bg-chart-4 dark:hover:bg-chart-4/90"
                 size="sm"
                 onClick={fetchData}
                 disabled={isLoading}
               >
-                <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+                {isLoading ? (
+                    <Loader2 className={cn("h-4 w-4 animate-spin")} />
+                ) : (
+                    <RefreshCw className="h-4 w-4" />
+                )}
                 <span className="ml-2 hidden sm:inline">Actualizar</span>
               </Button>
               <div className="relative flex-1 sm:flex-initial">
@@ -245,7 +256,7 @@ export default function LogsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
-                      No se encontraron registros que coincidan con tus filtros.
+                        {hasSearched ? 'No se encontraron registros que coincidan con tus filtros.' : 'Presiona "Actualizar" para cargar los registros.'}
                     </TableCell>
                   </TableRow>
                 )}
