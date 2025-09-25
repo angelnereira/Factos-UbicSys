@@ -120,16 +120,7 @@ export default function MonitoringPage() {
               </Card>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-              <Card className="col-span-4">
-                  <CardHeader>
-                      <CardTitle>Visión General</CardTitle>
-                      <CardDescription>Volumen de documentos procesados por mes.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                      <OverviewChart documents={staticDocuments} />
-                  </CardContent>
-              </Card>
-              <Card className="col-span-4 lg:col-span-3">
+              <Card className="col-span-4 lg:col-span-4">
                   <CardHeader>
                       <CardTitle>Documentos Recientes</CardTitle>
                       <CardDescription>
@@ -186,6 +177,15 @@ export default function MonitoringPage() {
                             ))}
                           </TableBody>
                         </Table>
+                  </CardContent>
+              </Card>
+              <Card className="col-span-4 lg:col-span-3">
+                  <CardHeader>
+                      <CardTitle>Visión General</CardTitle>
+                      <CardDescription>Volumen de documentos procesados por mes.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pl-2">
+                      <OverviewChart documents={staticDocuments} />
                   </CardContent>
               </Card>
           </div>
