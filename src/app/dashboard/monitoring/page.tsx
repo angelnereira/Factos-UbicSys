@@ -36,13 +36,13 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
 
 // --- Static Data ---
 const staticDocuments: FiscalDocument[] = [
-  { id: 'doc-1', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 1500.75, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-09-25T10:00:00Z')), documentType: 'factura', statusHistory: [] },
+  { id: 'doc-1', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 1500.75, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-09-25T10:00:00Z')), documentType: 'factura', statusHistory: [], cufe: 'e1c2b3d4-a5f6-7890-1234-abcdef123456', processedAt: Timestamp.fromDate(new Date('2023-09-25T10:01:15Z')) },
   { id: 'doc-2', companyId: 'comp-2', client: 'Logística Global', amount: 850.00, currency: 'USD', date: Timestamp.now(), erpType: 'oracle', status: 'pending', createdAt: Timestamp.fromDate(new Date('2023-09-25T11:30:00Z')), documentType: 'factura', statusHistory: [] },
-  { id: 'doc-3', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 250.00, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'rejected', createdAt: Timestamp.fromDate(new Date('2023-09-24T14:00:00Z')), documentType: 'factura', statusHistory: [] },
-  { id: 'doc-4', companyId: 'comp-3', client: 'Café de las Cumbres', amount: 75.50, currency: 'USD', date: Timestamp.now(), erpType: 'custom', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-08-15T09:00:00Z')), documentType: 'factura', statusHistory: [] },
-  { id: 'doc-5', companyId: 'comp-2', client: 'Logística Global', amount: 1200.00, currency: 'USD', date: Timestamp.now(), erpType: 'oracle', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-08-20T16:00:00Z')), documentType: 'factura', statusHistory: [] },
+  { id: 'doc-3', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 250.00, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'rejected', createdAt: Timestamp.fromDate(new Date('2023-09-24T14:00:00Z')), documentType: 'factura', statusHistory: [], errorDetails: 'Error 500: El RUC del receptor no es válido.', processedAt: Timestamp.fromDate(new Date('2023-09-24T14:00:45Z')) },
+  { id: 'doc-4', companyId: 'comp-3', client: 'Café de las Cumbres', amount: 75.50, currency: 'USD', date: Timestamp.now(), erpType: 'custom', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-08-15T09:00:00Z')), documentType: 'factura', statusHistory: [], cufe: 'f6e5d4c3-b2a1-0987-6543-fedcba987654', processedAt: Timestamp.fromDate(new Date('2023-08-15T09:01:05Z')) },
+  { id: 'doc-5', companyId: 'comp-2', client: 'Logística Global', amount: 1200.00, currency: 'USD', date: Timestamp.now(), erpType: 'oracle', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-08-20T16:00:00Z')), documentType: 'factura', statusHistory: [], cufe: 'a1b2c3d4-e5f6-7890-fedc-ba9876543210', processedAt: Timestamp.fromDate(new Date('2023-08-20T16:01:20Z')) },
   { id: 'doc-6', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 5000.00, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'pending', createdAt: Timestamp.fromDate(new Date('2023-07-05T12:00:00Z')), documentType: 'factura', statusHistory: [] },
-  { id: 'doc-7', companyId: 'comp-3', client: 'Café de las Cumbres', amount: 150.25, currency: 'USD', date: Timestamp.now(), erpType: 'custom', status: 'rejected', createdAt: Timestamp.fromDate(new Date('2023-07-10T08:30:00Z')), documentType: 'factura', statusHistory: [] },
+  { id: 'doc-7', companyId: 'comp-3', client: 'Café de las Cumbres', amount: 150.25, currency: 'USD', date: Timestamp.now(), erpType: 'custom', status: 'rejected', createdAt: Timestamp.fromDate(new Date('2023-07-10T08:30:00Z')), documentType: 'factura', statusHistory: [], errorDetails: 'Error 401: El token de autenticación ha expirado.', processedAt: Timestamp.fromDate(new Date('2023-07-10T08:30:55Z')) },
 ];
 
 
@@ -59,6 +59,14 @@ export default function MonitoringPage() {
   const recentDocuments = useMemo(() => {
     return staticDocuments.slice(0, 5);
   }, []);
+  
+  const getDateString = (date: Date | Timestamp | string | undefined) => {
+    if (!date) return 'N/A';
+    if (typeof date === 'string') return new Date(date).toLocaleString();
+    if (date && 'seconds' in date) return new Date((date as Timestamp).seconds * 1000).toLocaleString();
+    if (date instanceof Date) return date.toLocaleString();
+    return 'N/A';
+  };
 
   return (
     <>
@@ -125,16 +133,16 @@ export default function MonitoringPage() {
                   <CardHeader>
                       <CardTitle>Documentos Recientes</CardTitle>
                       <CardDescription>
-                          Los últimos 5 documentos procesados.
+                          Las últimas 5 transacciones enviadas a la API de HKA.
                       </CardDescription>
                   </CardHeader>
                   <CardContent>
                        <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Compañía</TableHead>
+                              <TableHead>Compañía / Documento</TableHead>
                               <TableHead>Estado</TableHead>
-                              <TableHead>Monto</TableHead>
+                              <TableHead className="text-right">CUFE / Detalles</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -143,7 +151,7 @@ export default function MonitoringPage() {
                                 <TableCell>
                                     <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">
                                         <div className="font-medium">{doc.client}</div>
-                                        <div className="text-sm text-muted-foreground">ID: {doc.id.substring(0, 6)}...</div>
+                                        <div className="text-sm text-muted-foreground font-mono">ID: {doc.id.substring(0, 8)}...</div>
                                     </Link>
                                 </TableCell>
                                 <TableCell>
@@ -154,11 +162,25 @@ export default function MonitoringPage() {
                                         {doc.status}
                                     </Badge>
                                 </TableCell>
-                                <TableCell>
-                                    {new Intl.NumberFormat('en-US', {
-                                        style: 'currency',
-                                        currency: doc.currency,
-                                    }).format(doc.amount)}
+                                <TableCell className="text-right">
+                                    {doc.status === 'approved' && doc.cufe && (
+                                      <div>
+                                          <div className="font-medium font-mono text-xs">CUFE: {doc.cufe.substring(0,12)}...</div>
+                                          <div className="text-sm text-muted-foreground">{getDateString(doc.processedAt)}</div>
+                                      </div>
+                                    )}
+                                    {doc.status === 'rejected' && (
+                                      <div>
+                                          <div className="font-medium text-destructive text-xs truncate" title={doc.errorDetails}>{doc.errorDetails}</div>
+                                          <div className="text-sm text-muted-foreground">{getDateString(doc.processedAt)}</div>
+                                      </div>
+                                    )}
+                                    {doc.status === 'pending' && (
+                                      <div>
+                                          <div className="font-medium text-muted-foreground text-xs">Aún no procesado</div>
+                                          <div className="text-sm text-muted-foreground">{getDateString(doc.createdAt)}</div>
+                                      </div>
+                                    )}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -171,5 +193,3 @@ export default function MonitoringPage() {
     </>
   );
 }
-
-    
