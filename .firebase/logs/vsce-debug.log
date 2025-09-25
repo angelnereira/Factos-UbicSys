@@ -1095,3 +1095,5 @@ I0925 17:33:04.385035   15001 load.go:74] Finished reloading
 I0925 17:33:04.464919   15001 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0925 17:33:04.352586   15001 load.go:31] Reloading schema and connectors...\nE0925 17:33:04.384481   15001 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service \"studio-7875732711-2b800-service\". No service has a schema.\nE0925 17:33:04.384548   15001 load.go:73] Could not load sources: \nErrors: schema/schema.gql:23:33: Undefined directive relation.\nI0925 17:33:04.384993   15001 collector.go:107] schema extensions wrote into \"/home/user/studio/dataconnect/.dataconnect/schema\"\nGenerated sources: prelude.gql [73251B] \nI0925 17:33:04.385035   15001 load.go:74] Finished reloading\nI0925 17:33:04.464919   15001 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
 [error] [Firebase Plugin] error:  {}
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[warn] ⚠  Data Connect Emulator has exited upon receiving signal: SIGINT 

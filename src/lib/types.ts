@@ -1,34 +1,47 @@
-
-
-
-
 import type { FactoryHkaDocumentRequest } from './integrations/tfhka/tfhka-types';
 import type { Timestamp } from 'firebase/firestore';
 
 
 export type CompanyStatus = 'Production' | 'Development' | 'Demo';
 export type ErpType = 'quickbooks' | 'sap' | 'custom' | 'api' | 'oracle' | 'microsoft-dynamics' | 'claris-filemaker';
-export type SubscriptionPlan = 'basic' | 'professional' | 'enterprise';
-export type SubscriptionStatus = 'active' | 'suspended' | 'cancelled';
 
 export interface Company {
   id: string; 
   name: string;
-  tax_id?: string;
+  taxId?: string;
   email: string;
   phone?: string;
   address?: string;
-  auth_uid: string;
-  erp_type: ErpType;
+  authUid: string;
+  erpType: ErpType;
   status: CompanyStatus;
   
   // Timestamps
-  created_at: string | Timestamp; 
-  updated_at: string | Timestamp; 
-
-  // Fields from old type for compatibility, can be removed later
-  createdAt?: string | Timestamp;
-  erpType?: ErpType;
+  createdAt: string | Timestamp; 
+  updatedAt: string | Timestamp;
+  onboarded: string | Timestamp;
+  
+  // Embedded configuration objects
+  integrationConfig: {
+    erpType: ErpType,
+    notificationSettings: {
+      emailNotifications: boolean;
+      webhookNotifications: boolean;
+      smsNotifications: boolean;
+    }
+  };
+  factoryHkaConfig: {
+    demo: {
+      username: string;
+      isActive: boolean;
+      maxDocumentsPerMonth: number;
+      documentsUsedThisMonth: number;
+    },
+    production: {
+      username: string;
+      isActive: boolean;
+    }
+  }
 }
 
 
@@ -74,5 +87,3 @@ export interface ProcessingStep {
   timestamp: Timestamp; // ISO 8601 string date
   details?: Record<string, unknown>;
 }
-
-    

@@ -70,7 +70,7 @@ const clientSchema = z.object({
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
-type SortKey = keyof Company | 'erpType' | '';
+type SortKey = keyof Company | '';
 
 export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -351,7 +351,7 @@ export default function ClientsPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('erp_type')}>
+                  <Button variant="ghost" onClick={() => handleSort('erpType')}>
                     Tipo de ERP
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -379,7 +379,7 @@ export default function ClientsPage() {
                       {company.email}
                     </div>
                   </TableCell>
-                  <TableCell>{company.erp_type}</TableCell>
+                  <TableCell>{company.erpType}</TableCell>
                   <TableCell>
                     <Badge variant={'outline'} className={cn(statusStyles[company.status!])}>
                       {company.status}

@@ -87,17 +87,30 @@ const submitDocumentFlow = ai.defineFlow(
     outputSchema: SubmitDocumentOutputSchema,
   },
   async ({ documentId, companyId }) => {
-    // 1. Fetch the document from Firestore
+    const db = getFirestore();
+    
+    // 1. Fetch company to determine the environment
+    const companyRef = doc(db, 'companies', companyId);
+    const companySnap = await getDoc(companyRef);
+    if (!companySnap.exists()) {
+        throw new Error(`Company with ID ${companyId} not found.`);
+    }
+    const companyData = companySnap.data() as Company;
+    const env = companyData.status;
+
+    // 2. Fetch the document from Firestore
     const document = await getDocumentById(companyId, documentId);
     if (!document) {
       throw new Error(`Document with ID ${documentId} not found for company ${companyId}.`);
     }
+    
+    const initialStatusHistory = document.statusHistory || [];
 
-    // 2. Add 'processing' to status history
+    // 3. Add 'processing' to status history
     await updateDocumentInFlow(companyId, documentId, {
       status: 'processing',
       statusHistory: [
-        ...document.statusHistory,
+        ...initialStatusHistory,
         {
           step: 'sent_to_pac',
           status: 'warning',
@@ -107,35 +120,48 @@ const submitDocumentFlow = ai.defineFlow(
       ],
     });
 
-    // 3. Get auth token from HKA
-    const env = (document as any).status === 'Production' ? 'Production' : 'Demo';
+    // Refresh document state to get the latest statusHistory
+    let currentDocument = await getDocumentById(companyId, documentId);
+    if (!currentDocument) {
+      // This should not happen, but as a safeguard.
+      throw new Error(`Document with ID ${documentId} disappeared during processing.`);
+    }
+
+    // 4. Get auth token from HKA
     const authResponse = await getAuthToken(env);
     if (authResponse.error || !authResponse.data) {
+        const authErrorMessage = `Error de autenticación con HKA: ${authResponse.error}`;
         await updateDocumentInFlow(companyId, documentId, {
             status: 'rejected',
-            errorDetails: `Error de autenticación con HKA: ${authResponse.error}`,
+            errorDetails: authErrorMessage,
             statusHistory: [
-                ...document.statusHistory,
-                { step: 'pac_response', status: 'error', message: `Error de autenticación: ${authResponse.error}`, timestamp: Timestamp.now() }
+                ...currentDocument.statusHistory,
+                { step: 'pac_response', status: 'error', message: authErrorMessage, timestamp: Timestamp.now() }
             ]
         });
-        return { success: false, message: `Error de autenticación con HKA: ${authResponse.error}` };
+        return { success: false, message: authErrorMessage };
     }
     const { token } = authResponse.data;
 
-    // 4. Submit the document to HKA
+    // 5. Submit the document to HKA
     const submissionData = document.originalData as unknown as FactoryHkaDocumentRequest;
 
     const submitResponse = await submitDocument(submissionData, token, env);
+    
+    // Refresh document state again before final update
+    currentDocument = await getDocumentById(companyId, documentId);
+    if (!currentDocument) {
+      throw new Error(`Document with ID ${documentId} disappeared before final update.`);
+    }
 
-    // 5. Handle the response and update Firestore
+    // 6. Handle the response and update Firestore
     if (submitResponse.error || !submitResponse.data) {
       const errorMessage = `Error al enviar documento a HKA: ${submitResponse.error}`;
       await updateDocumentInFlow(companyId, documentId, {
         status: 'rejected',
         errorDetails: errorMessage,
         statusHistory: [
-          ...document.statusHistory,
+          ...currentDocument.statusHistory,
           { step: 'pac_response', status: 'error', message: errorMessage, timestamp: Timestamp.now() }
         ]
       });
@@ -148,7 +174,7 @@ const submitDocumentFlow = ai.defineFlow(
       cufe: cufe,
       processedAt: Timestamp.now(),
       statusHistory: [
-        ...document.statusHistory,
+        ...currentDocument.statusHistory,
         { step: 'pac_response', status: 'success', message: `Documento enviado exitosamente a HKA. ${message}`, timestamp: Timestamp.now(), details: { cufe } }
       ]
     });
