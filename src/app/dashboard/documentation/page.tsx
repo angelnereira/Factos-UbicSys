@@ -71,7 +71,7 @@ export default function DocumentationPage() {
                     <p>Para enviar un nuevo documento (factura, nota de crédito, etc.), debes realizar una solicitud POST a la siguiente URL:</p>
                     <pre><code>POST /api/v1/documents</code></pre>
                     <h4>Cuerpo de la Solicitud (Body)</h4>
-                    <p>El cuerpo de la solicitud debe ser un objeto JSON que contenga los datos de tu documento. La estructura debe seguir el formato especificado por The Factory HKA. Puedes consultar el esquema completo en la sección "Tipos de Datos" de esta documentación.</p>
+                    <p>El cuerpo de la solicitud debe ser un objeto JSON que contenga los datos de tu documento. La estructura debe seguir el formato especificado por The Factory HKA. Puedes consultar el esquema completo en la sección "Tipos de Datos" de esta documentation.</p>
                 </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -86,7 +86,37 @@ export default function DocumentationPage() {
             </CardDescription>
         </CardHeader>
         <CardContent>
-          <Accordion type="single" collapsible className="w-full" defaultValue="item-5">
+          <Accordion type="single" collapsible className="w-full" defaultValue="item-6">
+            <AccordionItem value="item-6">
+                <AccordionTrigger>
+                    Propuesta de Mejoras y Roadmap de Desarrollo (25/09/2025)
+                </AccordionTrigger>
+                <AccordionContent className="prose dark:prose-invert max-w-none">
+                    <h4>Descripción General</h4>
+                    <p>
+                        Se ha definido una hoja de ruta de desarrollo detallada para la evolución de la plataforma Factos UbicSys. Este plan abarca mejoras críticas en la integración con el PAC, la inteligencia artificial con Genkit, la interfaz de usuario, y la seguridad.
+                    </p>
+                    <h4>Fases Principales del Roadmap</h4>
+                    <ul>
+                        <li>
+                            <strong>Fase 1 - Validación y Robustez (1 semana):</strong> Fortalecimiento del cliente API para The Factory HKA con lógica de reintentos, y optimización de índices de base de datos para consultas de alto rendimiento.
+                        </li>
+                         <li>
+                            <strong>Fase 2 - Expansión Funcional (2 semanas):</strong> Implementación de nuevos flujos Genkit para operaciones como cancelación y consulta de documentos, y mejoras significativas en el dashboard de monitoreo y la gestión de documentos.
+                        </li>
+                        <li>
+                            <strong>Fase 3 - Inteligencia y Optimización (2 semanas):</strong> Desarrollo de un análisis de errores con IA más avanzado, un asistente de configuración inteligente, y la implementación de rate limiting y caché en la API.
+                        </li>
+                         <li>
+                            <strong>Fase 4 - Calidad y Producción (1 semana):</strong> Creación de una suite de pruebas automatizadas, mejoras en la seguridad de la API y expansión de la estructura de datos para soportar nuevos tipos de documentos.
+                        </li>
+                    </ul>
+                    <h4>Impacto Estimado</h4>
+                     <p>
+                        El plan completo se estima en <strong>198 horas</strong> de desarrollo, con un enfoque prioritario en las mejoras de integración API y la expansión de los flujos de Genkit para asegurar la funcionalidad core del sistema.
+                    </p>
+                </AccordionContent>
+            </AccordionItem>
             <AccordionItem value="item-5">
                 <AccordionTrigger>
                     Mejoras de UI/UX y Funcionalidad del Dashboard (24/09/2025)
