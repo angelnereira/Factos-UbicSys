@@ -8,6 +8,7 @@ import {
   Search,
   Settings,
   Rocket,
+  Ticket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -216,6 +217,17 @@ function DashboardLayoutContent({
                   <p>Configurar credenciales para el entorno de producción.</p>
                 </TooltipContent>
               </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground border rounded-md px-3 h-9">
+                        <Ticket className="h-4 w-4" />
+                        <span>Folios: 9,880 / 10,000</span>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Folios disponibles en el plan actual.</p>
+                </TooltipContent>
+            </Tooltip>
             <ThemeToggle />
             <div className="flex items-center gap-2">
               <Tooltip>
