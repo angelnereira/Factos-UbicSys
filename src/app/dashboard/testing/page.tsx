@@ -20,7 +20,9 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { FlaskConical, Loader2, Send } from 'lucide-react';
+import { FlaskConical, Loader2, Send, Upload, File as FileIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 type Endpoint = 'consultarEmpresa' | 'crearFactura' | 'consultarEstatusDocumento' | 'anularDocumento';
 
@@ -98,16 +100,56 @@ const examplePayloads: Record<Endpoint, any> = {
 };
 
 export default function TestingPage() {
-  const [endpoint, setEndpoint] = useState<Endpoint>('consultarEmpresa');
-  const [payload, setPayload] = useState(JSON.stringify(examplePayloads.consultarEmpresa, null, 2));
+  const [endpoint, setEndpoint] = useState<Endpoint>('crearFactura');
+  const [payload, setPayload] = useState(JSON.stringify(examplePayloads.crearFactura, null, 2));
   const [response, setResponse] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleEndpointChange = (value: string) => {
     const newEndpoint = value as Endpoint;
     setEndpoint(newEndpoint);
     setPayload(JSON.stringify(examplePayloads[newEndpoint], null, 2));
     setResponse(null);
+    setFileName(null);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        if (file.type !== 'application/json') {
+            toast({
+                title: "Archivo no válido",
+                description: "Por favor, selecciona un archivo JSON.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target?.result;
+            if (typeof content === 'string') {
+                try {
+                    const parsed = JSON.parse(content);
+                    setPayload(JSON.stringify(parsed, null, 2));
+                    setFileName(file.name);
+                    toast({
+                        title: "Archivo cargado",
+                        description: `El contenido de ${file.name} se ha cargado en el payload.`
+                    });
+                } catch (error) {
+                     toast({
+                        title: "Error al leer el archivo",
+                        description: "El archivo JSON no tiene un formato válido.",
+                        variant: "destructive"
+                    });
+                }
+            }
+        };
+        reader.readAsText(file);
+    }
   };
   
   const handleTest = async () => {
@@ -199,6 +241,26 @@ export default function TestingPage() {
                   <SelectItem value="anularDocumento">/AnularDocumento</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+                <Label>Cargar Payload desde Archivo</Label>
+                <div className="flex items-center justify-center w-full">
+                    <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Haz clic para cargar</span> o arrastra y suelta</p>
+                            <p className="text-xs text-muted-foreground">Archivo JSON</p>
+                        </div>
+                        <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept="application/json" />
+                    </Label>
+                </div> 
+                {fileName && (
+                    <div className="flex items-center text-sm text-muted-foreground p-2 border rounded-md">
+                        <FileIcon className="h-4 w-4 mr-2" />
+                        <span>{fileName}</span>
+                    </div>
+                )}
             </div>
             
             <div className="space-y-2">
