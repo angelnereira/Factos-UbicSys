@@ -32,6 +32,7 @@ export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
   const pathname = usePathname();
 
   const getBasePath = (path: string) => {
+    if (path === '/dashboard') return '/dashboard/monitoring';
     const parts = path.split('/');
     if (parts.length > 2) {
       return `/${parts[1]}/${parts[2]}`;
@@ -77,7 +78,7 @@ export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
           href={item.href}
           className={cn(
             'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-            (basePath === item.href || (pathname === '/dashboard' && item.href.includes('monitoring'))) && 'bg-accent text-primary'
+            basePath === item.href && 'bg-accent text-primary'
           )}
         >
           <item.icon className="h-4 w-4" />
