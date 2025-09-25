@@ -14,6 +14,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 export default function DocumentationPage() {
   return (
@@ -24,54 +27,90 @@ export default function DocumentationPage() {
             Documentación del Sistema
           </h1>
           <p className="text-muted-foreground">
-            Aquí encontrarás un manual de usuario para integrar tu sistema con Factos UbicSys y un historial de cambios del sistema.
+            Aquí encontrarás guías de integración, manuales de API y un historial de cambios del sistema.
           </p>
         </div>
       </div>
       
       <Card>
         <CardHeader>
-            <CardTitle>Manual de Usuario</CardTitle>
+            <CardTitle>Manual de Integración y API</CardTitle>
             <CardDescription>
-                Guía para conectar y utilizar la plataforma de facturación electrónica.
+                Guía para conectar tu ERP y utilizar la API de Factos UbicSys.
             </CardDescription>
         </CardHeader>
         <CardContent>
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full" defaultValue="item-2">
             <AccordionItem value="item-1">
-                <AccordionTrigger>Introducción</AccordionTrigger>
+                <AccordionTrigger>Introducción al Middleware</AccordionTrigger>
                 <AccordionContent className="prose dark:prose-invert max-w-none">
                     <h4>¿Qué es Factos UbicSys?</h4>
                     <p>
-                        Factos UbicSys es una plataforma de middleware diseñada para simplificar la facturación electrónica en Panamá. Actuamos como un puente entre tu sistema de planificación de recursos empresariales (ERP) y el Proveedor de Autorización Calificado (PAC), The Factory HKA.
+                        Factos UbicSys es una plataforma de middleware diseñada para simplificar la facturación electrónica en Panamá. Actuamos como un puente robusto y escalable entre tu sistema de planificación de recursos empresariales (ERP) y el Proveedor de Autorización Calificado (PAC), The Factory HKA.
                     </p>
-                    <h4>¿Cómo funciona?</h4>
+                    <h4>Flujo de Trabajo General</h4>
                     <ol>
-                        <li>Tu sistema ERP envía los datos de la factura a nuestra API.</li>
-                        <li>Nosotros transformamos esos datos al formato exigido por la DGI y The Factory HKA.</li>
-                        <li>Enviamos el documento al PAC para su validación y aprobación.</li>
-                        <li>Te notificamos en tiempo real sobre el estado de cada documento (aprobado, rechazado, etc.) a través de webhooks o consultando nuestro dashboard.</li>
+                        <li>Tu sistema ERP envía los datos de la factura a nuestra API usando una clave de cliente generada en esta plataforma.</li>
+                        <li>Nosotros validamos, transformamos y almacenamos ese documento en nuestra base de datos con estado "pendiente".</li>
+                        <li>Un proceso asíncrono (orquestado por IA con Genkit) toma el documento, se autentica contra The Factory HKA usando las credenciales que configuraste y lo envía para su aprobación.</li>
+                        <li>Registramos la respuesta del PAC (aprobado o rechazado) y actualizamos el estado del documento, el CUFE y cualquier detalle de error en nuestro sistema.</li>
+                         <li>Puedes monitorear el estado de cada documento en tiempo real a través de nuestro dashboard.</li>
                     </ol>
                 </AccordionContent>
             </AccordionItem>
              <AccordionItem value="item-2">
-                <AccordionTrigger>Conexión de tu ERP</AccordionTrigger>
+                <AccordionTrigger>Guía de Configuración de API (Paso a Paso)</AccordionTrigger>
                 <AccordionContent className="prose dark:prose-invert max-w-none">
-                    <h4>Credenciales de API</h4>
+                    <h4>Paso 1: Obtener Credenciales de The Factory HKA</h4>
                     <p>
-                        Para conectar tu sistema, necesitarás un token de API que puedes generar en la sección de "Ajustes" de tu perfil de compañía. Este token deberá ser incluido en el encabezado de autorización de todas tus solicitudes.
+                        Antes de poder enviar documentos, necesitas tus credenciales de acceso para los entornos de <strong>Demo (pruebas)</strong> y <strong>Producción</strong> de The Factory HKA. Estas credenciales te las debe proporcionar tu contacto comercial o de soporte en HKA. Necesitarás dos datos clave por cada ambiente:
                     </p>
-                    <pre><code>Authorization: Bearer TU_API_KEY_AQUI</code></pre>
+                    <ul>
+                      <li><strong>Nit:</strong> Es tu identificador de usuario en la plataforma de HKA.</li>
+                      <li><strong>Token:</strong> Es tu contraseña o clave secreta.</li>
+                    </ul>
+
+                    <h4>Paso 2: Acceder a la Configuración de API</h4>
+                    <p>
+                        Navega a la sección de configuración de API en nuestro dashboard. Aquí es donde guardarás de forma segura las credenciales de HKA y generarás las claves para que tu ERP se conecte con nosotros.
+                    </p>
+                    <Button asChild>
+                        <Link href="/dashboard/settings/api">
+                            Ir a Configuración de API (Asistido)
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                    </Button>
+                    
+                    <h4>Paso 3: Ingresar Credenciales del PAC</h4>
+                    <p>
+                      En la página de configuración, verás una tarjeta llamada <strong>"Credenciales del PAC (The Factory HKA)"</strong>. Rellena los campos para los ambientes de "Demo" y "Producción" con los datos que obtuviste en el Paso 1.
+                    </p>
+                     
+                    <h4>Paso 4: Generar y Usar tu Clave de Cliente</h4>
+                    <p>
+                        En la misma página, en la sección <strong>"Claves de API del Cliente"</strong>, genera una nueva clave. <strong>Esta es la clave que tu sistema ERP debe usar</strong> en el encabezado de autorización para enviar documentos a Factos UbicSys.
+                    </p>
+                    <pre><code>Authorization: Bearer TU_CLAVE_GENERADA_AQUI</code></pre>
+
+                    <h4>Paso 5: Guardar y Probar</h4>
+                     <p>
+                       Guarda toda la configuración. Una vez guardada, te recomendamos ir a la sección de <strong>"Pruebas"</strong> para simular el envío de un documento usando el ambiente de Demo y verificar que la conexión funciona correctamente.
+                    </p>
                 </AccordionContent>
             </AccordionItem>
              <AccordionItem value="item-3">
-                <AccordionTrigger>API de Envío de Documentos</AccordionTrigger>
-                <AccordionContent className="prose dark-prose-invert max-w-none">
+                <AccordionTrigger>Endpoint de Envío de Documentos</AccordionTrigger>
+                <AccordionContent className="prose dark:prose-invert max-w-none">
                     <h4>Endpoint</h4>
-                    <p>Para enviar un nuevo documento (factura, nota de crédito, etc.), debes realizar una solicitud POST a la siguiente URL:</p>
+                    <p>Para enviar un nuevo documento (factura, nota de crédito, etc.), tu sistema debe realizar una solicitud <code>POST</code> a la siguiente URL:</p>
                     <pre><code>POST /api/v1/documents</code></pre>
+                    <h4>Autenticación</h4>
+                    <p>La solicitud debe incluir el encabezado <code>Authorization</code> con la clave de API que generaste en la configuración (Paso 4 de la guía).</p>
+                    <pre><code>Authorization: Bearer fk_live_...</code></pre>
                     <h4>Cuerpo de la Solicitud (Body)</h4>
-                    <p>El cuerpo de la solicitud debe ser un objeto JSON que contenga los datos de tu documento. La estructura debe seguir el formato especificado por The Factory HKA. Puedes consultar el esquema completo en la sección "Tipos de Datos" de esta documentation.</p>
+                    <p>El cuerpo de la solicitud debe ser un objeto JSON que contenga los datos de tu documento. La estructura debe seguir el formato especificado por The Factory HKA. Puedes usar la sección de "Pruebas" para ver y experimentar con un payload de ejemplo.</p>
+                     <h4>Respuesta Asíncrona</h4>
+                    <p>Si la solicitud es exitosa (API Key válida y JSON bien formado), nuestra API responderá con un código <code>202 Accepted</code>. Esto <strong>no significa que la factura fue aprobada por la DGI</strong>, sino que ha sido aceptada por nuestro sistema para ser procesada. El estado final se podrá consultar en el dashboard.</p>
                 </AccordionContent>
             </AccordionItem>
           </Accordion>
