@@ -1,6 +1,7 @@
 
 
 
+
 import type { FactoryHkaDocumentRequest } from './integrations/tfhka/tfhka-types';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -11,7 +12,7 @@ export type SubscriptionPlan = 'basic' | 'professional' | 'enterprise';
 export type SubscriptionStatus = 'active' | 'suspended' | 'cancelled';
 
 export interface Company {
-  id: string; // Supabase uses 'id' by default
+  id: string; 
   name: string;
   tax_id?: string;
   email: string;
@@ -21,12 +22,11 @@ export interface Company {
   erp_type: ErpType;
   status: CompanyStatus;
   
-  // Timestamps from Supabase are ISO 8601 strings
-  created_at: string; 
-  updated_at: string; 
+  // Timestamps
+  created_at: string | Timestamp; 
+  updated_at: string | Timestamp; 
 
   // Fields from old type for compatibility, can be removed later
-  companyId?: string; 
   createdAt?: string | Timestamp;
   erpType?: ErpType;
 }

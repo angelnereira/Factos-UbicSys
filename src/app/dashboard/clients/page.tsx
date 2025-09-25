@@ -51,7 +51,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/auth-context';
+import { getCompanies } from '@/lib/firebase/firestore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
@@ -77,6 +78,7 @@ export default function ClientsPage() {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { toast } = useToast();
+  const { db } = useAuth();
 
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,24 +87,28 @@ export default function ClientsPage() {
 
   useEffect(() => {
     async function fetchCompanies() {
-      const { data, error } = await supabase.from('companies').select('*');
-      
-      if (error) {
-        console.error('Error fetching companies:', error);
-        setError('No se pudieron cargar las compañías. Asegúrate de que la conexión a la base de datos esté configurada correctamente.');
-        toast({
-            title: "Error de Conexión",
-            description: "No se pudieron obtener los datos de las compañías desde Supabase.",
-            variant: "destructive"
-        })
-      } else {
-        setCompanies(data || []);
+      if (!db) {
+        setError('No se pudo establecer la conexión con la base de datos.');
+        setIsLoading(false);
+        return;
+      };
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const fetchedCompanies = await getCompanies(db);
+        setCompanies(fetchedCompanies as Company[]);
+      } catch (e) {
+         console.error('Error fetching companies:', e);
+         setError('No se pudieron cargar las compañías. Asegúrate de que la conexión a la base de datos esté configurada correctamente.');
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
     
     fetchCompanies();
-  }, [toast]);
+  }, [db]);
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -129,7 +135,7 @@ export default function ClientsPage() {
     if (searchQuery) {
       result = result.filter(client =>
         client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        client.email.toLowerCase().includes(searchQuery.toLowerCase())
+        (client.email && client.email.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -163,11 +169,10 @@ export default function ClientsPage() {
     setIsSubmitting(true);
     toast({
         title: 'Funcionalidad en desarrollo',
-        description: 'La creación de compañías se está migrando a Supabase.',
+        description: 'La creación de compañías se está migrando a Firestore.',
     });
-    // Placeholder for Supabase mutation
-    // const { data, error } = await supabase.from('companies').insert([{ name: values.name, email: values.email, erp_type: values.erpType, status: values.status, auth_uid: 'temp-auth-uid' }]);
-    // if (error) ...
+    // Placeholder for Firestore mutation
+    // await addCompany(db, { ...values, ... });
     setIsSubmitting(false);
     setIsDialogOpen(false);
   };
@@ -358,7 +363,7 @@ export default function ClientsPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('created_at')}>
+                  <Button variant="ghost" onClick={() => handleSort('createdAt')}>
                     Incorporado
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -380,7 +385,7 @@ export default function ClientsPage() {
                       {company.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{company.created_at ? new Date(company.created_at).toLocaleDateString() : 'N/A'}</TableCell>
+                  <TableCell>{company.createdAt ? new Date((company.createdAt as any).seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
                 </TableRow>
               ))}
                 {sortedAndFilteredClients.length === 0 && !error && (
