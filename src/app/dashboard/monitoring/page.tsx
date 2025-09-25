@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import {
   Card,
@@ -21,11 +21,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
-import { Loader2, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { OverviewChart } from '../documents/_components/overview-chart';
 import { Timestamp } from 'firebase/firestore';
-import { getAllDocuments } from '@/lib/firebase/firestore';
-import { useAuth } from '@/contexts/auth-context';
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
   approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -36,49 +34,31 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
   cancelled: 'text-gray-500 border-gray-500 bg-gray-500/10',
 };
 
+// --- Static Data ---
+const staticDocuments: FiscalDocument[] = [
+  { id: 'doc-1', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 1500.75, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-09-25T10:00:00Z')), documentType: 'factura', statusHistory: [] },
+  { id: 'doc-2', companyId: 'comp-2', client: 'Logística Global', amount: 850.00, currency: 'USD', date: Timestamp.now(), erpType: 'oracle', status: 'pending', createdAt: Timestamp.fromDate(new Date('2023-09-25T11:30:00Z')), documentType: 'factura', statusHistory: [] },
+  { id: 'doc-3', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 250.00, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'rejected', createdAt: Timestamp.fromDate(new Date('2023-09-24T14:00:00Z')), documentType: 'factura', statusHistory: [] },
+  { id: 'doc-4', companyId: 'comp-3', client: 'Café de las Cumbres', amount: 75.50, currency: 'USD', date: Timestamp.now(), erpType: 'custom', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-08-15T09:00:00Z')), documentType: 'factura', statusHistory: [] },
+  { id: 'doc-5', companyId: 'comp-2', client: 'Logística Global', amount: 1200.00, currency: 'USD', date: Timestamp.now(), erpType: 'oracle', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-08-20T16:00:00Z')), documentType: 'factura', statusHistory: [] },
+  { id: 'doc-6', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 5000.00, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'pending', createdAt: Timestamp.fromDate(new Date('2023-07-05T12:00:00Z')), documentType: 'factura', statusHistory: [] },
+  { id: 'doc-7', companyId: 'comp-3', client: 'Café de las Cumbres', amount: 150.25, currency: 'USD', date: Timestamp.now(), erpType: 'custom', status: 'rejected', createdAt: Timestamp.fromDate(new Date('2023-07-10T08:30:00Z')), documentType: 'factura', statusHistory: [] },
+];
+
 
 export default function MonitoringPage() {
-  const { db } = useAuth();
-  const [documents, setDocuments] = useState<FiscalDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      if (!db) return;
-      setIsLoading(true);
-      const fetchedDocuments = await getAllDocuments(db);
-      setDocuments(fetchedDocuments);
-      setIsLoading(false);
-    }
-    fetchData();
-  }, [db]);
-
   const documentMetrics = useMemo(() => {
     return {
-      total: documents.length,
-      pending: documents.filter(d => d.status === 'pending').length,
-      approved: documents.filter(d => d.status === 'approved').length,
-      rejected: documents.filter(d => d.status === 'rejected').length,
+      total: 1345,
+      pending: 23,
+      approved: 1280,
+      rejected: 42,
     };
-  }, [documents]);
+  }, []);
 
   const recentDocuments = useMemo(() => {
-    return [...documents]
-      .sort((a, b) => {
-          const dateA = a.createdAt as Timestamp;
-          const dateB = b.createdAt as Timestamp;
-          return dateB.seconds - dateA.seconds;
-      })
-      .slice(0, 5);
-  }, [documents]);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <Loader2 className="h-16 w-16 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+    return staticDocuments.slice(0, 5);
+  }, []);
 
   return (
     <>
@@ -138,7 +118,7 @@ export default function MonitoringPage() {
                       <CardDescription>Volumen de documentos procesados por mes.</CardDescription>
                   </CardHeader>
                   <CardContent className="pl-2">
-                      <OverviewChart documents={documents} />
+                      <OverviewChart documents={staticDocuments} />
                   </CardContent>
               </Card>
               <Card className="col-span-4 lg:col-span-3">
@@ -191,3 +171,5 @@ export default function MonitoringPage() {
     </>
   );
 }
+
+    
