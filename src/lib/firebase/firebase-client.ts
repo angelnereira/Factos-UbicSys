@@ -6,12 +6,12 @@ import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyATnNpGkVVDXiCVJX3sBI388h5koK9iylU",
+  authDomain: "studio-7875732711-2b800.firebaseapp.com",
+  projectId: "studio-7875732711-2b800",
+  storageBucket: "studio-7875732711-2b800.appspot.com",
+  messagingSenderId: "133672149206",
+  appId: "1:133672149206:web:d6b5e3a8c1f3d274577e9d",
 };
 
 let app: FirebaseApp | null = null;
@@ -19,7 +19,7 @@ let auth: Auth | null = null;
 let db: Firestore | null = null;
 
 // This check is crucial for client-side execution.
-if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
+if (typeof window !== 'undefined') {
     if (getApps().length === 0) {
         app = initializeApp(firebaseConfig);
     } else {
@@ -35,8 +35,6 @@ if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
             db = null;
         }
     }
-} else if (typeof window !== 'undefined') {
-    console.error("Firebase configuration is missing. Authentication and database services will be unavailable.");
 }
 
 export { app, auth, db };
