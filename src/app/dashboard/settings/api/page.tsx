@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import {
   Select,
@@ -27,9 +26,10 @@ const apiKeySchema = z.object({
   status: z.enum(['active', 'revoked']),
 });
 
+// Updated schema to match The Factory HKA's authentication fields
 const hkaCredentialsSchema = z.object({
-  username: z.string().min(1, "El nombre de usuario es requerido."),
-  password: z.string().min(1, "La contraseña es requerida."),
+  nit: z.string().min(1, "El Nit (nombre de usuario) es requerido."),
+  token: z.string().min(1, "El Token (contraseña) es requerido."),
 });
 
 const apiConfigSchema = z.object({
@@ -43,8 +43,8 @@ type ApiConfigFormValues = z.infer<typeof apiConfigSchema>;
 
 export default function ApiSettingsPage() {
   const { toast } = useToast();
-  const [showDemoPass, setShowDemoPass] = useState(false);
-  const [showProdPass, setShowProdPass] = useState(false);
+  const [showDemoToken, setShowDemoToken] = useState(false);
+  const [showProdToken, setShowProdToken] = useState(false);
 
   // Mock data, in a real app this would come from your DB
   const companies = [
@@ -57,8 +57,8 @@ export default function ApiSettingsPage() {
     defaultValues: {
       companyId: '',
       clientApiKeys: [{ key: `fk_live_${crypto.randomUUID()}`, status: 'active' }],
-      pacDemoCredentials: { username: '', password: '' },
-      pacProdCredentials: { username: '', password: '' },
+      pacDemoCredentials: { nit: '', token: '' },
+      pacProdCredentials: { nit: '', token: '' },
     },
   });
 
@@ -188,7 +188,7 @@ export default function ApiSettingsPage() {
                 <CardHeader>
                     <CardTitle>Credenciales del PAC (The Factory HKA)</CardTitle>
                     <CardDescription>
-                        Credenciales necesarias para conectar Factos UbicSys con el proveedor de autorización.
+                        Credenciales necesarias para conectar Factos UbicSys con el proveedor de autorización, según su documentación.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -196,27 +196,27 @@ export default function ApiSettingsPage() {
                         <h3 className="font-semibold">Ambiente de Demo / Pruebas</h3>
                          <FormField
                             control={form.control}
-                            name="pacDemoCredentials.username"
+                            name="pacDemoCredentials.nit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Username (Demo)</FormLabel>
-                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormLabel>Nit (Usuario Demo)</FormLabel>
+                                    <FormControl><Input placeholder="Nit de prueba proporcionado por HKA" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                         <FormField
                             control={form.control}
-                            name="pacDemoCredentials.password"
+                            name="pacDemoCredentials.token"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Password (Demo)</FormLabel>
+                                    <FormLabel>Token (Contraseña Demo)</FormLabel>
                                     <div className="relative">
                                         <FormControl>
-                                            <Input type={showDemoPass ? 'text' : 'password'} {...field} />
+                                            <Input type={showDemoToken ? 'text' : 'password'} placeholder="Token de prueba proporcionado por HKA" {...field} />
                                         </FormControl>
-                                        <Button variant="ghost" size="icon" type="button" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowDemoPass(!showDemoPass)}>
-                                            {showDemoPass ? <EyeOff /> : <Eye />}
+                                        <Button variant="ghost" size="icon" type="button" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowDemoToken(!showDemoToken)}>
+                                            {showDemoToken ? <EyeOff /> : <Eye />}
                                         </Button>
                                     </div>
                                     <FormMessage />
@@ -228,27 +228,27 @@ export default function ApiSettingsPage() {
                         <h3 className="font-semibold">Ambiente de Producción</h3>
                          <FormField
                             control={form.control}
-                            name="pacProdCredentials.username"
+                            name="pacProdCredentials.nit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Username (Producción)</FormLabel>
-                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormLabel>Nit (Usuario Producción)</FormLabel>
+                                    <FormControl><Input placeholder="Nit de producción proporcionado por HKA" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                         <FormField
                             control={form.control}
-                            name="pacProdCredentials.password"
+                            name="pacProdCredentials.token"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Password (Producción)</FormLabel>
+                                    <FormLabel>Token (Contraseña Producción)</FormLabel>
                                      <div className="relative">
                                         <FormControl>
-                                            <Input type={showProdPass ? 'text' : 'password'} {...field} />
+                                            <Input type={showProdToken ? 'text' : 'password'} placeholder="Token de producción proporcionado por HKA" {...field} />
                                         </FormControl>
-                                        <Button variant="ghost" size="icon" type="button" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowProdPass(!showProdPass)}>
-                                            {showProdPass ? <EyeOff /> : <Eye />}
+                                        <Button variant="ghost" size="icon" type="button" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowProdToken(!showProdToken)}>
+                                            {showProdToken ? <EyeOff /> : <Eye />}
                                         </Button>
                                     </div>
                                     <FormMessage />
