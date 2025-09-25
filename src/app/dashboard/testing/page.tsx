@@ -17,13 +17,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { FlaskConical, Loader2, Send } from 'lucide-react';
 
-type Endpoint = 'consultarEmpresa' | 'crearFactura';
+type Endpoint = 'consultarEmpresa' | 'crearFactura' | 'consultarEstatusDocumento' | 'anularDocumento';
 
 const examplePayloads: Record<Endpoint, any> = {
   consultarEmpresa: {
@@ -88,6 +87,13 @@ const examplePayloads: Record<Endpoint, any> = {
         totalTodosItems: "1"
       }
     }
+  },
+  consultarEstatusDocumento: {
+    cufe: 'e1c2b3d4-a5f6-7890-1234-abcdef123456'
+  },
+  anularDocumento: {
+    cufe: 'e1c2b3d4-a5f6-7890-1234-abcdef123456',
+    motivoAnulacion: '01', // '01' para 'Anulación de la operación'
   }
 };
 
@@ -111,20 +117,47 @@ export default function TestingPage() {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     let simulatedResponse;
-    if (endpoint === 'consultarEmpresa') {
-      simulatedResponse = {
-        Codigo: 200,
-        Resultado: "Success",
-        Mensaje: "Empresa consultada exitosamente.",
-        Nit: "J000000000",
-        idEmpresa: "emp-12345",
-      };
-    } else {
+    switch (endpoint) {
+      case 'consultarEmpresa':
+        simulatedResponse = {
+          Codigo: 200,
+          Resultado: "Success",
+          Mensaje: "Empresa consultada exitosamente.",
+          Nit: "J000000000",
+          idEmpresa: "emp-12345",
+        };
+        break;
+      case 'crearFactura':
         simulatedResponse = {
             Codigo: 200,
             Resultado: "Success",
             Mensaje: "Documento recibido y en proceso de validación.",
             cufe: `test-cufe-${crypto.randomUUID()}`
+        };
+        break;
+      case 'consultarEstatusDocumento':
+        simulatedResponse = {
+          Codigo: 200,
+          Resultado: "Success",
+          Mensaje: "Documento encontrado.",
+          status: "Aprobado",
+          cufe: JSON.parse(payload).cufe,
+          fechaProcesamiento: new Date().toISOString()
+        };
+        break;
+      case 'anularDocumento':
+        simulatedResponse = {
+          Codigo: 200,
+          Resultado: "Success",
+          Mensaje: "Solicitud de anulación recibida correctamente.",
+          cufe: JSON.parse(payload).cufe,
+        };
+        break;
+      default:
+        simulatedResponse = {
+          Codigo: 500,
+          Resultado: "Error",
+          Mensaje: "Endpoint no reconocido en la simulación."
         };
     }
 
@@ -162,6 +195,8 @@ export default function TestingPage() {
                 <SelectContent>
                   <SelectItem value="consultarEmpresa">/ConsultarEmpresa</SelectItem>
                   <SelectItem value="crearFactura">/CrearFactura</SelectItem>
+                  <SelectItem value="consultarEstatusDocumento">/ConsultarEstatusDocumento</SelectItem>
+                  <SelectItem value="anularDocumento">/AnularDocumento</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -229,3 +264,5 @@ export default function TestingPage() {
     </div>
   );
 }
+
+    
