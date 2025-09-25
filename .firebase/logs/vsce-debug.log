@@ -1134,3 +1134,4 @@ I0925 19:33:49.551581   17753 dev.go:102] Listening on address (HTTP + gRPC): 12
 [error] [Firebase Plugin] error:  {}
 [info] [Firebase Plugin] Stopping Data Connect toolkit
 [warn] ⚠  Data Connect Emulator has exited upon receiving signal: SIGINT 
+[debug] [2025-09-25T21:20:11.846Z] [Firebase Plugin] Activating Firebase extension.
