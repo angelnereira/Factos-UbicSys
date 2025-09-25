@@ -21,7 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
-import { FileText, Clock, CheckCircle, XCircle, FileJson } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, FileJson, Download } from 'lucide-react';
 import { OverviewChart } from '../documents/_components/overview-chart';
 import { Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -100,6 +100,20 @@ export default function MonitoringPage() {
     return 'N/A';
   };
 
+  const handleDownloadJson = (jsonData: any, docId: string) => {
+    if (!jsonData) return;
+    const jsonString = JSON.stringify(jsonData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `request-${docId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <div className="flex-1 space-y-4">
@@ -152,107 +166,113 @@ export default function MonitoringPage() {
               </Card>
           </div>
           <div className="grid grid-cols-1 gap-4">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Documentos Recientes</CardTitle>
-                      <CardDescription>
-                          Las últimas 5 transacciones enviadas a la API de HKA.
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                       <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Compañía / Documento</TableHead>
-                              <TableHead>Estado</TableHead>
-                              <TableHead>CUFE / Detalles</TableHead>
-                              <TableHead className="text-right">Acciones</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {recentDocuments.map(doc => (
-                              <TableRow key={doc.id}>
-                                <TableCell>
-                                    <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">
-                                        <div className="font-medium">{doc.client}</div>
-                                        <div className="text-sm text-muted-foreground font-mono">ID: {doc.id.substring(0, 8)}...</div>
-                                    </Link>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge
-                                        className={cn('capitalize', statusStyles[doc.status])}
-                                        variant="outline"
-                                    >
-                                        {doc.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    {doc.status === 'approved' && doc.cufe && (
-                                      <div>
-                                          <div className="font-medium font-mono text-xs">CUFE: {doc.cufe.substring(0,12)}...</div>
-                                          <div className="text-sm text-muted-foreground">{getDateString(doc.processedAt)}</div>
-                                      </div>
-                                    )}
-                                    {doc.status === 'rejected' && (
-                                      <div>
-                                          <div className="font-medium text-destructive text-xs truncate" title={doc.errorDetails}>{doc.errorDetails}</div>
-                                          <div className="text-sm text-muted-foreground">{getDateString(doc.processedAt)}</div>
-                                      </div>
-                                    )}
-                                    {doc.status === 'pending' && (
-                                      <div>
-                                          <div className="font-medium text-muted-foreground text-xs">Aún no procesado</div>
-                                          <div className="text-sm text-muted-foreground">{getDateString(doc.createdAt)}</div>
-                                      </div>
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" disabled={!doc.originalData}>
-                                                <FileJson className="h-4 w-4" />
-                                                <span className="sr-only">Ver JSON</span>
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-3xl">
-                                            <DialogHeader>
-                                                <DialogTitle>Detalles de la Transacción API</DialogTitle>
-                                                <DialogDescription>
-                                                    JSON enviado a The Factory HKA y la respuesta recibida.
-                                                </DialogDescription>
-                                            </DialogHeader>
-                                            <div className="grid gap-4 py-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Documentos Recientes</CardTitle>
+                    <CardDescription>
+                        Las últimas 5 transacciones enviadas a la API de HKA.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Compañía / Documento</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead>CUFE / Detalles</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {recentDocuments.map(doc => (
+                            <TableRow key={doc.id}>
+                              <TableCell>
+                                  <Link href={`/dashboard/documents/${doc.id}`} className="hover:underline">
+                                      <div className="font-medium">{doc.client}</div>
+                                      <div className="text-sm text-muted-foreground font-mono">ID: {doc.id.substring(0, 8)}...</div>
+                                  </Link>
+                              </TableCell>
+                              <TableCell>
+                                  <Badge
+                                      className={cn('capitalize', statusStyles[doc.status])}
+                                      variant="outline"
+                                  >
+                                      {doc.status}
+                                  </Badge>
+                              </TableCell>
+                              <TableCell>
+                                  {doc.status === 'approved' && doc.cufe && (
+                                    <div>
+                                        <div className="font-medium font-mono text-xs">CUFE: {doc.cufe.substring(0,12)}...</div>
+                                        <div className="text-sm text-muted-foreground">{getDateString(doc.processedAt)}</div>
+                                    </div>
+                                  )}
+                                  {doc.status === 'rejected' && (
+                                    <div>
+                                        <div className="font-medium text-destructive text-xs truncate" title={doc.errorDetails}>{doc.errorDetails}</div>
+                                        <div className="text-sm text-muted-foreground">{getDateString(doc.processedAt)}</div>
+                                    </div>
+                                  )}
+                                  {doc.status === 'pending' && (
+                                    <div>
+                                        <div className="font-medium text-muted-foreground text-xs">Aún no procesado</div>
+                                        <div className="text-sm text-muted-foreground">{getDateString(doc.createdAt)}</div>
+                                    </div>
+                                  )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                  <Dialog>
+                                      <DialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" disabled={!doc.originalData}>
+                                              <FileJson className="h-4 w-4" />
+                                              <span className="sr-only">Ver JSON</span>
+                                          </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-3xl">
+                                          <DialogHeader>
+                                              <DialogTitle>Detalles de la Transacción API</DialogTitle>
+                                              <DialogDescription>
+                                                  JSON enviado a The Factory HKA y la respuesta recibida.
+                                              </DialogDescription>
+                                          </DialogHeader>
+                                          <div className="grid gap-4 py-4">
+                                              <div>
+                                                  <div className="flex justify-between items-center mb-2">
+                                                    <h4 className="font-semibold">Payload Enviado (Request)</h4>
+                                                    <Button variant="outline" size="sm" onClick={() => handleDownloadJson(doc.originalData, doc.id)}>
+                                                        <Download className="mr-2 h-4 w-4" />
+                                                        Descargar JSON
+                                                    </Button>
+                                                  </div>
+                                                  <pre className="mt-2 h-[200px] w-full overflow-auto rounded-md bg-muted p-4 text-xs">
+                                                      <code>{JSON.stringify(doc.originalData, null, 2)}</code>
+                                                  </pre>
+                                              </div>
                                                 <div>
-                                                    <h4 className="font-semibold mb-2">Payload Enviado (Request)</h4>
-                                                    <pre className="mt-2 h-[200px] w-full overflow-auto rounded-md bg-muted p-4 text-xs">
-                                                        <code>{JSON.stringify(doc.originalData, null, 2)}</code>
-                                                    </pre>
-                                                </div>
-                                                 <div>
-                                                    <h4 className="font-semibold mb-2">Respuesta de la API (Response)</h4>
-                                                    <pre className="mt-2 h-[200px] w-full overflow-auto rounded-md bg-muted p-4 text-xs">
-                                                        <code>{doc.apiResponse ? JSON.stringify(doc.apiResponse, null, 2) : 'No hay respuesta de la API para este estado.'}</code>
-                                                    </pre>
-                                                </div>
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Visión General</CardTitle>
-                      <CardDescription>Volumen de documentos procesados por mes.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                      <OverviewChart documents={staticDocuments} />
-                  </CardContent>
-              </Card>
+                                                  <h4 className="font-semibold mb-2">Respuesta de la API (Response)</h4>
+                                                  <pre className="mt-2 h-[200px] w-full overflow-auto rounded-md bg-muted p-4 text-xs">
+                                                      <code>{doc.apiResponse ? JSON.stringify(doc.apiResponse, null, 2) : 'No hay respuesta de la API para este estado.'}</code>
+                                                  </pre>
+                                              </div>
+                                          </div>
+                                      </DialogContent>
+                                  </Dialog>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Visión General</CardTitle>
+                    <CardDescription>Volumen de documentos procesados por mes.</CardDescription>
+                </CardHeader>
+                <CardContent className="pl-2">
+                    <OverviewChart documents={staticDocuments} />
+                </CardContent>
+            </Card>
           </div>
       </div>
     </>
