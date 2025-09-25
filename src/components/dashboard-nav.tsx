@@ -8,7 +8,7 @@ import {
   Settings,
   History,
   Activity,
-  Landmark,
+  Beaker,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -22,7 +22,7 @@ const navItems = [
   { href: '/dashboard/monitoring', label: 'Monitoreo', icon: Activity },
   { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
   { href: '/dashboard/logs', label: 'Registros', icon: History },
-  { href: '/dashboard/finance', label: 'Finanzas', icon: Landmark },
+  { href: '/dashboard/testing', label: 'Pruebas', icon: Beaker },
   { href: '/dashboard/settings', label: 'Ajustes', icon: Settings },
 ];
 
