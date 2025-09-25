@@ -35,7 +35,12 @@ import { Button } from '@/components/ui/button';
 import { getAllDocuments } from '@/lib/firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
   approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -151,7 +156,7 @@ export default function DocumentsListPage() {
   }, [documents]);
 
   return (
-    <>
+    <TooltipProvider>
       <div className="flex items-center">
         <div className="flex-1">
           <h1 className="font-headline text-2xl font-bold tracking-tight">
@@ -172,34 +177,57 @@ export default function DocumentsListPage() {
               </CardDescription>
             </div>
             <div className="flex gap-2 w-full sm:w-auto items-center">
-              <Button
-                  variant="default"
-                  className="bg-chart-4 text-black hover:bg-chart-4/90 dark:bg-chart-4 dark:hover:bg-chart-4/90"
-                  size="sm"
-                  onClick={fetchData}
-                  disabled={isLoading}
-              >
-                  {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                      <RefreshCw className="h-4 w-4" />
-                  )}
-                  <span className="ml-2 hidden sm:inline">Actualizar</span>
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                      variant="default"
+                      className="bg-chart-4 text-black hover:bg-chart-4/90 dark:bg-chart-4 dark:hover:bg-chart-4/90"
+                      size="sm"
+                      onClick={fetchData}
+                      disabled={isLoading}
+                  >
+                      {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                          <RefreshCw className="h-4 w-4" />
+                      )}
+                      <span className="ml-2 hidden sm:inline">Actualizar</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Volver a cargar los documentos desde la base de datos.</p>
+                </TooltipContent>
+              </Tooltip>
               <div className="relative flex-1 sm:flex-initial">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Buscar por cliente, ID o CUFE..."
-                  className="w-full bg-background pl-8"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
+                 <Tooltip>
+                   <TooltipTrigger className="w-full text-left">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="search"
+                          placeholder="Buscar por cliente, ID o CUFE..."
+                          className="w-full bg-background pl-8"
+                          value={searchQuery}
+                          onChange={e => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+                   </TooltipTrigger>
+                   <TooltipContent>
+                     <p>Busca por nombre de cliente, ID de documento o CUFE.</p>
+                   </TooltipContent>
+                 </Tooltip>
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filtrar por Estado" />
-                </SelectTrigger>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filtrar por Estado" />
+                    </SelectTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Filtrar la lista por estado del documento.</p>
+                  </TooltipContent>
+                </Tooltip>
                 <SelectContent>
                   {uniqueStatuses.map(status => (
                     <SelectItem key={status} value={status} className="capitalize">
@@ -294,6 +322,6 @@ export default function DocumentsListPage() {
           )}
         </CardContent>
       </Card>
-    </>
+    </TooltipProvider>
   );
 }

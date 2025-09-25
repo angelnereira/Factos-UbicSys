@@ -17,6 +17,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from '@/components/user-nav';
@@ -45,6 +51,7 @@ function DashboardLayoutContent({
   };
 
   return (
+    <TooltipProvider>
       <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
         <div className="hidden border-r bg-muted/40 md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
@@ -65,12 +72,19 @@ function DashboardLayoutContent({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
-                  <Button size="sm" className="w-full" asChild>
-                    <Link href="/dashboard/settings/api">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Configurar API
-                    </Link>
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" className="w-full" asChild>
+                        <Link href="/dashboard/settings/api">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Configurar API
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Gestionar credenciales para la API de HKA y clientes.</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </CardContent>
               </Card>
               <Card>
@@ -81,12 +95,19 @@ function DashboardLayoutContent({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
-                  <Button size="sm" className="w-full" asChild>
-                    <Link href="/dashboard/documentation">
-                      <BookText className="mr-2 h-4 w-4" />
-                      Leer Manual
-                    </Link>
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" className="w-full" asChild>
+                        <Link href="/dashboard/documentation">
+                          <BookText className="mr-2 h-4 w-4" />
+                          Leer Manual
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Acceder a la guía de integración y al historial de cambios.</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </CardContent>
               </Card>
               <Card>
@@ -147,38 +168,66 @@ function DashboardLayoutContent({
             </Sheet>
             <div className="w-full flex-1">
               <form>
-                  <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                          type="search"
-                          placeholder="Buscar documentos, clientes, RUC..."
-                          className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                      />
-                  </div>
+                <Tooltip>
+                  <TooltipTrigger className="w-full text-left">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Buscar documentos, clientes, RUC..."
+                            className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+                        />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Búsqueda global en todo el sistema (Próximamente).</p>
+                  </TooltipContent>
+                </Tooltip>
               </form>
             </div>
-             <Button variant="outline" size="icon" asChild>
-                <Link href="/dashboard/settings">
-                  <Settings className="h-5 w-5" />
-                  <span className="sr-only">Configuración General</span>
-                </Link>
-              </Button>
-               <Button
-                variant="default"
-                size="sm"
-                className="bg-chart-4 text-black hover:bg-chart-4/90 dark:bg-chart-4 dark:hover:bg-chart-4/90"
-                asChild
-              >
-                <Link href="/dashboard/settings/api">
-                  <Rocket className="mr-2 h-4 w-4" />
-                  API Producción
-                </Link>
-              </Button>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" asChild>
+                    <Link href="/dashboard/settings">
+                      <Settings className="h-5 w-5" />
+                      <span className="sr-only">Configuración General</span>
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Acceder a la configuración general de la cuenta.</p>
+                </TooltipContent>
+              </Tooltip>
+               <Tooltip>
+                <TooltipTrigger asChild>
+                   <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-chart-4 text-black hover:bg-chart-4/90 dark:bg-chart-4 dark:hover:bg-chart-4/90"
+                    asChild
+                  >
+                    <Link href="/dashboard/settings/api">
+                      <Rocket className="mr-2 h-4 w-4" />
+                      API Producción
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Configurar credenciales para el entorno de producción.</p>
+                </TooltipContent>
+              </Tooltip>
             <ThemeToggle />
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className={cn(statusStyles[currentStatus])}>
-                {currentStatus}
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Badge variant="outline" className={cn(statusStyles[currentStatus])}>
+                    {currentStatus}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Entorno de trabajo actual.</p>
+                </TooltipContent>
+              </Tooltip>
               <UserNav />
             </div>
           </header>
@@ -187,6 +236,7 @@ function DashboardLayoutContent({
           </main>
         </div>
       </div>
+    </TooltipProvider>
   );
 }
 

@@ -23,6 +23,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { FlaskConical, Loader2, Send, Upload, File as FileIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type Endpoint = 'consultarEmpresa' | 'crearFactura' | 'consultarEstatusDocumento' | 'anularDocumento';
 
@@ -208,123 +214,137 @@ export default function TestingPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4">
-      <div className="flex items-center">
-        <div>
-          <h1 className="font-headline text-2xl font-bold tracking-tight">
-            Centro de Pruebas de API
-          </h1>
-          <p className="text-muted-foreground">
-            Simula llamadas a la API de The Factory HKA en el entorno de demostración.
-          </p>
+    <TooltipProvider>
+      <div className="flex-1 space-y-4">
+        <div className="flex items-center">
+          <div>
+            <h1 className="font-headline text-2xl font-bold tracking-tight">
+              Centro de Pruebas de API
+            </h1>
+            <p className="text-muted-foreground">
+              Simula llamadas a la API de The Factory HKA en el entorno de demostración.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Configuración de la Solicitud</CardTitle>
+              <CardDescription>
+                Selecciona el endpoint y ajusta el payload de la solicitud.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="endpoint">Endpoint de la API</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Select onValueChange={handleEndpointChange} defaultValue={endpoint}>
+                      <SelectTrigger id="endpoint">
+                        <SelectValue placeholder="Seleccionar endpoint" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="consultarEmpresa">/ConsultarEmpresa</SelectItem>
+                        <SelectItem value="crearFactura">/CrearFactura</SelectItem>
+                        <SelectItem value="consultarEstatusDocumento">/ConsultarEstatusDocumento</SelectItem>
+                        <SelectItem value="anularDocumento">/AnularDocumento</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Elige el endpoint de la API de HKA que deseas probar.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+
+              <div className="space-y-2">
+                  <Label>Cargar Payload desde Archivo</Label>
+                  <Tooltip>
+                    <TooltipTrigger className="w-full">
+                      <div className="flex items-center justify-center w-full">
+                          <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                  <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                                  <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Haz clic para cargar</span> o arrastra y suelta</p>
+                                  <p className="text-xs text-muted-foreground">Archivo JSON</p>
+                              </div>
+                              <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept="application/json" />
+                          </Label>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Carga un archivo JSON para usarlo como payload de la solicitud.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  {fileName && (
+                      <div className="flex items-center text-sm text-muted-foreground p-2 border rounded-md">
+                          <FileIcon className="h-4 w-4 mr-2" />
+                          <span>{fileName}</span>
+                      </div>
+                  )}
+              </div>
+              
+              <div className="space-y-2">
+                  <Label htmlFor="payload">Payload (JSON)</Label>
+                  <Textarea 
+                      id="payload"
+                      value={payload}
+                      onChange={(e) => setPayload(e.target.value)}
+                      rows={20}
+                      className="font-mono text-xs"
+                  />
+              </div>
+
+              <Button onClick={handleTest} disabled={isLoading} className="w-full">
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="mr-2 h-4 w-4" />
+                )}
+                Ejecutar Prueba
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Respuesta de la API</CardTitle>
+              <CardDescription>
+                Aquí se mostrará el resultado de la llamada a la API.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading && (
+                <div className="flex items-center justify-center h-full p-8">
+                  <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              {!isLoading && !response && (
+                <div className="flex flex-col items-center justify-center text-center p-8 border-dashed border-2 rounded-lg h-full">
+                  <FlaskConical className="h-12 w-12 text-muted-foreground" />
+                  <p className="mt-4 text-muted-foreground">
+                    La respuesta de la API aparecerá aquí después de ejecutar una prueba.
+                  </p>
+                </div>
+              )}
+              {response && (
+                   <div className="space-y-4">
+                      <Alert variant={response.Codigo === 200 ? 'default' : 'destructive'}>
+                          <AlertTitle>{response.Codigo === 200 ? 'Éxito (Código 200)' : 'Error'}</AlertTitle>
+                          <AlertDescription>{response.Mensaje}</AlertDescription>
+                      </Alert>
+                      <div>
+                           <Label>Respuesta Completa (JSON)</Label>
+                          <pre className="mt-2 h-[400px] w-full overflow-auto rounded-md bg-muted p-4 text-xs font-mono">
+                              <code>{JSON.stringify(response, null, 2)}</code>
+                          </pre>
+                      </div>
+                  </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Configuración de la Solicitud</CardTitle>
-            <CardDescription>
-              Selecciona el endpoint y ajusta el payload de la solicitud.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="endpoint">Endpoint de la API</Label>
-              <Select onValueChange={handleEndpointChange} defaultValue={endpoint}>
-                <SelectTrigger id="endpoint">
-                  <SelectValue placeholder="Seleccionar endpoint" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="consultarEmpresa">/ConsultarEmpresa</SelectItem>
-                  <SelectItem value="crearFactura">/CrearFactura</SelectItem>
-                  <SelectItem value="consultarEstatusDocumento">/ConsultarEstatusDocumento</SelectItem>
-                  <SelectItem value="anularDocumento">/AnularDocumento</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-                <Label>Cargar Payload desde Archivo</Label>
-                <div className="flex items-center justify-center w-full">
-                    <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Haz clic para cargar</span> o arrastra y suelta</p>
-                            <p className="text-xs text-muted-foreground">Archivo JSON</p>
-                        </div>
-                        <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept="application/json" />
-                    </Label>
-                </div> 
-                {fileName && (
-                    <div className="flex items-center text-sm text-muted-foreground p-2 border rounded-md">
-                        <FileIcon className="h-4 w-4 mr-2" />
-                        <span>{fileName}</span>
-                    </div>
-                )}
-            </div>
-            
-            <div className="space-y-2">
-                <Label htmlFor="payload">Payload (JSON)</Label>
-                <Textarea 
-                    id="payload"
-                    value={payload}
-                    onChange={(e) => setPayload(e.target.value)}
-                    rows={20}
-                    className="font-mono text-xs"
-                />
-            </div>
-
-            <Button onClick={handleTest} disabled={isLoading} className="w-full">
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="mr-2 h-4 w-4" />
-              )}
-              Ejecutar Prueba
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Respuesta de la API</CardTitle>
-            <CardDescription>
-              Aquí se mostrará el resultado de la llamada a la API.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading && (
-              <div className="flex items-center justify-center h-full p-8">
-                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
-              </div>
-            )}
-            {!isLoading && !response && (
-              <div className="flex flex-col items-center justify-center text-center p-8 border-dashed border-2 rounded-lg h-full">
-                <FlaskConical className="h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 text-muted-foreground">
-                  La respuesta de la API aparecerá aquí después de ejecutar una prueba.
-                </p>
-              </div>
-            )}
-            {response && (
-                 <div className="space-y-4">
-                    <Alert variant={response.Codigo === 200 ? 'default' : 'destructive'}>
-                        <AlertTitle>{response.Codigo === 200 ? 'Éxito (Código 200)' : 'Error'}</AlertTitle>
-                        <AlertDescription>{response.Mensaje}</AlertDescription>
-                    </Alert>
-                    <div>
-                         <Label>Respuesta Completa (JSON)</Label>
-                        <pre className="mt-2 h-[400px] w-full overflow-auto rounded-md bg-muted p-4 text-xs font-mono">
-                            <code>{JSON.stringify(response, null, 2)}</code>
-                        </pre>
-                    </div>
-                </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }
-
-    
