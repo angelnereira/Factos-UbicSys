@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -28,10 +27,12 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument, ProcessingStep, Company } from '@/lib/types';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { Timestamp, collectionGroup, getDocs, query, type Firestore } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface LogEntry extends ProcessingStep {
   documentId: string;
@@ -76,22 +77,34 @@ async function getAllLogs(db: Firestore): Promise<LogEntry[]> {
 
 export default function LogsPage() {
   const { db } = useAuth();
+  const { toast } = useToast();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [stepFilter, setStepFilter] = useState('all');
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!db) return;
-      setIsLoading(true);
+  const fetchData = useCallback(async () => {
+    if (!db) return;
+    setIsLoading(true);
+    try {
       const fetchedLogs = await getAllLogs(db);
       setLogs(fetchedLogs);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+      toast({
+        title: "Error al Cargar Registros",
+        description: "No se pudieron obtener los registros de auditoría desde Firestore.",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
     }
+  }, [db, toast]);
+
+  useEffect(() => {
     fetchData();
-  }, [db]);
+  }, [fetchData]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
@@ -140,7 +153,16 @@ export default function LogsPage() {
                 Busca y filtra a través de todos los registros del sistema.
               </CardDescription>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex gap-2 w-full sm:w-auto items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchData}
+                disabled={isLoading}
+              >
+                <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+                <span className="ml-2 hidden sm:inline">Actualizar</span>
+              </Button>
               <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -158,7 +180,7 @@ export default function LogsPage() {
                 <SelectContent>
                   {uniqueSteps.map(step => (
                     <SelectItem key={step} value={step} className="capitalize">
-                      {step === 'all' ? 'Todos los Pasos' : step}
+                      {step === 'all' ? 'Todos los Pasos' : step.replace(/_/g, ' ')}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -235,5 +257,3 @@ export default function LogsPage() {
     </>
   );
 }
-
-    
