@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Card,
@@ -29,11 +29,12 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
-import { Loader2, Search, ArrowUpDown } from 'lucide-react';
+import { Loader2, Search, ArrowUpDown, RefreshCw } from 'lucide-react';
 import type { Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { getAllDocuments } from '@/lib/firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
@@ -49,23 +50,40 @@ type SortKey = keyof FiscalDocument | '';
 
 export default function DocumentsListPage() {
   const { db } = useAuth();
+  const { toast } = useToast();
   const [documents, setDocuments] = useState<FiscalDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!db) return;
-      setIsLoading(true);
+  const fetchData = useCallback(async () => {
+    if (!db) {
+        toast({
+            title: "Error de Conexión",
+            description: "La base de datos no está disponible. No se pueden cargar los documentos.",
+            variant: "destructive"
+        });
+        return;
+    };
+    setIsLoading(true);
+    try {
       const fetchedDocuments = await getAllDocuments(db);
       setDocuments(fetchedDocuments);
+      setHasLoaded(true);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      toast({
+        title: "Error al Cargar Documentos",
+        description: "No se pudieron obtener los documentos desde Firestore.",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
     }
-    fetchData();
-  }, [db]);
+  }, [db, toast]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -153,7 +171,21 @@ export default function DocumentsListPage() {
                 Busca y filtra a través de todos los documentos.
               </CardDescription>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex gap-2 w-full sm:w-auto items-center">
+              <Button
+                  variant="default"
+                  className="bg-chart-4 text-black hover:bg-chart-4/90 dark:bg-chart-4 dark:hover:bg-chart-4/90"
+                  size="sm"
+                  onClick={fetchData}
+                  disabled={isLoading}
+              >
+                  {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                      <RefreshCw className="h-4 w-4" />
+                  )}
+                  <span className="ml-2 hidden sm:inline">Actualizar</span>
+              </Button>
               <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -184,6 +216,10 @@ export default function DocumentsListPage() {
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
+          ) : !hasLoaded ? (
+             <div className="h-24 text-center text-muted-foreground flex items-center justify-center">
+                  Presiona "Actualizar" para cargar los documentos.
+              </div>
           ) : (
             <Table>
               <TableHeader>
@@ -249,7 +285,7 @@ export default function DocumentsListPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
-                      No se encontraron documentos que coincidan con tus filtros.
+                       No se encontraron documentos que coincidan con tus filtros.
                     </TableCell>
                   </TableRow>
                 )}
