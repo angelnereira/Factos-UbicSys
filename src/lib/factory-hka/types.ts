@@ -5,6 +5,14 @@
  */
 
 /**
+ * Represents the credentials for a company to authenticate with TFHKA.
+ */
+export interface CompanyCredentials {
+  nit: string;
+  token: string;
+}
+
+/**
  * Represents the successful response from The Factory HKA /ConsultarEmpresa endpoint.
  */
 export interface TfhkaConsultarEmpresaResponse {

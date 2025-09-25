@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getAuthToken, submitDocument } from '@/lib/factory-hka/api-client';
-import type { FactoryHkaDocumentRequest } from '@/lib/factory-hka/types';
+import type { FactoryHkaDocumentRequest, CompanyCredentials } from '@/lib/factory-hka/types';
 import type { Company, FiscalDocument } from '@/lib/types';
 import { Timestamp, getDoc, doc, updateDoc, getFirestore } from 'firebase/firestore';
 
@@ -89,14 +89,25 @@ const submitDocumentFlow = ai.defineFlow(
   async ({ documentId, companyId }) => {
     const db = getFirestore();
     
-    // 1. Fetch company to determine the environment
+    // 1. Fetch company to get environment and credentials
     const companyRef = doc(db, 'companies', companyId);
     const companySnap = await getDoc(companyRef);
     if (!companySnap.exists()) {
         throw new Error(`Company with ID ${companyId} not found.`);
     }
     const companyData = companySnap.data() as Company;
-    const env = companyData.status;
+    const env = companyData.status; // 'Demo' or 'Production'
+    
+    const hkaConfig = env === 'Production' ? companyData.factoryHkaConfig.production : companyData.factoryHkaConfig.demo;
+    
+    const credentials: CompanyCredentials = {
+        nit: hkaConfig.username,
+        token: hkaConfig.password, // Assumes password field exists
+    };
+
+    if (!credentials.nit || !credentials.token) {
+        throw new Error(`Credentials for ${env} environment are not configured for company ${companyId}.`);
+    }
 
     // 2. Fetch the document from Firestore
     const document = await getDocumentById(companyId, documentId);
@@ -123,12 +134,11 @@ const submitDocumentFlow = ai.defineFlow(
     // Refresh document state to get the latest statusHistory
     let currentDocument = await getDocumentById(companyId, documentId);
     if (!currentDocument) {
-      // This should not happen, but as a safeguard.
       throw new Error(`Document with ID ${documentId} disappeared during processing.`);
     }
 
-    // 4. Get auth token from HKA
-    const authResponse = await getAuthToken(env);
+    // 4. Get auth token from HKA using company-specific credentials
+    const authResponse = await getAuthToken(credentials, env);
     if (authResponse.error || !authResponse.data) {
         const authErrorMessage = `Error de autenticación con HKA: ${authResponse.error}`;
         await updateDocumentInFlow(companyId, documentId, {

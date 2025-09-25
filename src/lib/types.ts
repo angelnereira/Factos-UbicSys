@@ -33,12 +33,14 @@ export interface Company {
   factoryHkaConfig: {
     demo: {
       username: string;
+      password?: string;
       isActive: boolean;
       maxDocumentsPerMonth: number;
       documentsUsedThisMonth: number;
     },
     production: {
       username: string;
+      password?: string;
       isActive: boolean;
     }
   }
