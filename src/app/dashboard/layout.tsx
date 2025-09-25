@@ -7,6 +7,7 @@ import {
   BookText,
   Search,
   Settings,
+  Rocket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -157,9 +158,20 @@ function DashboardLayoutContent({
               </form>
             </div>
              <Button variant="outline" size="icon" asChild>
-                <Link href="/dashboard/settings/api">
+                <Link href="/dashboard/settings">
                   <Settings className="h-5 w-5" />
-                  <span className="sr-only">Configuración de API</span>
+                  <span className="sr-only">Configuración General</span>
+                </Link>
+              </Button>
+               <Button
+                variant="default"
+                size="sm"
+                className="bg-chart-4 text-black hover:bg-chart-4/90 dark:bg-chart-4 dark:hover:bg-chart-4/90"
+                asChild
+              >
+                <Link href="/dashboard/settings/api">
+                  <Rocket className="mr-2 h-4 w-4" />
+                  API Producción
                 </Link>
               </Button>
             <ThemeToggle />
