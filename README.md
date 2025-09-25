@@ -48,6 +48,8 @@ Crea un archivo `.env` en la raíz del proyecto y añade las credenciales de tu 
 
 ```env
 # Credenciales de Firebase (obtenidas desde la consola de Firebase)
+# ¡Nota! En la configuración actual, estas credenciales están definidas directamente en el código
+# en 'src/lib/firebase/firebase-client.ts' para garantizar el funcionamiento en cualquier entorno.
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
 NEXT_PUBLIC_FIREBASE_API_KEY=...
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
@@ -72,7 +74,47 @@ Inicia el servidor de desarrollo:
 npm run dev
 ```
 
-La aplicación estará disponible en `http://localhost:9002`.
+La aplicación estará disponible en `http://localhost:9002` o el puerto que asigne el entorno de ejecución.
+
+## Guía de Configuración de Autenticación
+
+Para que el registro e inicio de sesión de usuarios con Google funcione correctamente, se requieren dos configuraciones que deben estar sincronizadas: una en la consola de Google Cloud y otra en el código fuente.
+
+### 1. Configuración en la Consola de Google Cloud
+
+Firebase Authentication utiliza OAuth 2.0 para manejar inicios de sesión con proveedores como Google. Esto requiere configurar un "Cliente OAuth" para tu aplicación.
+
+1.  **Navega a la sección de Credenciales:** En la [Consola de Google Cloud](https://console.cloud.google.com/apis/credentials), selecciona tu proyecto.
+2.  **Busca tu Cliente OAuth:** Deberías ver un cliente en la sección "OAuth 2.0 Client IDs", usualmente llamado "Web client (auto created by Google Service)".
+3.  **Configura los Orígenes y URIs de Redirección:**
+    *   **Authorized JavaScript origins:** Son las URLs desde donde se permitirán las solicitudes de inicio de sesión. Es crucial añadir las URLs de tu entorno de desarrollo local y la de producción/vista previa.
+        *   `http://localhost`
+        *   `http://localhost:9002` (o el puerto que uses localmente)
+        *   `https://[TU_PROYECTO_ID].firebaseapp.com`
+        *   La URL de tu entorno de Firebase Studio (ej: `https://*.cloudworkstations.dev`)
+    *   **Authorized redirect URIs:** Es la URL a la que Google redirigirá al usuario después de un inicio de sesión exitoso. Firebase gestiona esto automáticamente.
+        *   `https://[TU_PROYECTO_ID].firebaseapp.com/__/auth/handler`
+
+### 2. Configuración en el Código Fuente
+
+El código de la aplicación debe tener un "mapa" para saber a qué proyecto de Firebase conectarse.
+
+*   **Archivo Clave:** `src/lib/firebase/firebase-client.ts`
+*   **Implementación:** Dentro de este archivo, se encuentra un objeto `firebaseConfig`. Este objeto contiene las claves públicas que identifican tu proyecto de Firebase. Para garantizar que la conexión siempre funcione, estas claves se han definido directamente en el código.
+
+    ```typescript
+    // Ejemplo de la estructura en firebase-client.ts
+    const firebaseConfig = {
+      apiKey: "AIzaSy...",
+      authDomain: "tu-proyecto.firebaseapp.com",
+      projectId: "tu-proyecto-id",
+      // ...otras claves
+    };
+    ```
+
+*   **¿Es seguro?** Sí. Estas claves son públicas y su propósito es identificar tu proyecto, no otorgar acceso. La seguridad de los datos está controlada por las **Reglas de Seguridad de Firestore**.
+
+*   **El Disparador:** La función `signInWithGoogle` en `src/lib/firebase/auth.ts` utiliza el SDK de Firebase y esta configuración para iniciar el proceso de autenticación de forma segura cuando el usuario hace clic en el botón "Continuar con Google".
 
 ## Documentación del Proyecto
 

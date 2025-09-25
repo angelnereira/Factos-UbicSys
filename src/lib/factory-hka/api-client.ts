@@ -16,15 +16,15 @@ function getApiConfig(env: Environment) {
   if (env === 'Production') {
     return {
       apiUrl: PROD_API_URL,
-      username: process.env.TFHKA_PROD_USERNAME,
-      password: process.env.TFHKA_PROD_PASSWORD,
+      username: process.env.THE_FACTORY_HKA_PROD_USERNAME, // Consistent naming
+      password: process.env.THE_FACTORY_HKA_PROD_PASSWORD, // Consistent naming
     };
   }
-  // Default to Demo for 'Development' and 'Demo'
+  // Default to Demo for 'Development' and 'Demo' as specified in README
   return {
     apiUrl: DEMO_API_URL,
-    username: process.env.TFHKA_DEMO_USERNAME,
-    password: process.env.TFHKA_DEMO_PASSWORD,
+    username: process.env.THE_FACTORY_HKA_USERNAME,
+    password: process.env.THE_FACTORY_HKA_PASSWORD,
   };
 }
 
@@ -46,7 +46,7 @@ export async function getAuthToken(env: Environment): Promise<{
     return { data: null, error: errorMsg };
   }
   if (!config.username || !config.password) {
-    const errorMsg = `The Factory HKA credentials for ${env} environment are not configured in server-side environment variables (TFHKA_..._USERNAME/PASSWORD). This is expected if not deployed.`;
+    const errorMsg = `The Factory HKA credentials for ${env} environment are not configured in server-side environment variables (THE_FACTORY_HKA_...). This is expected if not deployed.`;
     console.warn(errorMsg);
     return { data: null, error: errorMsg };
   }
