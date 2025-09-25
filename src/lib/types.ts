@@ -1,5 +1,6 @@
 
 
+
 import type { FactoryHkaDocumentRequest } from './integrations/tfhka/tfhka-types';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -35,7 +36,7 @@ export type DocumentStatus = 'pending' | 'processing' | 'sent_to_pac' | 'approve
 export type DocumentType = 'factura' | 'nota_credito' | 'nota_debito' | 'factura_exportacion';
 
 export interface FiscalDocument {
-  documentId: string;
+  id: string; // id is from firestore
   companyId: string;
   
   documentType: DocumentType;
@@ -47,15 +48,15 @@ export interface FiscalDocument {
   errorDetails?: string;
   
   // Timestamps
-  createdAt: string; // ISO 8601 string date
-  updatedAt: string; // ISO 8601 string date
-  processedAt?: string;
+  createdAt: Timestamp; 
+  updatedAt: Timestamp;
+  processedAt?: Timestamp;
 
   // Properties from old Document type to keep UI working temporarily
   client: string;
   amount: number;
   currency: string;
-  date: string; // ISO 8601 string date
+  date: Timestamp; 
   erpType: string;
 
   // This will be mapped from originalData or another source
@@ -70,6 +71,8 @@ export interface ProcessingStep {
   step: ProcessingStepName;
   status: ProcessingStepStatus;
   message: string;
-  timestamp: string; // ISO 8601 string date
+  timestamp: Timestamp; // ISO 8601 string date
   details?: Record<string, unknown>;
 }
+
+    

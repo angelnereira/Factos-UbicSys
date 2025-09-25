@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -99,5 +100,7 @@ export async function getAllDocuments(db: Firestore): Promise<FiscalDocument[]> 
 export async function getAllLogs(db: Firestore) {
   const documentsQuery = query(collectionGroup(db, 'documents'));
   const querySnapshot = await getDocs(documentsQuery);
-  return querySnapshot.docs;
+  return querySnapshot;
 }
+
+    

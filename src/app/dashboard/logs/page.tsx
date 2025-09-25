@@ -27,11 +27,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import type { FiscalDocument, ProcessingStep } from '@/lib/types';
+import type { FiscalDocument, ProcessingStep, Company } from '@/lib/types';
 import { Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
-import { Timestamp } from 'firebase/firestore';
-import { getAllLogs } from '@/lib/firebase/firestore';
+import { Timestamp, collectionGroup, getDocs, query, type Firestore } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 
 interface LogEntry extends ProcessingStep {
@@ -45,6 +44,36 @@ const statusStyles: { [key in ProcessingStep['status']]: string } = {
   warning: 'text-chart-4 border-chart-4 bg-chart-4/10',
 };
 
+async function getAllLogs(db: Firestore): Promise<LogEntry[]> {
+    const documentsQuery = query(collectionGroup(db, 'documents'));
+    const querySnapshot = await getDocs(documentsQuery);
+    
+    const allLogs: LogEntry[] = [];
+    querySnapshot.forEach((docSnap) => {
+        const doc = docSnap.data() as FiscalDocument;
+        const companyId = docSnap.ref.parent.parent?.id ?? '';
+        
+        if (doc.statusHistory && Array.isArray(doc.statusHistory)) {
+          doc.statusHistory.forEach(step => {
+            allLogs.push({
+              ...step,
+              documentId: docSnap.id,
+              companyId: companyId,
+            });
+          });
+        }
+    });
+    
+    allLogs.sort((a, b) => {
+        const timeA = (a.timestamp as unknown as Timestamp)?.seconds || 0;
+        const timeB = (b.timestamp as unknown as Timestamp)?.seconds || 0;
+        return timeB - timeA;
+    });
+
+    return allLogs;
+}
+
+
 export default function LogsPage() {
   const { db } = useAuth();
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -57,23 +86,8 @@ export default function LogsPage() {
     async function fetchData() {
       if (!db) return;
       setIsLoading(true);
-      const querySnapshot = await getAllLogs(db);
-      const allLogs: LogEntry[] = [];
-      querySnapshot.forEach((docSnap) => {
-        const doc = docSnap.data() as FiscalDocument;
-        if (doc.statusHistory && Array.isArray(doc.statusHistory)) {
-          doc.statusHistory.forEach(step => {
-            allLogs.push({
-              ...step,
-              documentId: docSnap.id,
-              companyId: doc.companyId,
-            });
-          });
-        }
-      });
-      // Sort logs by most recent timestamp
-      allLogs.sort((a, b) => (b.timestamp as Timestamp).seconds - (a.timestamp as Timestamp).seconds);
-      setLogs(allLogs);
+      const fetchedLogs = await getAllLogs(db);
+      setLogs(fetchedLogs);
       setIsLoading(false);
     }
     fetchData();
@@ -94,6 +108,16 @@ export default function LogsPage() {
     const steps = new Set(logs.map(log => log.step));
     return ['all', ...Array.from(steps)];
   }, [logs]);
+
+  const getDateString = (date: any) => {
+    if (date && typeof date === 'object' && 'seconds' in date) {
+      return new Date((date as Timestamp).seconds * 1000).toLocaleString();
+    }
+    if (typeof date === 'string') {
+        return new Date(date).toLocaleString();
+    }
+    return 'N/A';
+  }
 
   return (
     <>
@@ -181,7 +205,7 @@ export default function LogsPage() {
                           {log.documentId.substring(0, 15)}...
                         </Link>
                       </TableCell>
-                      <TableCell className="capitalize">{log.step}</TableCell>
+                      <TableCell className="capitalize">{log.step.replace(/_/g, ' ')}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
@@ -192,9 +216,7 @@ export default function LogsPage() {
                       </TableCell>
                       <TableCell className="max-w-xs truncate">{log.message}</TableCell>
                       <TableCell>
-                        {new Date(
-                          (log.timestamp as Timestamp).seconds * 1000
-                        ).toLocaleString()}
+                        {getDateString(log.timestamp)}
                       </TableCell>
                     </TableRow>
                   ))
@@ -213,3 +235,5 @@ export default function LogsPage() {
     </>
   );
 }
+
+    
