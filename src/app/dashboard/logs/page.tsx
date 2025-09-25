@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -17,6 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,9 +34,9 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument, ProcessingStep, Company } from '@/lib/types';
-import { Loader2, Search, RefreshCw } from 'lucide-react';
+import { Loader2, Search, RefreshCw, Building } from 'lucide-react';
 import Link from 'next/link';
-import { Timestamp, collectionGroup, getDocs, query, type Firestore } from 'firebase/firestore';
+import { Timestamp, collectionGroup, getDocs, query, type Firestore, collection } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +44,10 @@ import { useToast } from '@/hooks/use-toast';
 interface LogEntry extends ProcessingStep {
   documentId: string;
   companyId: string;
+}
+
+interface GroupedLogs {
+    [companyId: string]: LogEntry[];
 }
 
 const statusStyles: { [key in ProcessingStep['status']]: string } = {
@@ -75,16 +85,22 @@ async function getAllLogs(db: Firestore): Promise<LogEntry[]> {
     return allLogs;
 }
 
+async function getCompanies(db: Firestore): Promise<Company[]> {
+    const q = collection(db, 'companies');
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Company));
+}
+
 
 export default function LogsPage() {
   const { db } = useAuth();
   const { toast } = useToast();
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [stepFilter, setStepFilter] = useState('all');
 
   const fetchData = useCallback(async () => {
     if (!db) {
@@ -96,10 +112,14 @@ export default function LogsPage() {
         return;
     };
     setIsLoading(true);
-    setHasSearched(true);
     try {
-      const fetchedLogs = await getAllLogs(db);
+      const [fetchedLogs, fetchedCompanies] = await Promise.all([
+          getAllLogs(db),
+          getCompanies(db)
+      ]);
       setLogs(fetchedLogs);
+      setCompanies(fetchedCompanies);
+      setHasLoaded(true);
     } catch (error) {
       console.error("Error fetching logs:", error);
       toast({
@@ -112,21 +132,27 @@ export default function LogsPage() {
     }
   }, [db, toast]);
 
-  const filteredLogs = useMemo(() => {
-    return logs.filter(log => {
+  const groupedAndFilteredLogs = useMemo(() => {
+    const filtered = logs.filter(log => {
       const searchMatch =
         log.documentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
         log.message.toLowerCase().includes(searchQuery.toLowerCase());
       const statusMatch = statusFilter === 'all' || log.status === statusFilter;
-      const stepMatch = stepFilter === 'all' || log.step === stepFilter;
-      return searchMatch && statusMatch && stepMatch;
+      return searchMatch && statusMatch;
     });
-  }, [logs, searchQuery, statusFilter, stepFilter]);
 
-  const uniqueSteps = useMemo(() => {
-    const steps = new Set(logs.map(log => log.step));
-    return ['all', ...Array.from(steps)];
-  }, [logs]);
+    return filtered.reduce((acc: GroupedLogs, log) => {
+        if (!acc[log.companyId]) {
+            acc[log.companyId] = [];
+        }
+        acc[log.companyId].push(log);
+        return acc;
+    }, {});
+  }, [logs, searchQuery, statusFilter]);
+
+  const getCompanyName = (companyId: string) => {
+      return companies.find(c => c.id === companyId)?.name || companyId;
+  }
 
   const getDateString = (date: any) => {
     if (date && typeof date === 'object' && 'seconds' in date) {
@@ -184,18 +210,6 @@ export default function LogsPage() {
                   onChange={e => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Select value={stepFilter} onValueChange={setStepFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Filtrar por Paso" />
-                </SelectTrigger>
-                <SelectContent>
-                  {uniqueSteps.map(step => (
-                    <SelectItem key={step} value={step} className="capitalize">
-                      {step === 'all' ? 'Todos los Pasos' : step.replace(/_/g, ' ')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Filtrar por Estado" />
@@ -215,56 +229,73 @@ export default function LogsPage() {
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
+          ) : !hasLoaded ? (
+              <div className="text-center text-muted-foreground py-16">
+                  Presiona "Actualizar" para cargar los registros.
+              </div>
+          ) : Object.keys(groupedAndFilteredLogs).length === 0 ? (
+               <div className="text-center text-muted-foreground py-16">
+                  No se encontraron registros que coincidan con tus filtros.
+              </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Documento ID</TableHead>
-                  <TableHead>Paso</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Mensaje</TableHead>
-                  <TableHead>Fecha</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLogs.length > 0 ? (
-                  filteredLogs.map((log, index) => (
-                    <TableRow key={`${log.documentId}-${index}`}>
-                      <TableCell>
-                        <Link
-                          href={`/dashboard/documents/${log.documentId}`}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          {log.documentId.substring(0, 15)}...
-                        </Link>
-                      </TableCell>
-                      <TableCell className="capitalize">{log.step.replace(/_/g, ' ')}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn('capitalize', statusStyles[log.status])}
-                        >
-                          {log.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">{log.message}</TableCell>
-                      <TableCell>
-                        {getDateString(log.timestamp)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                        {hasSearched ? 'No se encontraron registros que coincidan con tus filtros.' : 'Presiona "Actualizar" para cargar los registros.'}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+            <Accordion type="multiple" className="w-full">
+                {Object.entries(groupedAndFilteredLogs).map(([companyId, logEntries]) => (
+                    <AccordionItem value={companyId} key={companyId}>
+                        <AccordionTrigger>
+                            <div className="flex items-center gap-2">
+                                <Building className="h-5 w-5 text-muted-foreground" />
+                                <span className="font-semibold">{getCompanyName(companyId)}</span>
+                                <Badge variant="secondary">{logEntries.length} eventos</Badge>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Documento ID</TableHead>
+                                  <TableHead>Paso</TableHead>
+                                  <TableHead>Estado</TableHead>
+                                  <TableHead>Mensaje</TableHead>
+                                  <TableHead>Fecha</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {logEntries.map((log, index) => (
+                                  <TableRow key={`${log.documentId}-${index}`}>
+                                    <TableCell>
+                                      <Link
+                                        href={`/dashboard/documents/${log.documentId}`}
+                                        className="font-medium text-primary hover:underline"
+                                      >
+                                        {log.documentId.substring(0, 15)}...
+                                      </Link>
+                                    </TableCell>
+                                    <TableCell className="capitalize">{log.step.replace(/_/g, ' ')}</TableCell>
+                                    <TableCell>
+                                      <Badge
+                                        variant="outline"
+                                        className={cn('capitalize', statusStyles[log.status])}
+                                      >
+                                        {log.status}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="max-w-xs truncate">{log.message}</TableCell>
+                                    <TableCell>
+                                      {getDateString(log.timestamp)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
+            </Accordion>
           )}
         </CardContent>
       </Card>
     </>
   );
 }
+
+    
