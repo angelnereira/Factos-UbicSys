@@ -119,8 +119,8 @@ export default function MonitoringPage() {
                 </CardContent>
               </Card>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-              <Card className="col-span-4 lg:col-span-4">
+          <div className="grid grid-cols-1 gap-4">
+              <Card>
                   <CardHeader>
                       <CardTitle>Documentos Recientes</CardTitle>
                       <CardDescription>
@@ -179,7 +179,7 @@ export default function MonitoringPage() {
                         </Table>
                   </CardContent>
               </Card>
-              <Card className="col-span-4 lg:col-span-3">
+              <Card>
                   <CardHeader>
                       <CardTitle>Visión General</CardTitle>
                       <CardDescription>Volumen de documentos procesados por mes.</CardDescription>
