@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   FileText,
-  Users,
   Settings,
   History,
   Activity,
@@ -22,7 +21,6 @@ import {
 const navItems = [
   { href: '/dashboard/monitoring', label: 'Monitoreo', icon: Activity },
   { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
-  { href: '/dashboard/clients', label: 'Compañías', icon: Users },
   { href: '/dashboard/logs', label: 'Registros', icon: History },
   { href: '/dashboard/finance', label: 'Finanzas', icon: Landmark },
   { href: '/dashboard/settings', label: 'Ajustes', icon: Settings },
