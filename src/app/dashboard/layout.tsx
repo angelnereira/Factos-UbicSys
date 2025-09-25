@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Menu,
@@ -34,22 +35,48 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import PrivateRoute from '@/components/private-route';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth-context';
+import type { Company } from '@/lib/types';
+import { getCompanyByAuthUid } from '@/lib/firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Placeholder for the current status. In a real app, this would come from a state management or context.
-  const currentStatus: 'Production' | 'Development' | 'Demo' = 'Demo';
-  const { toast } = useToast();
+  const { user, db } = useAuth();
+  const [company, setCompany] = useState<Company | null>(null);
+  const [loadingCompany, setLoadingCompany] = useState(true);
+
+  useEffect(() => {
+    async function fetchCompany() {
+      if (user && db) {
+        setLoadingCompany(true);
+        const fetchedCompany = await getCompanyByAuthUid(db, user.uid);
+        setCompany(fetchedCompany);
+        setLoadingCompany(false);
+      }
+    }
+    fetchCompany();
+  }, [user, db]);
+  
+  const currentStatus = company?.status || 'Development';
 
   const statusStyles = {
     Production: 'text-chart-2 border-chart-2 bg-chart-2/10',
     Development: 'text-destructive border-destructive bg-destructive/10',
     Demo: 'text-chart-4 border-chart-4 bg-chart-4/10',
   };
+
+  const activePlanConfig = company?.status === 'Production'
+    ? company.factoryHkaConfig.production
+    : company?.factoryHkaConfig.demo;
+
+  const foliosUsed = activePlanConfig?.documentsUsedThisMonth || 0;
+  const maxFolios = activePlanConfig?.maxDocumentsPerMonth || 0;
+
 
   return (
     <TooltipProvider>
@@ -221,7 +248,11 @@ function DashboardLayoutContent({
                 <TooltipTrigger asChild>
                     <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground border rounded-md px-3 h-9">
                         <Ticket className="h-4 w-4" />
-                        <span>Folios: 9,880 / 10,000</span>
+                        {loadingCompany ? (
+                          <Skeleton className="w-24 h-4" />
+                        ) : (
+                          <span>Folios: {(maxFolios - foliosUsed).toLocaleString()} / {maxFolios.toLocaleString()}</span>
+                        )}
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -232,9 +263,13 @@ function DashboardLayoutContent({
             <div className="flex items-center gap-2">
               <Tooltip>
                 <TooltipTrigger>
-                  <Badge variant="outline" className={cn(statusStyles[currentStatus])}>
-                    {currentStatus}
-                  </Badge>
+                  {loadingCompany ? (
+                     <Skeleton className="w-20 h-6" />
+                  ): (
+                    <Badge variant="outline" className={cn(statusStyles[currentStatus])}>
+                      {currentStatus}
+                    </Badge>
+                  )}
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Entorno de trabajo actual.</p>

@@ -11,6 +11,7 @@ import {
   query,
   collectionGroup,
   Timestamp,
+  where,
   type Firestore,
 } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
@@ -35,6 +36,22 @@ export async function addCompany(db: Firestore, companyData: Omit<Company, 'id'>
     } catch (error) {
         console.error("Error adding company to Firestore: ", error);
         return { id: null, error };
+    }
+}
+
+// Function to get a single company by auth UID
+export async function getCompanyByAuthUid(db: Firestore, authUid: string): Promise<Company | null> {
+    try {
+        const q = query(collection(db, 'companies'), where('authUid', '==', authUid));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            return { id: doc.id, ...doc.data() } as Company;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error getting company by auth UID: ", error);
+        return null;
     }
 }
 
@@ -102,5 +119,3 @@ export async function getAllLogs(db: Firestore) {
   const querySnapshot = await getDocs(documentsQuery);
   return querySnapshot;
 }
-
-    
