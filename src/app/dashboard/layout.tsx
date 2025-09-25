@@ -156,6 +156,12 @@ function DashboardLayoutContent({
                   </div>
               </form>
             </div>
+             <Button variant="outline" size="icon" asChild>
+                <Link href="/dashboard/settings/api">
+                  <Settings className="h-5 w-5" />
+                  <span className="sr-only">Configuración de API</span>
+                </Link>
+              </Button>
             <ThemeToggle />
             <div className="flex items-center gap-2">
               <Badge variant="outline" className={cn(statusStyles[currentStatus])}>
