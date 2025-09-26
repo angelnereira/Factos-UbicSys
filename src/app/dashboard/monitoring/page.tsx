@@ -123,14 +123,6 @@ export default function MonitoringPage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-  
-    if (error) {
-    return (
-      <div className="flex justify-center items-center h-40 text-center">
-        <p className="text-destructive">{error}</p>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -141,6 +133,11 @@ export default function MonitoringPage() {
                 Una visión general del estado y volumen de tus documentos.
             </p>
           </div>
+          {error && (
+            <div className="flex justify-center items-center h-40 text-center">
+              <p className="text-destructive">{error}</p>
+            </div>
+          )}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
