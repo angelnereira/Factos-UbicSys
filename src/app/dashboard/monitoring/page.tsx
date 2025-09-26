@@ -1,14 +1,13 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card';
 import {
   Table,
@@ -21,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
-import { FileText, Clock, CheckCircle, XCircle, FileJson, Download } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, FileJson, Download, Loader2 } from 'lucide-react';
 import { OverviewChart } from '../documents/_components/overview-chart';
 import { Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -33,6 +32,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/auth-context';
+import { getAllDocuments } from '@/lib/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const statusStyles: { [key in FiscalDocument['status']]: string } = {
   approved: 'text-chart-2 border-chart-2 bg-chart-2/10',
@@ -43,54 +46,60 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
   cancelled: 'text-gray-500 border-gray-500 bg-gray-500/10',
 };
 
-// --- Static Data ---
-const staticDocuments: (FiscalDocument & { apiResponse?: any })[] = [
-  { 
-    id: 'doc-1', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 1500.75, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-09-25T10:00:00Z')), documentType: 'factura', statusHistory: [], cufe: 'e1c2b3d4-a5f6-7890-1234-abcdef123456', processedAt: Timestamp.fromDate(new Date('2023-09-25T10:01:15Z')),
-    originalData: { documento: { datosTransaccion: { tipoDocumento: '01' }, cliente: { razonSocial: 'Constructora del Istmo' } } },
-    apiResponse: { Codigo: 200, Resultado: "Success", Mensaje: "Documento recibido y aprobado.", cufe: "e1c2b3d4-a5f6-7890-1234-abcdef123456" }
-  },
-  { 
-    id: 'doc-2', companyId: 'comp-2', client: 'Logística Global', amount: 850.00, currency: 'USD', date: Timestamp.now(), erpType: 'oracle', status: 'pending', createdAt: Timestamp.fromDate(new Date('2023-09-25T11:30:00Z')), documentType: 'factura', statusHistory: [],
-    originalData: { documento: { datosTransaccion: { tipoDocumento: '01' }, cliente: { razonSocial: 'Logística Global' } } },
-  },
-  { 
-    id: 'doc-3', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 250.00, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'rejected', createdAt: Timestamp.fromDate(new Date('2023-09-24T14:00:00Z')), documentType: 'factura', statusHistory: [], errorDetails: 'Error 500: El RUC del receptor no es válido.', processedAt: Timestamp.fromDate(new Date('2023-09-24T14:00:45Z')),
-    originalData: { documento: { datosTransaccion: { tipoDocumento: '01' }, cliente: { razonSocial: 'Constructora del Istmo', numeroRUC: '123-INVALID' } } },
-    apiResponse: { Codigo: 500, Resultado: "Error", Mensaje: "El RUC del receptor no es válido.", errors: { "documento.cliente.numeroRUC": "Formato inválido." } }
-  },
-  { 
-    id: 'doc-4', companyId: 'comp-3', client: 'Café de las Cumbres', amount: 75.50, currency: 'USD', date: Timestamp.now(), erpType: 'custom', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-08-15T09:00:00Z')), documentType: 'factura', statusHistory: [], cufe: 'f6e5d4c3-b2a1-0987-6543-fedcba987654', processedAt: Timestamp.fromDate(new Date('2023-08-15T09:01:05Z')),
-    originalData: { documento: { datosTransaccion: { tipoDocumento: '01' }, cliente: { razonSocial: 'Café de las Cumbres' } } },
-    apiResponse: { Codigo: 200, Resultado: "Success", Mensaje: "Documento recibido y aprobado.", cufe: "f6e5d4c3-b2a1-0987-6543-fedcba987654" }
-  },
-  { 
-    id: 'doc-5', companyId: 'comp-2', client: 'Logística Global', amount: 1200.00, currency: 'USD', date: Timestamp.now(), erpType: 'oracle', status: 'approved', createdAt: Timestamp.fromDate(new Date('2023-08-20T16:00:00Z')), documentType: 'factura', statusHistory: [], cufe: 'a1b2c3d4-e5f6-7890-fedc-ba9876543210', processedAt: Timestamp.fromDate(new Date('2023-08-20T16:01:20Z')),
-    originalData: { documento: { datosTransaccion: { tipoDocumento: '01' }, cliente: { razonSocial: 'Logística Global' } } },
-    apiResponse: { Codigo: 200, Resultado: "Success", Mensaje: "Documento recibido y aprobado.", cufe: "a1b2c3d4-e5f6-7890-fedc-ba9876543210" }
-  },
-  { id: 'doc-6', companyId: 'comp-1', client: 'Constructora del Istmo', amount: 5000.00, currency: 'USD', date: Timestamp.now(), erpType: 'sap', status: 'pending', createdAt: Timestamp.fromDate(new Date('2023-07-05T12:00:00Z')), documentType: 'factura', statusHistory: [] },
-  { 
-    id: 'doc-7', companyId: 'comp-3', client: 'Café de las Cumbres', amount: 150.25, currency: 'USD', date: Timestamp.now(), erpType: 'custom', status: 'rejected', createdAt: Timestamp.fromDate(new Date('2023-07-10T08:30:00Z')), documentType: 'factura', statusHistory: [], errorDetails: 'Error 401: El token de autenticación ha expirado.', processedAt: Timestamp.fromDate(new Date('2023-07-10T08:30:55Z')),
-    originalData: { documento: { datosTransaccion: { tipoDocumento: '01' }, cliente: { razonSocial: 'Café de las Cumbres' } } },
-    apiResponse: { Codigo: 401, Resultado: "Error", Mensaje: "Token de autenticación inválido o expirado." }
-  },
-];
-
-
 export default function MonitoringPage() {
+  const { db } = useAuth();
+  const { toast } = useToast();
+  const [documents, setDocuments] = useState<FiscalDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+   useEffect(() => {
+    async function fetchData() {
+      if (!db) {
+        setError("La conexión con la base de datos no está disponible.");
+        setIsLoading(false);
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const fetchedDocuments = await getAllDocuments(db);
+        fetchedDocuments.sort((a, b) => {
+          const timeA = (a.createdAt as Timestamp)?.seconds || 0;
+          const timeB = (b.createdAt as Timestamp)?.seconds || 0;
+          return timeB - timeA;
+        });
+        setDocuments(fetchedDocuments);
+      } catch (err) {
+        console.error("Error fetching documents:", err);
+        setError("No se pudieron cargar los documentos.");
+        toast({
+          title: "Error de Carga",
+          description: "No se pudieron obtener los documentos desde Firestore.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, [db, toast]);
+
   const documentMetrics = useMemo(() => {
-    return {
-      total: 1345,
-      pending: 23,
-      approved: 1280,
-      rejected: 42,
-    };
-  }, []);
+    return documents.reduce(
+      (acc, doc) => {
+        acc.total++;
+        if (doc.status === 'approved') acc.approved++;
+        if (doc.status === 'pending') acc.pending++;
+        if (doc.status === 'rejected') acc.rejected++;
+        return acc;
+      },
+      { total: 0, pending: 0, approved: 0, rejected: 0 }
+    );
+  }, [documents]);
 
   const recentDocuments = useMemo(() => {
-    return staticDocuments.slice(0, 5);
-  }, []);
+    return documents.slice(0, 5);
+  }, [documents]);
   
   const getDateString = (date: Date | Timestamp | string | undefined) => {
     if (!date) return 'N/A';
@@ -113,6 +122,14 @@ export default function MonitoringPage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+  
+    if (error) {
+    return (
+      <div className="flex justify-center items-center h-40 text-center">
+        <p className="text-destructive">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -132,7 +149,7 @@ export default function MonitoringPage() {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{documentMetrics.total}</div>
+                  {isLoading ? <Skeleton className="h-8 w-20" /> : <div className="text-2xl font-bold">{documentMetrics.total}</div>}
                 </CardContent>
               </Card>
               <Card>
@@ -143,7 +160,7 @@ export default function MonitoringPage() {
                   <CheckCircle className="h-4 w-4 text-chart-2" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{documentMetrics.approved}</div>
+                   {isLoading ? <Skeleton className="h-8 w-20" /> : <div className="text-2xl font-bold">{documentMetrics.approved}</div>}
                 </CardContent>
               </Card>
               <Card>
@@ -152,7 +169,7 @@ export default function MonitoringPage() {
                   <Clock className="h-4 w-4 text-chart-4" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{documentMetrics.pending}</div>
+                   {isLoading ? <Skeleton className="h-8 w-20" /> : <div className="text-2xl font-bold">{documentMetrics.pending}</div>}
                 </CardContent>
               </Card>
               <Card>
@@ -161,19 +178,28 @@ export default function MonitoringPage() {
                   <XCircle className="h-4 w-4 text-destructive" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{documentMetrics.rejected}</div>
+                   {isLoading ? <Skeleton className="h-8 w-20" /> : <div className="text-2xl font-bold">{documentMetrics.rejected}</div>}
                 </CardContent>
               </Card>
           </div>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card>
                 <CardHeader>
                     <CardTitle>Documentos Recientes</CardTitle>
                     <CardDescription>
-                        Las últimas 5 transacciones enviadas a la API de HKA.
+                        Las últimas 5 transacciones procesadas.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                     {isLoading ? (
+                        <div className="flex justify-center items-center h-48">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                     ) : documents.length === 0 ? (
+                         <div className="text-center text-muted-foreground py-10">
+                            No hay documentos recientes.
+                         </div>
+                     ) : (
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -213,7 +239,7 @@ export default function MonitoringPage() {
                                         <div className="text-sm text-muted-foreground">{getDateString(doc.processedAt)}</div>
                                     </div>
                                   )}
-                                  {doc.status === 'pending' && (
+                                  {(doc.status === 'pending' || doc.status === 'processing') && (
                                     <div>
                                         <div className="font-medium text-muted-foreground text-xs">Aún no procesado</div>
                                         <div className="text-sm text-muted-foreground">{getDateString(doc.createdAt)}</div>
@@ -251,7 +277,7 @@ export default function MonitoringPage() {
                                                 <div>
                                                   <h4 className="font-semibold mb-2">Respuesta de la API (Response)</h4>
                                                   <pre className="mt-2 h-[200px] w-full overflow-auto rounded-md bg-muted p-4 text-xs">
-                                                      <code>{doc.apiResponse ? JSON.stringify(doc.apiResponse, null, 2) : 'No hay respuesta de la API para este estado.'}</code>
+                                                      <code>{'Aún no implementado.'}</code>
                                                   </pre>
                                               </div>
                                           </div>
@@ -262,6 +288,7 @@ export default function MonitoringPage() {
                           ))}
                         </TableBody>
                       </Table>
+                     )}
                 </CardContent>
             </Card>
             <Card>
@@ -270,7 +297,13 @@ export default function MonitoringPage() {
                     <CardDescription>Volumen de documentos procesados por mes.</CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
-                    <OverviewChart documents={staticDocuments} />
+                    {isLoading ? (
+                         <div className="flex justify-center items-center h-[350px]">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : (
+                         <OverviewChart documents={documents} />
+                    )}
                 </CardContent>
             </Card>
           </div>
