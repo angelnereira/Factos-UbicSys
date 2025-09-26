@@ -98,7 +98,6 @@ export default function LogsPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -120,7 +119,6 @@ export default function LogsPage() {
       ]);
       setLogs(fetchedLogs);
       setCompanies(fetchedCompanies);
-      setHasLoaded(true);
     } catch (error) {
       console.error("Error fetching logs:", error);
       toast({
@@ -234,13 +232,9 @@ export default function LogsPage() {
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : !hasLoaded ? (
-              <div className="text-center text-muted-foreground py-16">
-                  Presiona "Actualizar" para cargar los registros.
-              </div>
           ) : Object.keys(groupedAndFilteredLogs).length === 0 ? (
                <div className="text-center text-muted-foreground py-16">
-                  No se encontraron registros que coincidan con tus filtros.
+                  No se encontraron registros de eventos.
               </div>
           ) : (
             <Accordion type="multiple" className="w-full">
