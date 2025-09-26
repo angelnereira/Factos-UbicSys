@@ -37,6 +37,21 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // This is the new configuration to allow cross-origin requests in development
+  // from the Cloud Workstations environment.
+  async headers() {
+    return [
+      {
+        source: '/_next/(.*)',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*', // Allow all origins for simplicity in dev, can be restricted if needed
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
