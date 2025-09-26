@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -16,22 +16,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { FlaskConical, Loader2, Send, Upload, File as FileIcon, Building } from 'lucide-react';
+import { FlaskConical, Loader2, Send, Upload, File as FileIcon, Building, ChevronsUpDown, Check, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import type { Company } from '@/lib/types';
-import { getCompanies } from '@/lib/firebase/firestore';
+import { getCompanies, addCompany as addCompanyToDb } from '@/lib/firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
+import { Timestamp } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 
 type Endpoint = 'ConsultarEmpresa' | 'CrearFactura' | 'ConsultarEstatusDocumento' | 'AnularDocumento';
@@ -83,22 +92,23 @@ const examplePayloads: Record<Endpoint, any> = {
 };
 
 export default function TestingPage() {
-  const { db } = useAuth();
+  const { db, user } = useAuth();
   const { toast } = useToast();
 
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [environment, setEnvironment] = useState<Environment>('Demo');
   const [endpoint, setEndpoint] = useState<Endpoint>('CrearFactura');
   const [payload, setPayload] = useState(JSON.stringify(examplePayloads.CrearFactura, null, 2));
   const [response, setResponse] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true); // Start as true
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [openCompanySelector, setOpenCompanySelector] = useState(false);
 
-  useEffect(() => {
-    async function fetchCompanies() {
+  const fetchCompanies = useCallback(async () => {
       if (!db) {
-        setIsLoading(false); // Stop loading if db is not available
+        setIsLoading(false);
         return;
       }
       setIsLoading(true);
@@ -106,18 +116,49 @@ export default function TestingPage() {
       setCompanies(fetchedCompanies);
 
       if (fetchedCompanies.length > 0 && !selectedCompany) {
-        setSelectedCompany(fetchedCompanies[0].id);
+        setSelectedCompany(fetchedCompanies[0]);
       }
       setIsLoading(false);
-    }
+  }, [db, selectedCompany]);
+
+  useEffect(() => {
     fetchCompanies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [db]);
+  
+  const addCompany = async (companyName: string) => {
+    if (!db || !user) return;
+    setIsLoading(true);
+    const newCompanyData: Omit<Company, 'id'> = {
+      name: companyName,
+      email: user.email || `${companyName.toLowerCase().replace(/\s/g, '_')}@example.com`,
+      authUid: user.uid,
+      status: 'Demo',
+      onboarded: Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      integrationConfig: { erpType: 'api', notificationSettings: { emailNotifications: true, webhookNotifications: false, smsNotifications: false } },
+      factoryHkaConfig: {
+        demo: { username: "user_demo", isActive: true, maxDocumentsPerMonth: 100, documentsUsedThisMonth: 0 },
+        production: { username: "user_prod", isActive: false },
+      },
+    };
+    const { id, error } = await addCompanyToDb(db, newCompanyData);
+    if (id && !error) {
+        const newCompany = { ...newCompanyData, id } as Company;
+        toast({ title: "Compañía Creada", description: `La compañía '${companyName}' ha sido registrada.` });
+        await fetchCompanies();
+        setSelectedCompany(newCompany);
+    } else {
+        toast({ title: "Error", description: "No se pudo crear la compañía.", variant: "destructive" });
+    }
+    setIsLoading(false);
+  }
+
 
   const handleEndpointChange = (value: string) => {
     const newEndpoint = value as Endpoint;
     setEndpoint(newEndpoint);
-    // For 'ConsultarEmpresa', the payload is often empty as info comes from headers
     const newPayload = newEndpoint === 'ConsultarEmpresa' ? {} : examplePayloads[newEndpoint];
     setPayload(JSON.stringify(newPayload, null, 2));
     setResponse(null);
@@ -154,13 +195,11 @@ export default function TestingPage() {
             };
             reader.readAsText(file);
         } else if (fileType === 'application/xml' || fileType === 'text/xml' || fileType.startsWith('application/vnd.')) {
-            // For XML, Excel, PDF for now we show a message
             setFileName(fileName);
             toast({
                 title: "Archivo Recibido",
                 description: `Se cargó ${fileName}. La conversión automática a JSON para este formato estará disponible próximamente.`
             });
-            // Here you could implement a conversion service in the future
             setPayload(JSON.stringify({ "message": `Contenido del archivo ${fileName} será procesado aquí.`}, null, 2));
 
         } else {
@@ -177,7 +216,7 @@ export default function TestingPage() {
     if (!selectedCompany) {
       toast({
         title: "Compañía no seleccionada",
-        description: "Por favor, selecciona una compañía para la prueba.",
+        description: "Por favor, selecciona o crea una compañía para la prueba.",
         variant: "destructive",
       });
       return;
@@ -195,7 +234,7 @@ export default function TestingPage() {
         return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     setResponse(null);
 
     try {
@@ -203,7 +242,7 @@ export default function TestingPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                companyId: selectedCompany,
+                companyId: selectedCompany.id,
                 environment,
                 endpoint,
                 payload: parsedPayload,
@@ -230,12 +269,11 @@ export default function TestingPage() {
             variant: "destructive",
         });
     } finally {
-        setIsLoading(false);
+        setIsSubmitting(false);
     }
   };
 
   return (
-    <TooltipProvider>
       <div className="flex-1 space-y-4">
         <div className="flex items-center">
           <div>
@@ -259,21 +297,66 @@ export default function TestingPage() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="company">Compañía (Credenciales)</Label>
-                        <Select onValueChange={setSelectedCompany} value={selectedCompany} disabled={isLoading || companies.length === 0}>
-                            <SelectTrigger id="company">
-                                <SelectValue placeholder={isLoading ? "Cargando compañías..." : "Seleccionar compañía..."} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {companies.map(comp => (
-                                    <SelectItem key={comp.id} value={comp.id}>
-                                      <div className="flex items-center gap-2">
-                                        <Building className="h-4 w-4" />
-                                        {comp.name}
-                                      </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <Popover open={openCompanySelector} onOpenChange={setOpenCompanySelector}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={openCompanySelector}
+                                className="w-full justify-between"
+                                disabled={isLoading}
+                                >
+                                {selectedCompany
+                                    ? <span className="truncate">{selectedCompany.name}</span>
+                                    : "Seleccionar compañía..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command filter={(value, search) => {
+                                    const company = companies.find(c => c.id === value);
+                                    if (company?.name.toLowerCase().includes(search.toLowerCase())) return 1;
+                                    return 0;
+                                }}>
+                                    <CommandInput placeholder="Buscar o crear compañía..." />
+                                    <CommandList>
+                                        <CommandEmpty>
+                                            <Button variant="ghost" className="w-full justify-start" onClick={() => {
+                                                const searchInput = document.querySelector('input[cmdk-input]') as HTMLInputElement;
+                                                if (searchInput.value) {
+                                                    addCompany(searchInput.value);
+                                                    setOpenCompanySelector(false);
+                                                }
+                                            }}>
+                                                <PlusCircle className="mr-2 h-4 w-4" />
+                                                Crear nueva compañía
+                                            </Button>
+                                        </CommandEmpty>
+                                        <CommandGroup>
+                                        {companies.map((company) => (
+                                            <CommandItem
+                                            key={company.id}
+                                            value={company.id}
+                                            onSelect={(currentValue) => {
+                                                const company = companies.find(c => c.id === currentValue);
+                                                setSelectedCompany(company || null);
+                                                setOpenCompanySelector(false);
+                                            }}
+                                            >
+                                            <Check
+                                                className={cn(
+                                                "mr-2 h-4 w-4",
+                                                selectedCompany?.id === company.id ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+                                            {company.name}
+                                            </CommandItem>
+                                        ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="environment">Ambiente</Label>
@@ -337,10 +420,10 @@ export default function TestingPage() {
 
               <Button 
                 onClick={handleTest} 
-                disabled={isLoading}
+                disabled={isSubmitting || isLoading}
                 className="w-full bg-chart-4 text-black hover:bg-chart-4/90 dark:bg-chart-4 dark:hover:bg-chart-4/90"
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Send className="mr-2 h-4 w-4" />
@@ -358,12 +441,12 @@ export default function TestingPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading && !response && ( // Show loader only when loading and there's no response yet
+              {isSubmitting && !response && (
                 <div className="flex items-center justify-center h-full p-8">
                   <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
                 </div>
               )}
-              {!isLoading && !response && (
+              {!isSubmitting && !response && (
                 <div className="flex flex-col items-center justify-center text-center p-8 border-dashed border-2 rounded-lg h-full">
                   <FlaskConical className="h-12 w-12 text-muted-foreground" />
                   <p className="mt-4 text-muted-foreground">
@@ -389,6 +472,5 @@ export default function TestingPage() {
           </Card>
         </div>
       </div>
-    </TooltipProvider>
   );
 }
