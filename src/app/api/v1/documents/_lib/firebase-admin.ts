@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import type { Company } from '@/lib/types';
 
 if (!admin.apps.length) {
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
@@ -32,7 +33,8 @@ export async function validateApiKey(authHeader: string | null): Promise<{ compa
     }
     const apiKey = authHeader.split(' ')[1];
     
-    // Search for the key in our simulation
+    // In a real app, you would query Firestore for a company with this apiKey.
+    // For now, we simulate with a mock object.
     const companyId = MOCK_API_KEYS[apiKey];
     
     if (!companyId) {
@@ -40,4 +42,30 @@ export async function validateApiKey(authHeader: string | null): Promise<{ compa
     }
     
     return { companyId };
+}
+
+/**
+ * Fetches a company by its ID using the Firebase Admin SDK.
+ * @param companyId - The ID of the company to fetch.
+ * @returns The company data or null if not found.
+ */
+export async function getCompanyById_admin(companyId: string): Promise<Company | null> {
+    if (!adminDb) {
+        console.error("Admin SDK not initialized, cannot fetch company.");
+        return null;
+    }
+    try {
+        const docRef = adminDb.collection('companies').doc(companyId);
+        const docSnap = await docRef.get();
+
+        if (docSnap.exists) {
+            return { id: docSnap.id, ...docSnap.data() } as Company;
+        } else {
+            console.log(`No company found with ID: ${companyId}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error getting company by ID (admin): ${companyId}`, error);
+        return null;
+    }
 }

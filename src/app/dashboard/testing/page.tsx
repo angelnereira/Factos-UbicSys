@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { FlaskConical, Loader2, Send, Upload, File as FileIcon } from 'lucide-react';
+import { FlaskConical, Loader2, Send, Upload, File as FileIcon, ServerCrash, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -29,34 +29,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import type { Company } from '@/lib/types';
+import { getCompanies } from '@/lib/firebase/firestore';
+import { useAuth } from '@/contexts/auth-context';
 
-type Endpoint = 'consultarEmpresa' | 'crearFactura' | 'consultarEstatusDocumento' | 'anularDocumento';
+
+type Endpoint = 'ConsultarEmpresa' | 'CrearFactura' | 'ConsultarEstatusDocumento' | 'AnularDocumento';
+type Environment = 'Demo' | 'Production';
 
 const examplePayloads: Record<Endpoint, any> = {
-  consultarEmpresa: {
-    Nit: 'J000000000',
-    TokenEmpresa: 'tu-token-empresa',
-    TokenClave: 'tu-token-clave',
-    Plataforma: 'TFHKA'
-  },
-  crearFactura: {
+  ConsultarEmpresa: {}, // This endpoint often uses credentials from headers
+  CrearFactura: {
     documento: {
       codigoSucursalEmisor: "001",
-      tipoSucursal: "01",
       datosTransaccion: {
-        tipoEmision: "01",
         tipoDocumento: "01",
-        numeroDocumentoFiscal: "000000001",
-        puntoFacturacionFiscal: "001",
+        numeroDocumentoFiscal: `TEST-${Math.floor(Date.now() / 1000)}`,
         fechaEmision: new Date().toISOString(),
-        fechaSalida: new Date().toISOString(),
-        naturalezaOperacion: "01",
-        tipoOperacion: "01",
-        destinoOperacion: "01",
-        formatoCAFE: "01",
-        entregaCAFE: "01",
-        envioContenedor: "01",
-        procesoGeneracion: "01",
         cliente: {
           tipoClienteFE: "02",
           tipoContribuyente: "01",
@@ -64,59 +53,66 @@ const examplePayloads: Record<Endpoint, any> = {
           digitoVerificadorRUC: "45",
           razonSocial: "Cliente de Prueba",
           direccion: "Ciudad de Panamá",
-          codigoUbicacion: "7-7-7",
-          provincia: "Panamá",
-          distrito: "Panamá",
-          corregimiento: "Ancón",
-          telefono1: "123-4567",
           correoElectronico1: "cliente@prueba.com",
           pais: "PA"
         }
       },
-      listaItems: [
-        {
-          descripcion: "Producto de prueba",
-          codigo: "P-001",
-          unidadMedida: "und",
-          cantidad: "1.00",
-          precioUnitario: "100.00",
-          precioItem: "100.00",
-          valorTotal: "107.00",
-          tasaITBMS: "0.07",
-          valorITBMS: "7.00"
-        }
-      ],
+      listaItems: [{
+        descripcion: "Producto de prueba",
+        cantidad: "1.00",
+        precioUnitario: "1.00",
+        valorTotal: "1.07",
+        tasaITBMS: "0.07",
+        valorITBMS: "0.07"
+      }],
       totalesSubTotales: {
-        totalPrecioNeto: "100.00",
-        totalITBMS: "7.00",
-        totalMontoGravado: "100.00",
-        totalFactura: "107.00",
-        nroItems: "1",
-        totalTodosItems: "1"
+        totalPrecioNeto: "1.00",
+        totalITBMS: "0.07",
+        totalMontoGravado: "1.00",
+        totalFactura: "1.07",
       }
     }
   },
-  consultarEstatusDocumento: {
+  ConsultarEstatusDocumento: {
     cufe: 'e1c2b3d4-a5f6-7890-1234-abcdef123456'
   },
-  anularDocumento: {
+  AnularDocumento: {
     cufe: 'e1c2b3d4-a5f6-7890-1234-abcdef123456',
-    motivoAnulacion: '01', // '01' para 'Anulación de la operación'
+    motivoAnulacion: '01',
   }
 };
 
 export default function TestingPage() {
-  const [endpoint, setEndpoint] = useState<Endpoint>('crearFactura');
-  const [payload, setPayload] = useState(JSON.stringify(examplePayloads.crearFactura, null, 2));
+  const { db } = useAuth();
+  const { toast } = useToast();
+
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [environment, setEnvironment] = useState<Environment>('Demo');
+  const [endpoint, setEndpoint] = useState<Endpoint>('CrearFactura');
+  const [payload, setPayload] = useState(JSON.stringify(examplePayloads.CrearFactura, null, 2));
   const [response, setResponse] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchCompanies() {
+      if (!db) return;
+      const fetchedCompanies = await getCompanies(db);
+      setCompanies(fetchedCompanies);
+      if (fetchedCompanies.length > 0) {
+        setSelectedCompany(fetchedCompanies[0].id);
+      }
+    }
+    fetchCompanies();
+  }, [db]);
 
   const handleEndpointChange = (value: string) => {
     const newEndpoint = value as Endpoint;
     setEndpoint(newEndpoint);
-    setPayload(JSON.stringify(examplePayloads[newEndpoint], null, 2));
+    // For 'ConsultarEmpresa', the payload is often empty as info comes from headers
+    const newPayload = newEndpoint === 'ConsultarEmpresa' ? {} : examplePayloads[newEndpoint];
+    setPayload(JSON.stringify(newPayload, null, 2));
     setResponse(null);
     setFileName(null);
   };
@@ -159,58 +155,64 @@ export default function TestingPage() {
   };
   
   const handleTest = async () => {
-    setIsLoading(true);
-    setResponse(null);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    let simulatedResponse;
-    switch (endpoint) {
-      case 'consultarEmpresa':
-        simulatedResponse = {
-          Codigo: 200,
-          Resultado: "Success",
-          Mensaje: "Empresa consultada exitosamente.",
-          Nit: "J000000000",
-          idEmpresa: "emp-12345",
-        };
-        break;
-      case 'crearFactura':
-        simulatedResponse = {
-            Codigo: 200,
-            Resultado: "Success",
-            Mensaje: "Documento recibido y en proceso de validación.",
-            cufe: `test-cufe-${crypto.randomUUID()}`
-        };
-        break;
-      case 'consultarEstatusDocumento':
-        simulatedResponse = {
-          Codigo: 200,
-          Resultado: "Success",
-          Mensaje: "Documento encontrado.",
-          status: "Aprobado",
-          cufe: JSON.parse(payload).cufe,
-          fechaProcesamiento: new Date().toISOString()
-        };
-        break;
-      case 'anularDocumento':
-        simulatedResponse = {
-          Codigo: 200,
-          Resultado: "Success",
-          Mensaje: "Solicitud de anulación recibida correctamente.",
-          cufe: JSON.parse(payload).cufe,
-        };
-        break;
-      default:
-        simulatedResponse = {
-          Codigo: 500,
-          Resultado: "Error",
-          Mensaje: "Endpoint no reconocido en la simulación."
-        };
+    if (!selectedCompany) {
+      toast({
+        title: "Compañía no seleccionada",
+        description: "Por favor, selecciona una compañía para la prueba.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setResponse(simulatedResponse);
-    setIsLoading(false);
+    let parsedPayload;
+    try {
+        parsedPayload = JSON.parse(payload);
+    } catch (error) {
+        toast({
+            title: "JSON Inválido",
+            description: "El payload de la solicitud no es un JSON válido.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    setIsLoading(true);
+    setResponse(null);
+
+    try {
+        const apiResponse = await fetch('/api/v1/testing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                companyId: selectedCompany,
+                environment,
+                endpoint,
+                payload: parsedPayload,
+            }),
+        });
+
+        const data = await apiResponse.json();
+        setResponse(data);
+
+        if (!apiResponse.ok) {
+            toast({
+                title: `Error de la API de HKA (Código: ${apiResponse.status})`,
+                description: data.message || data.Mensaje || 'La API devolvió una respuesta de error.',
+                variant: 'destructive',
+            });
+        }
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error de red desconocido";
+        setResponse({ message: `Error al conectar con el servidor proxy: ${errorMessage}` });
+        toast({
+            title: "Error de Conexión",
+            description: "No se pudo conectar con el servidor de pruebas local.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -222,7 +224,7 @@ export default function TestingPage() {
               Centro de Pruebas de API
             </h1>
             <p className="text-muted-foreground">
-              Simula llamadas a la API de The Factory HKA en el entorno de demostración.
+              Ejecuta llamadas reales a la API de The Factory HKA en un ambiente controlado.
             </p>
           </div>
         </div>
@@ -231,51 +233,70 @@ export default function TestingPage() {
             <CardHeader>
               <CardTitle>Configuración de la Solicitud</CardTitle>
               <CardDescription>
-                Selecciona el endpoint y ajusta el payload de la solicitud.
+                Selecciona la compañía, ambiente, endpoint y ajusta el payload.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="company">Compañía (Credenciales)</Label>
+                        <Select onValueChange={setSelectedCompany} value={selectedCompany}>
+                            <SelectTrigger id="company">
+                                <SelectValue placeholder="Seleccionar compañía..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {companies.map(comp => (
+                                    <SelectItem key={comp.id} value={comp.id}>
+                                      <div className="flex items-center gap-2">
+                                        <Building className="h-4 w-4" />
+                                        {comp.name}
+                                      </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="environment">Ambiente</Label>
+                        <Select onValueChange={(v) => setEnvironment(v as Environment)} defaultValue={environment}>
+                            <SelectTrigger id="environment">
+                                <SelectValue placeholder="Seleccionar ambiente" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Demo">Demo</SelectItem>
+                                <SelectItem value="Production">Producción</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
               <div className="space-y-2">
                 <Label htmlFor="endpoint">Endpoint de la API</Label>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Select onValueChange={handleEndpointChange} defaultValue={endpoint}>
-                      <SelectTrigger id="endpoint">
+                <Select onValueChange={handleEndpointChange} defaultValue={endpoint}>
+                    <SelectTrigger id="endpoint">
                         <SelectValue placeholder="Seleccionar endpoint" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="consultarEmpresa">/ConsultarEmpresa</SelectItem>
-                        <SelectItem value="crearFactura">/CrearFactura</SelectItem>
-                        <SelectItem value="consultarEstatusDocumento">/ConsultarEstatusDocumento</SelectItem>
-                        <SelectItem value="anularDocumento">/AnularDocumento</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Elige el endpoint de la API de HKA que deseas probar.</p>
-                  </TooltipContent>
-                </Tooltip>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ConsultarEmpresa">/ConsultarEmpresa</SelectItem>
+                        <SelectItem value="CrearFactura">/CrearFactura</SelectItem>
+                        <SelectItem value="ConsultarEstatusDocumento">/ConsultarEstatusDocumento</SelectItem>
+                        <SelectItem value="AnularDocumento">/AnularDocumento</SelectItem>
+                    </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
                   <Label>Cargar Payload desde Archivo</Label>
-                  <Tooltip>
-                    <TooltipTrigger className="w-full">
-                      <div className="flex items-center justify-center w-full">
-                          <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
-                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                  <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                                  <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Haz clic para cargar</span> o arrastra y suelta</p>
-                                  <p className="text-xs text-muted-foreground">Archivo JSON</p>
-                              </div>
-                              <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept="application/json" />
-                          </Label>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Carga un archivo JSON para usarlo como payload de la solicitud.</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <div className="flex items-center justify-center w-full">
+                      <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                              <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Haz clic para cargar</span> o arrastra y suelta</p>
+                              <p className="text-xs text-muted-foreground">Archivo JSON</p>
+                          </div>
+                          <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept="application/json" />
+                      </Label>
+                  </div>
                   {fileName && (
                       <div className="flex items-center text-sm text-muted-foreground p-2 border rounded-md">
                           <FileIcon className="h-4 w-4 mr-2" />
@@ -290,18 +311,18 @@ export default function TestingPage() {
                       id="payload"
                       value={payload}
                       onChange={(e) => setPayload(e.target.value)}
-                      rows={20}
+                      rows={15}
                       className="font-mono text-xs"
                   />
               </div>
 
-              <Button onClick={handleTest} disabled={isLoading} className="w-full">
+              <Button onClick={handleTest} disabled={isLoading || !selectedCompany} className="w-full">
                 {isLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Send className="mr-2 h-4 w-4" />
                 )}
-                Ejecutar Prueba
+                Ejecutar Prueba Real
               </Button>
             </CardContent>
           </Card>
@@ -310,7 +331,7 @@ export default function TestingPage() {
             <CardHeader>
               <CardTitle>Respuesta de la API</CardTitle>
               <CardDescription>
-                Aquí se mostrará el resultado de la llamada a la API.
+                Aquí se mostrará el resultado real de la llamada a la API de HKA.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -329,9 +350,9 @@ export default function TestingPage() {
               )}
               {response && (
                    <div className="space-y-4">
-                      <Alert variant={response.Codigo === 200 ? 'default' : 'destructive'}>
-                          <AlertTitle>{response.Codigo === 200 ? 'Éxito (Código 200)' : 'Error'}</AlertTitle>
-                          <AlertDescription>{response.Mensaje}</AlertDescription>
+                      <Alert variant={(response.Codigo === 200 || response.status === 'success') ? 'default' : 'destructive'}>
+                          <AlertTitle>{response.Codigo === 200 ? 'Éxito' : 'Error'}</AlertTitle>
+                          <AlertDescription>{response.Mensaje || response.message || 'La respuesta no contiene un mensaje estándar.'}</AlertDescription>
                       </Alert>
                       <div>
                            <Label>Respuesta Completa (JSON)</Label>
