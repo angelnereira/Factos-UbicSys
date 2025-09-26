@@ -11,10 +11,18 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    // NOTE: The development check is a temporary bypass to allow dashboard access
+    // while fixing OAuth configuration in Google Cloud Console.
+    // In production, this check will not apply, and users must be logged in.
+    if (!loading && !user && process.env.NODE_ENV !== 'development') {
       router.push('/');
     }
   }, [user, loading, router]);
+  
+  // In development, we can bypass the auth check to work on the UI.
+  if (process.env.NODE_ENV === 'development') {
+    return <>{children}</>;
+  }
 
   if (loading || !user) {
     return (

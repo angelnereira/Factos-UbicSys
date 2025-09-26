@@ -91,7 +91,7 @@ Firebase Authentication utiliza OAuth 2.0 para manejar inicios de sesión con pr
 3.  **Configura los Orígenes y URIs de Redirección:**
     *   **Authorized JavaScript origins:** Son las URLs desde donde se permitirán las solicitudes de inicio de sesión. Es crucial añadir las URLs de tu entorno de desarrollo local y la de producción/vista previa.
         *   `http://localhost`
-        *   `http://localhost:9002` (o el puerto que uses localmente)
+        *   `http://localhost:3000` (o el puerto que uses localmente)
         *   `https://[TU_PROYECTO_ID].firebaseapp.com`
         *   La URL de tu entorno de Firebase Studio (ej: `https://*.cloudworkstations.dev`)
     *   **Authorized redirect URIs:** Es la URL a la que Google redirigirá al usuario después de un inicio de sesión exitoso. Firebase gestiona esto automáticamente.
@@ -169,7 +169,7 @@ Inicia el servidor de desarrollo:
 npm run dev
 ```
 
-La aplicación estará disponible en `http://localhost:9002` o el puerto que asigne el entorno de ejecución.
+La aplicación estará disponible en `http://localhost:3000`.
 
 ## Documentación del Proyecto
 
