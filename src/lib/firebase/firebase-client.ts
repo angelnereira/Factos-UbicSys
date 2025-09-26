@@ -5,24 +5,29 @@ import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration.
+// This is a public configuration and it's safe to be exposed.
+// Security is enforced by Firebase Security Rules on the backend.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyDF1p34M229iUSpguPY3HYMv6s2r92kY7w",
+  authDomain: "studio-7875732711-2b800.firebaseapp.com",
+  projectId: "studio-7875732711-2b800",
+  storageBucket: "studio-7875732711-2b800.appspot.com",
+  messagingSenderId: "7875732711",
+  appId: "1:7875732711:web:dd880b435abb508215c024"
 };
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 
-if (typeof window !== 'undefined' && firebaseConfig.projectId) {
+// This check ensures Firebase is only initialized on the client-side.
+if (typeof window !== 'undefined') {
     if (getApps().length === 0) {
+        // Initialize Firebase if it hasn't been initialized yet
         app = initializeApp(firebaseConfig);
     } else {
+        // Use the existing app if already initialized
         app = getApp();
     }
 
