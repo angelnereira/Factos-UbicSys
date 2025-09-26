@@ -7,6 +7,12 @@ import type { Timestamp } from 'firebase/firestore';
 export type CompanyStatus = 'Production' | 'Development' | 'Demo';
 export type ErpType = 'quickbooks' | 'sap' | 'custom' | 'api' | 'oracle' | 'microsoft-dynamics' | 'claris-filemaker';
 
+export interface ApiKey {
+  key: string;
+  status: 'active' | 'revoked';
+  createdAt: Timestamp;
+}
+
 export interface Company {
   id: string; 
   name: string;
@@ -22,6 +28,8 @@ export interface Company {
   createdAt: Timestamp; 
   updatedAt: Timestamp;
   onboarded: Timestamp;
+
+  apiKeys: ApiKey[];
   
   // Embedded configuration objects
   integrationConfig: {

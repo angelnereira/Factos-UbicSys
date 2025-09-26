@@ -29,10 +29,12 @@ import { useAuth } from '@/contexts/auth-context';
 import { getCompanies, updateCompany, getCompanyById } from '@/lib/firebase/firestore';
 import type { Company } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Timestamp } from 'firebase/firestore';
 
 const apiKeySchema = z.object({
   key: z.string().min(1, "La clave no puede estar vacía."),
   status: z.enum(['active', 'revoked']),
+  createdAt: z.instanceof(Timestamp),
 });
 
 const hkaCredentialsSchema = z.object({
@@ -66,13 +68,13 @@ export default function ApiSettingsPage() {
     resolver: zodResolver(apiConfigSchema),
     defaultValues: {
       companyId: '',
-      clientApiKeys: [{ key: `fk_live_${crypto.randomUUID()}`, status: 'active' }],
+      clientApiKeys: [],
       pacDemoCredentials: { username: '', password: '' },
       pacProdCredentials: { username: '', password: '' },
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "clientApiKeys",
   });
@@ -100,20 +102,29 @@ export default function ApiSettingsPage() {
     if (companyData) {
       form.reset({
         companyId: companyData.id,
-        // TODO: Client API keys should be stored in the company doc as well.
-        clientApiKeys: [{ key: `fk_live_${crypto.randomUUID()}`, status: 'active' }], 
+        clientApiKeys: companyData.apiKeys || [], 
         pacDemoCredentials: {
-          username: companyData.factoryHkaConfig.demo.username || '',
-          password: companyData.factoryHkaConfig.demo.password || '',
+          username: companyData.factoryHkaConfig?.demo?.username || '',
+          password: companyData.factoryHkaConfig?.demo?.password || '',
         },
         pacProdCredentials: {
-          username: companyData.factoryHkaConfig.production.username || '',
-          password: companyData.factoryHkaConfig.production.password || '',
+          username: companyData.factoryHkaConfig?.production?.username || '',
+          password: companyData.factoryHkaConfig?.production?.password || '',
         }
       });
+      // useFieldArray's `replace` is needed to update the array in the form state
+      replace(companyData.apiKeys || []);
+    } else {
+        form.reset({
+            companyId,
+            clientApiKeys: [],
+            pacDemoCredentials: { username: '', password: '' },
+            pacProdCredentials: { username: '', password: '' },
+        });
+        replace([]);
     }
     setIsFormLoading(false);
-  }, [db, form]);
+  }, [db, form, replace]);
 
   const onSubmit = async (values: ApiConfigFormValues) => {
     if (!db) {
@@ -122,15 +133,25 @@ export default function ApiSettingsPage() {
     }
     setIsSubmitting(true);
     
+    const companyToUpdate = companies.find(c => c.id === values.companyId);
+
+    if (!companyToUpdate) {
+        toast({ title: "Error", description: "No se encontró la compañía seleccionada.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+    }
+
     const dataToUpdate: Partial<Company> = {
+        apiKeys: values.clientApiKeys,
         factoryHkaConfig: {
+            ...companyToUpdate.factoryHkaConfig,
             demo: {
-                ...companies.find(c => c.id === values.companyId)?.factoryHkaConfig.demo,
+                ...companyToUpdate.factoryHkaConfig.demo,
                 username: values.pacDemoCredentials.username,
                 password: values.pacDemoCredentials.password,
             },
             production: {
-                ...companies.find(c => c.id === values.companyId)?.factoryHkaConfig.production,
+                ...companyToUpdate.factoryHkaConfig.production,
                 username: values.pacProdCredentials.username,
                 password: values.pacProdCredentials.password,
             }
@@ -147,7 +168,7 @@ export default function ApiSettingsPage() {
     } else {
        toast({
         title: 'Error al Guardar',
-        description: 'No se pudo actualizar la configuración.',
+        description: `No se pudo actualizar la configuración: ${error?.message}`,
         variant: 'destructive',
       });
       console.error(error);
@@ -171,7 +192,6 @@ export default function ApiSettingsPage() {
         });
     }
   };
-
 
   return (
     <TooltipProvider>
@@ -241,7 +261,7 @@ export default function ApiSettingsPage() {
                   </div>
               )}
 
-              <div className={isFormLoading ? 'hidden' : 'space-y-8'}>
+              <div className={isFormLoading || !selectedCompanyId ? 'hidden' : 'space-y-8'}>
                   <Card>
                        <CardHeader>
                           <CardTitle>Claves de API del Cliente</CardTitle>
@@ -292,7 +312,7 @@ export default function ApiSettingsPage() {
                                   </Tooltip>
                               </div>
                           ))}
-                          <Button type="button" variant="outline" size="sm" onClick={() => append({ key: `fk_live_${crypto.randomUUID()}`, status: 'active' })}>
+                          <Button type="button" variant="outline" size="sm" onClick={() => append({ key: `fk_live_${crypto.randomUUID().replace(/-/g, '')}`, status: 'active', createdAt: Timestamp.now() })}>
                               <PlusCircle className="mr-2 h-4 w-4" />
                               Generar Nueva Clave
                           </Button>

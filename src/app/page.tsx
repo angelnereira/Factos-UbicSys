@@ -36,6 +36,7 @@ import { Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuth } from '@/contexts/auth-context';
 import { signUpWithEmailAndPassword, loginWithEmailAndPassword, signInWithGoogle } from '@/lib/firebase/auth';
+import { getCompanyByAuthUid } from '@/lib/firebase/firestore';
 import type { AuthError } from 'firebase/auth';
 import { GoogleIcon } from '@/components/google-icon';
 import { Separator } from '@/components/ui/separator';
@@ -59,7 +60,7 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 export default function AuthPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading: authLoading, auth } = useAuth();
+  const { user, loading: authLoading, auth, db } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // This state will be true if Firebase config is missing in the environment.
@@ -144,13 +145,12 @@ export default function AuthPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!auth) return;
+    if (!auth || !db) return;
     setIsSubmitting(true);
-    const { result, isNewUser, error } = await signInWithGoogle(auth);
-    setIsSubmitting(false);
+    const { result, error } = await signInWithGoogle(auth);
 
     if (error) {
-      // Handle specific errors if needed
+      setIsSubmitting(false);
       if (error.code !== 'auth/popup-closed-by-user') {
           toast({
             title: 'Error de inicio de sesión con Google',
@@ -162,20 +162,25 @@ export default function AuthPage() {
     }
 
     if (result) {
-        if (isNewUser) {
-            toast({
-                title: '¡Cuenta creada con Google!',
-                description: 'Por favor, completa tu perfil de compañía.'
-            });
-            const { displayName, email, uid } = result.user;
-            router.push(`/signup/complete-profile?name=${encodeURIComponent(displayName || '')}&email=${encodeURIComponent(email || '')}&uid=${uid}`);
-        } else {
-            toast({
+        const user = result.user;
+        const companyProfile = await getCompanyByAuthUid(db, user.uid);
+        
+        if (companyProfile) {
+             toast({
                 title: '¡Inicio de sesión exitoso!',
                 description: 'Bienvenido de nuevo.'
             });
             router.push('/dashboard');
+        } else {
+             toast({
+                title: '¡Cuenta creada con Google!',
+                description: 'Por favor, completa tu perfil de compañía.'
+            });
+            const { displayName, email, uid } = user;
+            router.push(`/signup/complete-profile?name=${encodeURIComponent(displayName || '')}&email=${encodeURIComponent(email || '')}&uid=${uid}`);
         }
+    } else {
+      setIsSubmitting(false);
     }
   }
   

@@ -29,13 +29,12 @@ export const loginWithEmailAndPassword = async (auth: Auth, email: string, passw
   }
 };
 
-export const signInWithGoogle = async (auth: Auth): Promise<{ result: UserCredential | null; isNewUser: boolean; error: AuthError | null; }> => {
+export const signInWithGoogle = async (auth: Auth): Promise<{ result: UserCredential | null; error: AuthError | null; }> => {
   const provider = new GoogleAuthProvider();
   try {
     const result = await signInWithPopup(auth, provider);
-    const additionalInfo = getAdditionalUserInfo(result);
-    return { result, isNewUser: !!additionalInfo?.isNewUser, error: null };
+    return { result, error: null };
   } catch (error) {
-    return { result: null, isNewUser: false, error: error as AuthError };
+    return { result: null, error: error as AuthError };
   }
 };

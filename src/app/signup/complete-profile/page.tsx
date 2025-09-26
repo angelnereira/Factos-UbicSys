@@ -102,6 +102,13 @@ function CompleteProfileForm() {
       onboarded: Timestamp.now(),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
+      apiKeys: [
+        {
+          key: `fk_live_${crypto.randomUUID().replace(/-/g, '')}`,
+          status: 'active',
+          createdAt: Timestamp.now(),
+        }
+      ],
       integrationConfig: {
         erpType: 'custom',
         notificationSettings: {

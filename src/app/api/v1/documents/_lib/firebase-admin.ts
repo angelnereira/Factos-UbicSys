@@ -20,29 +20,53 @@ if (!admin.apps.length) {
 
 export const adminDb = admin.apps.length ? admin.firestore() : null;
 
-// This is a simulation. In a real system, API Keys would be stored in Firestore
-// and validated here.
-const MOCK_API_KEYS: { [key: string]: string } = {
-    "test-api-key-1": "comp-1",
-    "test-api-key-2": "comp-2",
-};
-
+/**
+ * Validates an API key by querying the 'companies' collection.
+ * @param authHeader - The Authorization header string (e.g., "Bearer your-api-key").
+ * @returns An object with the companyId if valid, or an error string.
+ */
 export async function validateApiKey(authHeader: string | null): Promise<{ companyId?: string; error?: string }> {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return { error: 'Authorization header is missing or malformed.' };
     }
+    if (!adminDb) {
+        return { error: 'Database connection is not available on the server.' };
+    }
+
     const apiKey = authHeader.split(' ')[1];
     
-    // In a real app, you would query Firestore for a company with this apiKey.
-    // For now, we simulate with a mock object.
-    const companyId = MOCK_API_KEYS[apiKey];
-    
-    if (!companyId) {
-        return { error: 'Invalid API key.' };
+    try {
+        const companiesRef = adminDb.collection('companies');
+        // Firestore doesn't support querying nested array objects directly in this manner.
+        // A better data model would be a subcollection of apiKeys or a top-level collection.
+        // For now, we fetch all and filter in memory. This is NOT scalable for many companies.
+        const snapshot = await companiesRef.get();
+        
+        let foundCompanyId: string | null = null;
+
+        snapshot.forEach(doc => {
+            const company = doc.data() as Company;
+            // Check if the company has apiKeys and if any key matches and is active
+            if (company.apiKeys && Array.isArray(company.apiKeys)) {
+                const keyExists = company.apiKeys.some(k => k.key === apiKey && k.status === 'active');
+                if (keyExists) {
+                    foundCompanyId = doc.id;
+                }
+            }
+        });
+        
+        if (foundCompanyId) {
+            return { companyId: foundCompanyId };
+        } else {
+            return { error: 'Invalid or inactive API key.' };
+        }
+
+    } catch (error) {
+        console.error('Error validating API key:', error);
+        return { error: 'An internal error occurred during API key validation.' };
     }
-    
-    return { companyId };
 }
+
 
 /**
  * Fetches a company by its ID using the Firebase Admin SDK.
