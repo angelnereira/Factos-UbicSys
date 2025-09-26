@@ -17,24 +17,24 @@ import { Timestamp } from 'firebase/firestore';
 export function mapRequestToFiscalDocument(
     body: FactoryHkaDocumentRequest, 
     companyId: string
-): Partial<Omit<FiscalDocument, 'id'>> {
+): Omit<FiscalDocument, 'id'> {
 
-    const { datosTransaccion, totalesSubTotales, cliente, listaItems } = body.documento;
+    const { datosTransaccion, totalesSubTotales, cliente } = body.documento;
 
-    // This mapping makes several assumptions and would need to be more robust
-    // based on business rules.
     const documentTypeMapping = {
         '01': 'factura',
         '05': 'nota_credito',
         '06': 'nota_debito',
         '04': 'factura_exportacion',
-    };
+    } as const;
     
+    const documentType = datosTransaccion.tipoDocumento as keyof typeof documentTypeMapping;
+
     return {
         companyId,
-        documentType: documentTypeMapping[datosTransaccion.tipoDocumento as keyof typeof documentTypeMapping] || 'factura',
+        documentType: documentTypeMapping[documentType] || 'factura',
         status: 'pending',
-        originalData: body as any, // Store the complete original request
+        originalData: body,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         statusHistory: [
@@ -48,7 +48,7 @@ export function mapRequestToFiscalDocument(
         // --- Properties for UI ---
         client: cliente.razonSocial,
         amount: parseFloat(totalesSubTotales.totalFactura),
-        currency: 'USD', // Assuming USD, this should come from the request
+        currency: 'USD', // Assuming USD, this should come from the request if available
         date: new Date(datosTransaccion.fechaEmision),
         erpType: 'api', // Documents via API are marked as such
     };

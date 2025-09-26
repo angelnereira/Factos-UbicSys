@@ -1,3 +1,4 @@
+
 import type { FactoryHkaDocumentRequest } from './integrations/tfhka/tfhka-types';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -13,13 +14,13 @@ export interface Company {
   phone?: string;
   address?: string;
   authUid: string;
-  erpType: ErpType;
+  
   status: CompanyStatus;
   
   // Timestamps
-  createdAt: string | Timestamp; 
-  updatedAt: string | Timestamp;
-  onboarded: string | Timestamp;
+  createdAt: Timestamp; 
+  updatedAt: Timestamp;
+  onboarded: Timestamp;
   
   // Embedded configuration objects
   integrationConfig: {
@@ -67,11 +68,11 @@ export interface FiscalDocument {
   updatedAt: Timestamp;
   processedAt?: Timestamp;
 
-  // Properties from old Document type to keep UI working temporarily
+  // Properties for UI - will be populated by the mapper
   client: string;
   amount: number;
   currency: string;
-  date: Timestamp; 
+  date: Date; 
   erpType: string;
 
   // This will be mapped from originalData or another source
@@ -86,6 +87,6 @@ export interface ProcessingStep {
   step: ProcessingStepName;
   status: ProcessingStepStatus;
   message: string;
-  timestamp: Timestamp; // ISO 8601 string date
+  timestamp: Timestamp;
   details?: Record<string, unknown>;
 }
