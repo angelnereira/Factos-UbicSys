@@ -18,10 +18,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { FiscalDocument } from '@/lib/types';
-import { FileText, Clock, CheckCircle, XCircle, FileJson, Download, Loader2 } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, FileJson, Download, Loader2, AlertTriangle } from 'lucide-react';
 import { OverviewChart } from '../documents/_components/overview-chart';
 import { Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -134,9 +135,11 @@ export default function MonitoringPage() {
             </p>
           </div>
           {error && (
-            <div className="flex justify-center items-center h-40 text-center">
-              <p className="text-destructive">{error}</p>
-            </div>
+             <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+             </Alert>
           )}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
@@ -309,3 +312,5 @@ export default function MonitoringPage() {
     </>
   );
 }
+
+    
