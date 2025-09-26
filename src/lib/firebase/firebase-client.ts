@@ -5,21 +5,21 @@ import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyATnNpGkVVDXiCVJX3sBI388h5koK9iylU",
-  authDomain: "studio-7875732711-2b800.firebaseapp.com",
-  projectId: "studio-7875732711-2b800",
-  storageBucket: "studio-7875732711-2b800.appspot.com",
-  messagingSenderId: "133672149206",
-  appId: "1:133672149206:web:d6b5e3a8c1f3d274577e9d",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 
-// This check is crucial for client-side execution.
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && firebaseConfig.projectId) {
     if (getApps().length === 0) {
         app = initializeApp(firebaseConfig);
     } else {

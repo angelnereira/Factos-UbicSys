@@ -1,39 +1,20 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if the user owns the company document
-    function isCompanyOwner(companyId) {
-      return isAuthenticated() && get(/databases/$(database)/documents/companies/$(companyId)).data.authUid == request.auth.uid;
-    }
-
-    // Rules for the 'companies' collection
+    // Companies can be created by any authenticated user,
+    // but can only be read, updated, or deleted by the user who owns them.
     match /companies/{companyId} {
-      // A user can read their own company document
-      allow read: if isCompanyOwner(companyId);
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.authUid;
 
-      // A user can update their own company document.
-      // We restrict creation to be handled by backend functions/setup process.
-      // We restrict deletion to prevent accidental data loss.
-      allow update: if isCompanyOwner(companyId);
-      allow create, delete: if false;
-
-      // Rules for the 'documents' subcollection
+      // Documents (invoices, etc.) can be managed by the user who owns the parent company.
+      // API routes with a service account can bypass this rule.
       match /documents/{documentId} {
-        // A user can read, create, and update documents within their own company
-        allow read, write: if isCompanyOwner(companyId);
+        allow read, write: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/companies/$(companyId)).data.authUid;
       }
-    }
-    
-     // Disallow any other access at the root level
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }
