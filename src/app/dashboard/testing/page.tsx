@@ -120,37 +120,49 @@ export default function TestingPage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-        if (file.type !== 'application/json') {
+        const fileType = file.type;
+        const fileName = file.name;
+
+        if (fileType === 'application/json') {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target?.result;
+                if (typeof content === 'string') {
+                    try {
+                        const parsed = JSON.parse(content);
+                        setPayload(JSON.stringify(parsed, null, 2));
+                        setFileName(fileName);
+                        toast({
+                            title: "Archivo JSON cargado",
+                            description: `El contenido de ${fileName} se ha cargado en el payload.`
+                        });
+                    } catch (error) {
+                         toast({
+                            title: "Error al leer el archivo",
+                            description: "El archivo JSON no tiene un formato válido.",
+                            variant: "destructive"
+                        });
+                    }
+                }
+            };
+            reader.readAsText(file);
+        } else if (fileType === 'application/xml' || fileType === 'text/xml' || fileType.startsWith('application/vnd.')) {
+            // For XML, Excel, PDF for now we show a message
+            setFileName(fileName);
             toast({
-                title: "Archivo no válido",
-                description: "Por favor, selecciona un archivo JSON.",
+                title: "Archivo Recibido",
+                description: `Se cargó ${fileName}. La conversión automática a JSON para este formato estará disponible próximamente.`
+            });
+            // Here you could implement a conversion service in the future
+            setPayload(JSON.stringify({ "message": `Contenido del archivo ${fileName} será procesado aquí.`}, null, 2));
+
+        } else {
+             toast({
+                title: "Archivo no soportado",
+                description: "Por favor, selecciona un archivo .json, .xml, .xls, .xlsx o .pdf.",
                 variant: "destructive"
             });
-            return;
         }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const content = e.target?.result;
-            if (typeof content === 'string') {
-                try {
-                    const parsed = JSON.parse(content);
-                    setPayload(JSON.stringify(parsed, null, 2));
-                    setFileName(file.name);
-                    toast({
-                        title: "Archivo cargado",
-                        description: `El contenido de ${file.name} se ha cargado en el payload.`
-                    });
-                } catch (error) {
-                     toast({
-                        title: "Error al leer el archivo",
-                        description: "El archivo JSON no tiene un formato válido.",
-                        variant: "destructive"
-                    });
-                }
-            }
-        };
-        reader.readAsText(file);
     }
   };
   
@@ -292,9 +304,9 @@ export default function TestingPage() {
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                               <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
                               <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Haz clic para cargar</span> o arrastra y suelta</p>
-                              <p className="text-xs text-muted-foreground">Archivo JSON</p>
+                              <p className="text-xs text-muted-foreground">JSON, XML, XLS, XLSX, PDF</p>
                           </div>
-                          <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept="application/json" />
+                          <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept="application/json, application/xml, text/xml, .xls, .xlsx, application/pdf" />
                       </Label>
                   </div>
                   {fileName && (
