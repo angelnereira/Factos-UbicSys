@@ -104,7 +104,6 @@ function CompleteProfileForm() {
       onboarded: Timestamp.now(),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
-      erpType: 'custom',
       integrationConfig: {
         erpType: 'custom',
         notificationSettings: {

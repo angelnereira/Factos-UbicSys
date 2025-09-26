@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow to submit a fiscal document to The Factory HKA,
@@ -9,11 +10,13 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { getAuthToken, submitDocument } from '@/lib/factory-hka/api-client';
 import type { FactoryHkaDocumentRequest, CompanyCredentials } from '@/lib/factory-hka/types';
 import type { Company, FiscalDocument } from '@/lib/types';
 import { Timestamp, getDoc, doc, updateDoc, getFirestore } from 'firebase/firestore';
+import { getCompanyById_admin } from '@/app/api/v1/documents/_lib/firebase-admin';
+import { adminDb } from '@/app/api/v1/documents/_lib/firebase-admin';
 
 
 async function getDocumentById(companyId: string, documentId: string): Promise<FiscalDocument | null> {
@@ -87,15 +90,13 @@ const submitDocumentFlow = ai.defineFlow(
     outputSchema: SubmitDocumentOutputSchema,
   },
   async ({ documentId, companyId }) => {
-    const db = getFirestore();
     
     // 1. Fetch company to get environment and credentials
-    const companyRef = doc(db, 'companies', companyId);
-    const companySnap = await getDoc(companyRef);
-    if (!companySnap.exists()) {
+    const companyData = await getCompanyById_admin(companyId);
+
+    if (!companyData) {
         throw new Error(`Company with ID ${companyId} not found.`);
     }
-    const companyData = companySnap.data() as Company;
     const env = companyData.status; // 'Demo' or 'Production'
     
     const hkaConfig = env === 'Production' ? companyData.factoryHkaConfig.production : companyData.factoryHkaConfig.demo;
