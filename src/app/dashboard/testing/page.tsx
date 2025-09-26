@@ -92,27 +92,27 @@ export default function TestingPage() {
   const [endpoint, setEndpoint] = useState<Endpoint>('CrearFactura');
   const [payload, setPayload] = useState(JSON.stringify(examplePayloads.CrearFactura, null, 2));
   const [response, setResponse] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start as true
   const [fileName, setFileName] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchCompanies() {
-      if (!db) return;
-      // Set loading for the company fetch operation
-      const initialLoad = companies.length === 0;
-      if(initialLoad) setIsLoading(true);
-      
+      if (!db) {
+        setIsLoading(false); // Stop loading if db is not available
+        return;
+      }
+      setIsLoading(true);
       const fetchedCompanies = await getCompanies(db);
       setCompanies(fetchedCompanies);
 
-      // If no company is selected and we have fetched companies, select the first one.
-      if (!selectedCompany && fetchedCompanies.length > 0) {
+      if (fetchedCompanies.length > 0 && !selectedCompany) {
         setSelectedCompany(fetchedCompanies[0].id);
       }
-      if(initialLoad) setIsLoading(false);
+      setIsLoading(false);
     }
     fetchCompanies();
-  }, [db, companies.length, selectedCompany]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db]);
 
   const handleEndpointChange = (value: string) => {
     const newEndpoint = value as Endpoint;
@@ -259,7 +259,7 @@ export default function TestingPage() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="company">Compañía (Credenciales)</Label>
-                        <Select onValueChange={setSelectedCompany} value={selectedCompany} disabled={companies.length === 0}>
+                        <Select onValueChange={setSelectedCompany} value={selectedCompany} disabled={isLoading || companies.length === 0}>
                             <SelectTrigger id="company">
                                 <SelectValue placeholder={isLoading ? "Cargando compañías..." : "Seleccionar compañía..."} />
                             </SelectTrigger>
@@ -358,7 +358,7 @@ export default function TestingPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading && (
+              {isLoading && !response && ( // Show loader only when loading and there's no response yet
                 <div className="flex items-center justify-center h-full p-8">
                   <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
                 </div>
@@ -373,7 +373,7 @@ export default function TestingPage() {
               )}
               {response && (
                    <div className="space-y-4">
-                      <Alert variant={(response.Codigo === 200 || response.status === 'success') ? 'default' : 'destructive'}>
+                      <Alert variant={(response.Codigo === 200 || response.Resultado === 'Success') ? 'default' : 'destructive'}>
                           <AlertTitle>{(response.Codigo === 200 || response.Resultado === 'Success') ? 'Éxito' : 'Error'}</AlertTitle>
                           <AlertDescription>{response.Mensaje || response.message || 'La respuesta no contiene un mensaje estándar.'}</AlertDescription>
                       </Alert>
@@ -392,5 +392,3 @@ export default function TestingPage() {
     </TooltipProvider>
   );
 }
-
-    
