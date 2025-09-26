@@ -10,6 +10,7 @@ import {
   Settings,
   Rocket,
   Ticket,
+  ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,8 +38,15 @@ import { cn } from '@/lib/utils';
 import PrivateRoute from '@/components/private-route';
 import { useAuth } from '@/contexts/auth-context';
 import type { Company } from '@/lib/types';
-import { getCompanyByAuthUid } from '@/lib/firebase/firestore';
+import { getCompanyByAuthUid, updateCompany } from '@/lib/firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 
 function DashboardLayoutContent({
@@ -47,6 +55,7 @@ function DashboardLayoutContent({
   children: React.ReactNode;
 }) {
   const { user, db } = useAuth();
+  const { toast } = useToast();
   const [company, setCompany] = useState<Company | null>(null);
   const [loadingCompany, setLoadingCompany] = useState(true);
 
@@ -65,9 +74,9 @@ function DashboardLayoutContent({
   const currentStatus = company?.status || 'Development';
 
   const statusStyles = {
-    Production: 'text-chart-2 border-chart-2 bg-chart-2/10',
-    Development: 'text-destructive border-destructive bg-destructive/10',
-    Demo: 'text-chart-4 border-chart-4 bg-chart-4/10',
+    Production: 'text-chart-2 border-chart-2 bg-chart-2/10 hover:bg-chart-2/20',
+    Development: 'text-destructive border-destructive bg-destructive/10 hover:bg-destructive/20',
+    Demo: 'text-chart-4 border-chart-4 bg-chart-4/10 hover:bg-chart-4/20',
   };
 
   const activePlanConfig = company?.status === 'Production'
@@ -76,6 +85,27 @@ function DashboardLayoutContent({
 
   const foliosUsed = activePlanConfig?.documentsUsedThisMonth || 0;
   const maxFolios = activePlanConfig?.maxDocumentsPerMonth || 0;
+  
+  const toggleCompanyStatus = async () => {
+    if (!db || !company) return;
+
+    const newStatus = company.status === 'Demo' ? 'Production' : 'Demo';
+    const { success, error } = await updateCompany(db, company.id, { status: newStatus });
+
+    if (success) {
+      setCompany(prev => prev ? { ...prev, status: newStatus } : null);
+      toast({
+        title: 'Ambiente Actualizado',
+        description: `La compañía ha sido cambiada al ambiente de ${newStatus}.`,
+      });
+    } else {
+      toast({
+        title: 'Error al Actualizar',
+        description: `No se pudo cambiar el ambiente: ${error}`,
+        variant: 'destructive',
+      });
+    }
+  };
 
 
   return (
@@ -261,20 +291,33 @@ function DashboardLayoutContent({
             </Tooltip>
             <ThemeToggle />
             <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger>
-                  {loadingCompany ? (
-                     <Skeleton className="w-20 h-6" />
-                  ): (
-                    <Badge variant="outline" className={cn(statusStyles[currentStatus])}>
-                      {currentStatus}
-                    </Badge>
-                  )}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Entorno de trabajo actual.</p>
-                </TooltipContent>
-              </Tooltip>
+               {loadingCompany ? (
+                 <Skeleton className="w-28 h-9" />
+               ) : (
+                  <DropdownMenu>
+                    <Tooltip>
+                       <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className={cn("pl-3 pr-2", statusStyles[currentStatus])}>
+                              <span className="font-semibold">{currentStatus}</span>
+                              <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                       <TooltipContent>
+                         <p>Cambiar ambiente de trabajo</p>
+                       </TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuContent align="end">
+                       <DropdownMenuItem onClick={toggleCompanyStatus} disabled={currentStatus === 'Production'}>
+                         Cambiar a Producción
+                       </DropdownMenuItem>
+                       <DropdownMenuItem onClick={toggleCompanyStatus} disabled={currentStatus === 'Demo'}>
+                         Cambiar a Demo
+                       </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+               )}
               <UserNav />
             </div>
           </header>

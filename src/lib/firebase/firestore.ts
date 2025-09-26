@@ -39,6 +39,26 @@ export async function addCompany(db: Firestore, companyData: Omit<Company, 'id'>
     }
 }
 
+// Function to update a company
+export async function updateCompany(db: Firestore, companyId: string, data: Partial<Company>): Promise<{ success: boolean; error?: any }> {
+  if (!companyId) {
+    const error = new Error("companyId must be provided.");
+    console.error(error);
+    return { success: false, error };
+  }
+  try {
+    const docRef = doc(db, 'companies', companyId);
+    await updateDoc(docRef, {
+      ...data,
+      updatedAt: Timestamp.now(),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error(`Error updating company ${companyId}:`, error);
+    return { success: false, error };
+  }
+}
+
 // Function to get a single company by auth UID
 export async function getCompanyByAuthUid(db: Firestore, authUid: string): Promise<Company | null> {
     try {
