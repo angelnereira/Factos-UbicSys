@@ -2,7 +2,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,11 +15,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/auth-context';
 import { signOut } from 'firebase/auth';
+import { User } from 'lucide-react';
 
 export function UserNav() {
   const router = useRouter();
   const { user, auth } = useAuth();
-  const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar-1');
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -33,16 +32,9 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-             {userAvatar?.imageUrl && (
-              <AvatarImage
-                src={userAvatar.imageUrl}
-                alt="User avatar"
-                data-ai-hint={userAvatar.imageHint}
-                width={40}
-                height={40}
-              />
-            )}
-            <AvatarFallback>{user?.email?.[0].toUpperCase() || 'A'}</AvatarFallback>
+            <AvatarFallback>
+              <User className="h-5 w-5" />
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
