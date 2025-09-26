@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Card,
@@ -35,7 +35,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/auth-context';
-import { getAllDocuments } from '@/lib/firebase/firestore';
+import { getAllDocumentsForUser, getAllDocuments } from '@/lib/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -49,42 +49,56 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
 };
 
 export default function MonitoringPage() {
-  const { db } = useAuth();
+  const { db, user } = useAuth();
   const { toast } = useToast();
   const [documents, setDocuments] = useState<FiscalDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-   useEffect(() => {
-    async function fetchData() {
-      if (!db) {
-        setError("La conexión con la base de datos no está disponible.");
+   const fetchData = useCallback(async () => {
+    if (!db) {
+      setError("La conexión con la base de datos no está disponible.");
+      setIsLoading(false);
+      return;
+    }
+     // In a real multi-tenant app, you'd use the user's auth UID.
+     // For development, we're bypassing this to show all documents.
+    const uid = user?.uid;
+     if (!uid && process.env.NODE_ENV !== 'development') {
+        setError("No se pudo identificar al usuario. No se pueden cargar los documentos.");
         setIsLoading(false);
         return;
-      }
-      setIsLoading(true);
-      try {
-        const fetchedDocuments = await getAllDocuments(db);
-        fetchedDocuments.sort((a, b) => {
-          const timeA = (a.createdAt as Timestamp)?.seconds || 0;
-          const timeB = (b.createdAt as Timestamp)?.seconds || 0;
-          return timeB - timeA;
-        });
-        setDocuments(fetchedDocuments);
-      } catch (err) {
-        console.error("Error fetching documents:", err);
-        setError("No se pudieron cargar los documentos.");
-        toast({
-          title: "Error de Carga",
-          description: "No se pudieron obtener los documentos desde Firestore.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
+     }
+
+    setIsLoading(true);
+    try {
+      // Use getAllDocuments for dev to see everything, otherwise scope to user.
+      const fetchedDocuments = process.env.NODE_ENV === 'development'
+        ? await getAllDocuments(db)
+        : await getAllDocumentsForUser(db, uid!);
+
+      fetchedDocuments.sort((a, b) => {
+        const timeA = (a.createdAt as Timestamp)?.seconds || 0;
+        const timeB = (b.createdAt as Timestamp)?.seconds || 0;
+        return timeB - timeA;
+      });
+      setDocuments(fetchedDocuments);
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+      setError("No se pudieron cargar los documentos. Revisa las reglas de seguridad de Firestore.");
+      toast({
+        title: "Error de Carga",
+        description: "No se pudieron obtener los documentos desde Firestore.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
+  }, [db, user, toast]);
+
+   useEffect(() => {
     fetchData();
-  }, [db, toast]);
+  }, [fetchData]);
 
   const documentMetrics = useMemo(() => {
     return documents.reduce(
@@ -234,13 +248,13 @@ export default function MonitoringPage() {
                                         <div className="text-sm text-muted-foreground">{getDateString(doc.processedAt)}</div>
                                     </div>
                                   )}
-                                  {doc.status === 'rejected' && (
+                                  {doc.status === 'rejected' && doc.errorDetails && (
                                     <div>
                                         <div className="font-medium text-destructive text-xs truncate" title={doc.errorDetails}>{doc.errorDetails}</div>
                                         <div className="text-sm text-muted-foreground">{getDateString(doc.processedAt)}</div>
                                     </div>
                                   )}
-                                  {(doc.status === 'pending' || doc.status === 'processing') && (
+                                  {(doc.status === 'pending' || doc.status === 'processing' || doc.status === 'sent_to_pac') && (
                                     <div>
                                         <div className="font-medium text-muted-foreground text-xs">Aún no procesado</div>
                                         <div className="text-sm text-muted-foreground">{getDateString(doc.createdAt)}</div>

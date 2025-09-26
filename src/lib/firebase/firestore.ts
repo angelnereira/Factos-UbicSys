@@ -14,17 +14,19 @@ import {
   Timestamp,
   where,
   type Firestore,
+  orderBy,
+  limit,
 } from 'firebase/firestore';
 import type { Company, FiscalDocument } from '../types';
 
 
 // Function to get a list of companies
-export async function getCompanies(db: Firestore) {
+export async function getCompanies(db: Firestore): Promise<Company[]> {
   const q = collection(db, 'companies');
   const querySnapshot = await getDocs(q);
-  const companies: any[] = [];
+  const companies: Company[] = [];
   querySnapshot.forEach(doc => {
-    companies.push({ id: doc.id, ...doc.data() });
+    companies.push({ id: doc.id, ...doc.data() } as Company);
   });
   return companies;
 }
@@ -123,7 +125,32 @@ export async function updateDocumentInFlow(
   }
 };
 
+/**
+ * Gets all documents for the currently authenticated user's company.
+ * It first finds the company associated with the authUid, then fetches its documents.
+ * @param db - The Firestore instance.
+ * @param authUid - The authenticated user's UID.
+ * @returns A promise that resolves to an array of FiscalDocument.
+ */
+export async function getAllDocumentsForUser(db: Firestore, authUid: string): Promise<FiscalDocument[]> {
+  const company = await getCompanyByAuthUid(db, authUid);
+  if (!company) {
+    console.log("No company found for the current user. Cannot fetch documents.");
+    return [];
+  }
+
+  const documentsQuery = query(collection(db, 'companies', company.id, 'documents'));
+  const querySnapshot = await getDocs(documentsQuery);
+  const fetchedDocuments: FiscalDocument[] = [];
+  querySnapshot.forEach((doc) => {
+    fetchedDocuments.push({ id: doc.id, ...doc.data() } as FiscalDocument);
+  });
+  return fetchedDocuments;
+}
+
 // Function to get all documents using a collectionGroup query
+// Note: This is less secure and less efficient for multi-tenant apps.
+// Prefer `getAllDocumentsForUser` where possible.
 export async function getAllDocuments(db: Firestore): Promise<FiscalDocument[]> {
   const documentsQuery = query(collectionGroup(db, 'documents'));
   const querySnapshot = await getDocs(documentsQuery);

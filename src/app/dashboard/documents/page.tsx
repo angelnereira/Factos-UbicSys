@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Card,
@@ -32,7 +32,7 @@ import type { FiscalDocument } from '@/lib/types';
 import { Loader2, Search, ArrowUpDown, RefreshCw } from 'lucide-react';
 import type { Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { getAllDocuments } from '@/lib/firebase/firestore';
+import { getAllDocumentsForUser, getAllDocuments } from '@/lib/firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -54,7 +54,7 @@ const statusStyles: { [key in FiscalDocument['status']]: string } = {
 type SortKey = keyof FiscalDocument | '';
 
 export default function DocumentsListPage() {
-  const { db } = useAuth();
+  const { db, user } = useAuth();
   const { toast } = useToast();
   const [documents, setDocuments] = useState<FiscalDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,22 +73,37 @@ export default function DocumentsListPage() {
         });
         return;
     };
+     const uid = user?.uid;
+     if (!uid && process.env.NODE_ENV !== 'development') {
+        toast({ title: "Error de Autenticación", description: "No se pudo identificar al usuario.", variant: "destructive" });
+        return;
+     }
+
     setIsLoading(true);
     try {
-      const fetchedDocuments = await getAllDocuments(db);
+      const fetchedDocuments = process.env.NODE_ENV === 'development'
+        ? await getAllDocuments(db)
+        : await getAllDocumentsForUser(db, uid!);
+
       setDocuments(fetchedDocuments);
       setHasLoaded(true);
     } catch (error) {
       console.error("Error fetching documents:", error);
       toast({
         title: "Error al Cargar Documentos",
-        description: "No se pudieron obtener los documentos desde Firestore.",
+        description: "No se pudieron obtener los documentos. Revisa las reglas de seguridad de Firestore.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
-  }, [db, toast]);
+  }, [db, user, toast]);
+
+  useEffect(() => {
+    // Automatically fetch data when the component mounts
+    fetchData();
+  }, [fetchData]);
+
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
