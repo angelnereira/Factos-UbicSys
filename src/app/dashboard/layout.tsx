@@ -14,6 +14,7 @@ import {
   FileText as FileTextIcon,
   History,
   Beaker,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -288,6 +289,10 @@ function DashboardLayoutContent({
                     <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/logs'))}>
                       <History className="mr-2" />
                       <span>Registros</span>
+                    </CommandItem>
+                    <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/exports'))}>
+                      <Download className="mr-2" />
+                      <span>Exportaciones</span>
                     </CommandItem>
                     <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/testing'))}>
                       <Beaker className="mr-2" />

@@ -128,3 +128,55 @@ export async function submitDocument(
         return { data: null, error: `Network error: ${errorMessage}` };
     }
 }
+
+/**
+ * Downloads documents from The Factory HKA based on a date range.
+ * 
+ * @param criteria - The download criteria, including date range.
+ * @param token - The authentication token.
+ * @param env - The environment (Demo or Production).
+ * @returns A promise that resolves with the file blob or an error object.
+ */
+export async function downloadDocumentsByDate(
+    criteria: { FechaDesde: string; FechaHasta: string },
+    token: string,
+    env: Environment
+): Promise<{ data: Blob | null; error: string | null; }> {
+    const apiUrl = getApiUrl(env);
+    if (!apiUrl) {
+        return { data: null, error: `The Factory HKA API URL for ${env} is not configured.` };
+    }
+
+    try {
+        const response = await fetch(`${apiUrl}/DescargarDocumentos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json, application/zip',
+                'TokenEmpresa': token,
+                'TokenClave': token,
+            },
+            body: JSON.stringify(criteria),
+        });
+
+        if (!response.ok) {
+            const errorResponse: FactoryHkaError = await response.json();
+            const errorMessage = `Failed to download documents from HKA (${env}): ${errorResponse.message || response.statusText}`;
+            console.error(errorMessage, errorResponse.errors);
+            return { data: null, error: errorMessage };
+        }
+
+        // The response should be a zip file
+        const blob = await response.blob();
+        if (blob.type !== 'application/zip') {
+             return { data: null, error: `La API no devolvió un archivo ZIP. Tipo de contenido recibido: ${blob.type}` };
+        }
+        
+        return { data: blob, error: null };
+
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown network error occurred.';
+        console.error(`Error during document download (${env}):`, errorMessage);
+        return { data: null, error: `Network error: ${errorMessage}` };
+    }
+}
