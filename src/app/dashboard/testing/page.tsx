@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { FlaskConical, Loader2, Send, Upload, File as FileIcon, ServerCrash, Building } from 'lucide-react';
+import { FlaskConical, Loader2, Send, Upload, File as FileIcon, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -98,11 +98,13 @@ export default function TestingPage() {
   useEffect(() => {
     async function fetchCompanies() {
       if (!db) return;
+      setIsLoading(true);
       const fetchedCompanies = await getCompanies(db);
       setCompanies(fetchedCompanies);
       if (fetchedCompanies.length > 0) {
         setSelectedCompany(fetchedCompanies[0].id);
       }
+      setIsLoading(false);
     }
     fetchCompanies();
   }, [db]);
@@ -252,9 +254,9 @@ export default function TestingPage() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="company">Compañía (Credenciales)</Label>
-                        <Select onValueChange={setSelectedCompany} value={selectedCompany}>
+                        <Select onValueChange={setSelectedCompany} value={selectedCompany} disabled={isLoading || companies.length === 0}>
                             <SelectTrigger id="company">
-                                <SelectValue placeholder="Seleccionar compañía..." />
+                                <SelectValue placeholder={isLoading ? "Cargando compañías..." : "Seleccionar compañía..."} />
                             </SelectTrigger>
                             <SelectContent>
                                 {companies.map(comp => (
@@ -363,7 +365,7 @@ export default function TestingPage() {
               {response && (
                    <div className="space-y-4">
                       <Alert variant={(response.Codigo === 200 || response.status === 'success') ? 'default' : 'destructive'}>
-                          <AlertTitle>{response.Codigo === 200 ? 'Éxito' : 'Error'}</AlertTitle>
+                          <AlertTitle>{(response.Codigo === 200 || response.Resultado === 'Success') ? 'Éxito' : 'Error'}</AlertTitle>
                           <AlertDescription>{response.Mensaje || response.message || 'La respuesta no contiene un mensaje estándar.'}</AlertDescription>
                       </Alert>
                       <div>
