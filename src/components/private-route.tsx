@@ -7,11 +7,6 @@ import { useAuth } from '@/contexts/auth-context';
 import { Loader2 } from 'lucide-react';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  // Bypass authentication in development environment
-  if (process.env.NODE_ENV === 'development') {
-    return <>{children}</>;
-  }
-  
   const { user, loading } = useAuth();
   const router = useRouter();
 
