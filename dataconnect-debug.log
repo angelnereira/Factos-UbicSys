@@ -1,8 +1,8 @@
-I0926 18:33:54.017190    9021 load.go:31] Reloading schema and connectors...
-E0926 18:33:54.031666    9021 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "studio-7875732711-2b800-service". No service has a schema.
-E0926 18:33:54.031820    9021 load.go:73] Could not load sources: 
+I0926 19:49:39.424423   24151 load.go:31] Reloading schema and connectors...
+E0926 19:49:39.436040   24151 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "studio-7875732711-2b800-service". No service has a schema.
+E0926 19:49:39.436145   24151 load.go:73] Could not load sources: 
 Errors: schema/schema.gql:23:33: Undefined directive relation.
-I0926 18:33:54.034611    9021 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
+I0926 19:49:39.438928   24151 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
 Generated sources: prelude.gql [73251B] 
-I0926 18:33:54.034841    9021 load.go:74] Finished reloading
-I0926 18:33:54.074795    9021 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+I0926 19:49:39.439011   24151 load.go:74] Finished reloading
+I0926 19:49:39.502537   24151 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001

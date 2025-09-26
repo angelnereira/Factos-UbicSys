@@ -9,7 +9,7 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
 // This is a public configuration and it's safe to be exposed.
 // Security is enforced by Firebase Security Rules on the backend.
 const firebaseConfig = {
-  apiKey: "AIzaSyDF1p34M229iUSpguPY3HYMv6s2r92kY7w",
+  apiKey: "AIzaSyBx11TjLWQvQtuFbIOL753IPHRlq9K1gLI",
   authDomain: "studio-7875732711-2b800.firebaseapp.com",
   projectId: "studio-7875732711-2b800",
   storageBucket: "studio-7875732711-2b800.appspot.com",
