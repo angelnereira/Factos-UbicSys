@@ -11,6 +11,9 @@ import {
   Rocket,
   Ticket,
   ChevronDown,
+  FileText as FileTextIcon,
+  History,
+  Beaker,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,12 +30,24 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from '@/components/ui/command';
+
+
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from '@/components/user-nav';
 import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { DashboardNav } from '@/components/dashboard-nav';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import PrivateRoute from '@/components/private-route';
@@ -47,6 +62,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useRouter } from 'next/navigation';
 
 
 function DashboardLayoutContent({
@@ -54,10 +70,24 @@ function DashboardLayoutContent({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const { user, db } = useAuth();
   const { toast } = useToast();
   const [company, setCompany] = useState<Company | null>(null);
   const [loadingCompany, setLoadingCompany] = useState(true);
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setOpen((open) => !open)
+      }
+    }
+ 
+    document.addEventListener("keydown", down)
+    return () => document.removeEventListener("keydown", down)
+  }, [])
 
   useEffect(() => {
     async function fetchCompany() {
@@ -106,6 +136,11 @@ function DashboardLayoutContent({
       });
     }
   };
+
+  const runCommand = (command: () => void) => {
+    setOpen(false)
+    command()
+  }
 
 
   return (
@@ -225,24 +260,57 @@ function DashboardLayoutContent({
               </SheetContent>
             </Sheet>
             <div className="flex-1">
-              <form>
-                <Tooltip>
-                  <TooltipTrigger className="w-full text-left">
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Buscar documentos, clientes, RUC..."
-                            className="w-full appearance-none bg-background pl-8 shadow-none"
-                        />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Búsqueda global en todo el sistema (Próximamente).</p>
-                  </TooltipContent>
-                </Tooltip>
-              </form>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'relative w-full justify-start text-sm text-muted-foreground'
+                  )}
+                  onClick={() => setOpen(true)}
+                >
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4" />
+                  <span className="pl-6">Buscar globalmente...</span>
+                  <CommandShortcut className="absolute right-2 top-1/2 -translate-y-1/2">
+                      <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                          <span className="text-xs">⌘</span>K
+                      </kbd>
+                  </CommandShortcut>
+                </Button>
             </div>
+             <CommandDialog open={open} onOpenChange={setOpen}>
+                <CommandInput placeholder="Escribe un comando o busca..." />
+                <CommandList>
+                  <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+                  <CommandGroup heading="Páginas">
+                    <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/documents'))}>
+                      <FileTextIcon className="mr-2" />
+                      <span>Documentos</span>
+                    </CommandItem>
+                    <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/logs'))}>
+                      <History className="mr-2" />
+                      <span>Registros</span>
+                    </CommandItem>
+                    <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/testing'))}>
+                      <Beaker className="mr-2" />
+                      <span>Pruebas de API</span>
+                    </CommandItem>
+                  </CommandGroup>
+                  <CommandSeparator />
+                  <CommandGroup heading="Configuración">
+                     <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/settings'))}>
+                       <Settings className="mr-2" />
+                       <span>Ajustes Generales</span>
+                    </CommandItem>
+                    <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/settings/api'))}>
+                       <Rocket className="mr-2" />
+                       <span>Configuración de API</span>
+                    </CommandItem>
+                     <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/documentation'))}>
+                       <BookText className="mr-2" />
+                       <span>Documentación</span>
+                    </CommandItem>
+                  </CommandGroup>
+                </CommandList>
+            </CommandDialog>
              <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="outline" size="icon" asChild>
