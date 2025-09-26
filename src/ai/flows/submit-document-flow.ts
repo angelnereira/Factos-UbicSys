@@ -14,53 +14,50 @@ import { z } from 'zod';
 import { getAuthToken, submitDocument } from '@/lib/factory-hka/api-client';
 import type { FactoryHkaDocumentRequest, CompanyCredentials } from '@/lib/factory-hka/types';
 import type { Company, FiscalDocument } from '@/lib/types';
-import { Timestamp, getDoc, doc, updateDoc, getFirestore } from 'firebase/firestore';
-import { getCompanyById_admin } from '@/app/api/v1/documents/_lib/firebase-admin';
-import { adminDb } from '@/app/api/v1/documents/_lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
+import { getCompanyById_admin, adminDb } from '@/app/api/v1/documents/_lib/firebase-admin';
 
 
-async function getDocumentById(companyId: string, documentId: string): Promise<FiscalDocument | null> {
-    const db = getFirestore();
+async function getDocumentById_admin(companyId: string, documentId: string): Promise<FiscalDocument | null> {
+    if (!adminDb) {
+        console.error("Admin SDK not initialized, cannot fetch document.");
+        return null;
+    }
     try {
-        if (!companyId || !documentId) {
-            console.error("companyId and documentId must be provided.");
-            return null;
-        }
-        const docRef = doc(db, "companies", companyId, "documents", documentId);
-        const docSnap = await getDoc(docRef);
+        const docRef = adminDb.collection("companies").doc(companyId).collection("documents").doc(documentId);
+        const docSnap = await docRef.get();
 
-        if (docSnap.exists()) {
+        if (docSnap.exists) {
             return { id: docSnap.id, ...docSnap.data() } as FiscalDocument;
         } else {
-            console.log("No such document!");
+            console.log(`No document found with ID: ${documentId} in company ${companyId}`);
             return null;
         }
     } catch (error) {
-        console.error("Error getting document by ID: ", error);
+        console.error("Error getting document by ID (admin): ", error);
         return null;
     }
 }
 
-async function updateDocumentInFlow(
+async function updateDocumentInFlow_admin(
   companyId: string,
   documentId: string,
   data: Partial<FiscalDocument>
 ): Promise<{ success: boolean; error?: any }> => {
-  const db = getFirestore();
-  if (!companyId || !documentId) {
-    const error = new Error("companyId and documentId must be provided.");
+  if (!adminDb) {
+    const error = new Error("Admin SDK not initialized, cannot update document.");
     console.error(error);
     return { success: false, error };
   }
   try {
-    const docRef = doc(db, 'companies', companyId, 'documents', documentId);
-    await updateDoc(docRef, {
+    const docRef = adminDb.collection('companies').doc(companyId).collection('documents').doc(documentId);
+    await docRef.update({
       ...data,
       updatedAt: Timestamp.now(),
     });
     return { success: true };
   } catch (error) {
-    console.error(`Error updating document ${documentId}:`, error);
+    console.error(`Error updating document ${documentId} (admin):`, error);
     return { success: false, error };
   }
 };
@@ -103,15 +100,15 @@ const submitDocumentFlow = ai.defineFlow(
     
     const credentials: CompanyCredentials = {
         nit: hkaConfig.username,
-        token: hkaConfig.password, // Assumes password field exists
+        token: hkaConfig.password!, 
     };
 
     if (!credentials.nit || !credentials.token) {
         throw new Error(`Credentials for ${env} environment are not configured for company ${companyId}.`);
     }
 
-    // 2. Fetch the document from Firestore
-    const document = await getDocumentById(companyId, documentId);
+    // 2. Fetch the document from Firestore using Admin SDK
+    const document = await getDocumentById_admin(companyId, documentId);
     if (!document) {
       throw new Error(`Document with ID ${documentId} not found for company ${companyId}.`);
     }
@@ -119,7 +116,7 @@ const submitDocumentFlow = ai.defineFlow(
     const initialStatusHistory = document.statusHistory || [];
 
     // 3. Add 'processing' to status history
-    await updateDocumentInFlow(companyId, documentId, {
+    await updateDocumentInFlow_admin(companyId, documentId, {
       status: 'processing',
       statusHistory: [
         ...initialStatusHistory,
@@ -133,7 +130,7 @@ const submitDocumentFlow = ai.defineFlow(
     });
 
     // Refresh document state to get the latest statusHistory
-    let currentDocument = await getDocumentById(companyId, documentId);
+    let currentDocument = await getDocumentById_admin(companyId, documentId);
     if (!currentDocument) {
       throw new Error(`Document with ID ${documentId} disappeared during processing.`);
     }
@@ -142,7 +139,7 @@ const submitDocumentFlow = ai.defineFlow(
     const authResponse = await getAuthToken(credentials, env);
     if (authResponse.error || !authResponse.data) {
         const authErrorMessage = `Error de autenticación con HKA: ${authResponse.error}`;
-        await updateDocumentInFlow(companyId, documentId, {
+        await updateDocumentInFlow_admin(companyId, documentId, {
             status: 'rejected',
             errorDetails: authErrorMessage,
             statusHistory: [
@@ -160,7 +157,7 @@ const submitDocumentFlow = ai.defineFlow(
     const submitResponse = await submitDocument(submissionData, token, env);
     
     // Refresh document state again before final update
-    currentDocument = await getDocumentById(companyId, documentId);
+    currentDocument = await getDocumentById_admin(companyId, documentId);
     if (!currentDocument) {
       throw new Error(`Document with ID ${documentId} disappeared before final update.`);
     }
@@ -168,7 +165,7 @@ const submitDocumentFlow = ai.defineFlow(
     // 6. Handle the response and update Firestore
     if (submitResponse.error || !submitResponse.data) {
       const errorMessage = `Error al enviar documento a HKA: ${submitResponse.error}`;
-      await updateDocumentInFlow(companyId, documentId, {
+      await updateDocumentInFlow_admin(companyId, documentId, {
         status: 'rejected',
         errorDetails: errorMessage,
         statusHistory: [
@@ -180,7 +177,7 @@ const submitDocumentFlow = ai.defineFlow(
     }
     
     const { cufe, message } = submitResponse.data;
-    await updateDocumentInFlow(companyId, documentId, {
+    await updateDocumentInFlow_admin(companyId, documentId, {
       status: 'sent_to_pac',
       cufe: cufe,
       processedAt: Timestamp.now(),
