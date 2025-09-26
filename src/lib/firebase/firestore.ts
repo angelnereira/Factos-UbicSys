@@ -62,6 +62,23 @@ export async function updateCompany(db: Firestore, companyId: string, data: Part
   }
 }
 
+// Function to get a single company by its document ID
+export async function getCompanyById(db: Firestore, companyId: string): Promise<Company | null> {
+    if (!companyId) return null;
+    try {
+        const docRef = doc(db, 'companies', companyId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return { id: docSnap.id, ...docSnap.data() } as Company;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error getting company by ID: ${companyId}`, error);
+        return null;
+    }
+}
+
+
 // Function to get a single company by auth UID
 export async function getCompanyByAuthUid(db: Firestore, authUid: string): Promise<Company | null> {
     try {

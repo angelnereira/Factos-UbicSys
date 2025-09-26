@@ -44,6 +44,8 @@ export interface Company {
       username: string;
       password?: string;
       isActive: boolean;
+      maxDocumentsPerMonth: number;
+      documentsUsedThisMonth: number;
     }
   }
 }

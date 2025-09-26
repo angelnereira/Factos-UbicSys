@@ -94,8 +94,6 @@ function CompleteProfileForm() {
       return false;
     }
 
-    // Creates the company profile in Firestore.
-    // This connects the authenticated user (authUid) to their company data.
     const companyData: Omit<Company, 'id'> = {
       name,
       email,
@@ -114,14 +112,18 @@ function CompleteProfileForm() {
       },
       factoryHkaConfig: {
         demo: {
-          username: "user_demo", // Placeholder
+          username: "",
+          password: "",
           isActive: true,
           maxDocumentsPerMonth: 1000,
           documentsUsedThisMonth: 0,
         },
         production: {
-          username: "user_prod", // Placeholder
+          username: "",
+          password: "",
           isActive: false,
+          maxDocumentsPerMonth: 0,
+          documentsUsedThisMonth: 0,
         }
       },
       taxId: values.taxId,
