@@ -98,16 +98,21 @@ export default function TestingPage() {
   useEffect(() => {
     async function fetchCompanies() {
       if (!db) return;
-      setIsLoading(true);
+      // Set loading for the company fetch operation
+      const initialLoad = companies.length === 0;
+      if(initialLoad) setIsLoading(true);
+      
       const fetchedCompanies = await getCompanies(db);
       setCompanies(fetchedCompanies);
-      if (fetchedCompanies.length > 0) {
+
+      // If no company is selected and we have fetched companies, select the first one.
+      if (!selectedCompany && fetchedCompanies.length > 0) {
         setSelectedCompany(fetchedCompanies[0].id);
       }
-      setIsLoading(false);
+      if(initialLoad) setIsLoading(false);
     }
     fetchCompanies();
-  }, [db]);
+  }, [db, companies.length, selectedCompany]);
 
   const handleEndpointChange = (value: string) => {
     const newEndpoint = value as Endpoint;
@@ -254,7 +259,7 @@ export default function TestingPage() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="company">Compañía (Credenciales)</Label>
-                        <Select onValueChange={setSelectedCompany} value={selectedCompany} disabled={isLoading || companies.length === 0}>
+                        <Select onValueChange={setSelectedCompany} value={selectedCompany} disabled={companies.length === 0}>
                             <SelectTrigger id="company">
                                 <SelectValue placeholder={isLoading ? "Cargando compañías..." : "Seleccionar compañía..."} />
                             </SelectTrigger>
@@ -330,7 +335,11 @@ export default function TestingPage() {
                   />
               </div>
 
-              <Button onClick={handleTest} disabled={isLoading || !selectedCompany} className="w-full">
+              <Button 
+                onClick={handleTest} 
+                disabled={isLoading}
+                className="w-full bg-chart-4 text-black hover:bg-chart-4/90 dark:bg-chart-4 dark:hover:bg-chart-4/90"
+              >
                 {isLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
