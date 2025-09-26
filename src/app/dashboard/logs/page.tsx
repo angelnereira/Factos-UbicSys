@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -97,7 +97,7 @@ export default function LogsPage() {
   const { toast } = useToast();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -109,6 +109,7 @@ export default function LogsPage() {
             description: "La base de datos no está disponible. No se pueden cargar los registros.",
             variant: "destructive"
         });
+        setIsLoading(false);
         return;
     };
     setIsLoading(true);
@@ -131,6 +132,10 @@ export default function LogsPage() {
       setIsLoading(false);
     }
   }, [db, toast]);
+
+   useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const groupedAndFilteredLogs = useMemo(() => {
     const filtered = logs.filter(log => {
@@ -169,7 +174,7 @@ export default function LogsPage() {
       <div className="flex items-center">
         <div className="flex-1">
           <h1 className="font-headline text-2xl font-bold tracking-tight">
-            Registros del Sistema
+            System Logs
           </h1>
           <p className="text-muted-foreground">
             Un registro de auditoría de todos los eventos de procesamiento de documentos.
@@ -297,5 +302,3 @@ export default function LogsPage() {
     </>
   );
 }
-
-    

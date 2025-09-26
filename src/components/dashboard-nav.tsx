@@ -22,7 +22,7 @@ import {
 const navItems = [
   { href: '/dashboard/monitoring', label: 'Monitoreo', icon: Activity },
   { href: '/dashboard/documents', label: 'Documentos', icon: FileText },
-  { href: '/dashboard/logs', label: 'Registros', icon: History },
+  { href: '/dashboard/logs', label: 'System Logs', icon: History },
   { href: '/dashboard/exports', label: 'Exportaciones', icon: Download },
   { href: '/dashboard/testing', label: 'Pruebas', icon: Beaker },
   { href: '/dashboard/settings', label: 'Ajustes', icon: Settings },

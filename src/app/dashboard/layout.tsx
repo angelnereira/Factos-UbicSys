@@ -288,7 +288,7 @@ function DashboardLayoutContent({
                     </CommandItem>
                     <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/logs'))}>
                       <History className="mr-2" />
-                      <span>Registros</span>
+                      <span>System Logs</span>
                     </CommandItem>
                     <CommandItem onSelect={() => runCommand(() => router.push('/dashboard/exports'))}>
                       <Download className="mr-2" />
