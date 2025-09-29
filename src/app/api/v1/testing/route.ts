@@ -3,14 +3,26 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCompanyById_admin, adminDb } from '../documents/_lib/firebase-admin';
 import type { CompanyCredentials } from '@/lib/factory-hka/types';
+import soapRequest from 'easy-soap-request';
 
 // Define endpoints allowed for testing to prevent abuse
 const ALLOWED_ENDPOINTS = [
-    'ConsultarEmpresa',
-    'CrearFactura',
-    'ConsultarEstatusDocumento',
-    'AnularDocumento',
+    'Enviar',
+    'EstadoDocumento',
+    'AnulacionDocumento',
+    'DescargaXML',
+    'FoliosRestantes',
+    'EnvioCorreo',
+    'DescargaPDF',
+    'RastreoCorreo',
+    'ConsultarRucDV'
 ];
+
+const SOAP_API_URLS = {
+    Demo: "https://demoemision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc",
+    Production: "https://produccionemision.thefactoryhka.com.pa/ws/obj/v1.0/Service.svc" // Asumido, cambiar si es diferente
+};
+
 
 const testApiSchema = z.object({
     companyId: z.string().min(1, "El ID de la compañía es requerido."),
@@ -18,17 +30,8 @@ const testApiSchema = z.object({
     endpoint: z.string().refine(val => ALLOWED_ENDPOINTS.includes(val), {
         message: "Endpoint no válido o no permitido para pruebas."
     }),
-    payload: z.record(z.unknown()), // The payload to send to HKA
+    payloadXml: z.string().min(1, "El payload XML es requerido."),
 });
-
-// Helper function to get HKA API URL from environment
-function getHkaApiUrl(env: 'Demo' | 'Production') {
-    if (env === 'Production') {
-        return process.env.NEXT_PUBLIC_THE_FACTORY_HKA_PROD_API_URL || 'https://prod.thefactoryhka.com.pa/api/v2'; // Fallback
-    }
-    return process.env.NEXT_PUBLIC_THE_FACTORY_HKA_API_URL || 'https://demodte.thefactoryhka.com.pa/api/v2'; // Fallback
-}
-
 
 export async function POST(request: Request) {
     if (!adminDb) {
@@ -47,15 +50,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, message: 'Datos de la solicitud inválidos.', errors: validation.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { companyId, environment, endpoint, payload } = validation.data;
+    const { companyId, environment, endpoint, payloadXml } = validation.data;
 
-    // 1. Fetch company data securely using Admin SDK
     const company = await getCompanyById_admin(companyId);
     if (!company) {
         return NextResponse.json({ success: false, message: `Compañía con ID '${companyId}' no encontrada.` }, { status: 404 });
     }
 
-    // 2. Get credentials for the selected environment
     const hkaConfig = environment === 'Production' ? company.factoryHkaConfig.production : company.factoryHkaConfig.demo;
     
     if (!hkaConfig?.username || !hkaConfig?.password) {
@@ -67,31 +68,27 @@ export async function POST(request: Request) {
         token: hkaConfig.password,
     };
 
-    // 3. Prepare and make the call to The Factory HKA
-    const hkaApiUrl = getHkaApiUrl(environment);
-    const fullUrl = `${hkaApiUrl}/${endpoint}`;
+    const url = SOAP_API_URLS[environment];
+    const soapAction = `"http://tempuri.org/IService/${endpoint}"`;
+
+    // Replace placeholders in the user-provided XML
+    const finalXml = payloadXml
+        .replace(/TOKENEMPRESA/g, credentials.nit)
+        .replace(/TOKENPASSWORD/g, credentials.token);
 
     try {
-        const hkaResponse = await fetch(fullUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                // Add authentication headers required by HKA
-                'TokenEmpresa': credentials.token,
-                'TokenClave': credentials.token, // As per docs, seems to be the same
-            },
-            body: JSON.stringify(payload),
-        });
+        const { response } = await soapRequest({ url, headers: { 'Content-Type': 'text/xml', 'SOAPAction': soapAction }, xml: finalXml });
+        const { body: responseBody, statusCode } = response;
 
-        // Forward the response from HKA, whether it's a success or an error
-        const responseData = await hkaResponse.json();
-        
-        return NextResponse.json(responseData, { status: hkaResponse.status });
+        // Aquí, idealmente, convertiríamos el XML de respuesta a JSON para un manejo más fácil en el frontend.
+        // Por ahora, devolvemos el cuerpo como texto. Una librería como 'xml-js' podría usarse aquí.
+        return NextResponse.json({ success: true, statusCode, body: responseBody }, { status: 200 });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(`[API Test Proxy] Error calling HKA endpoint '${endpoint}':`, error);
-        const errorMessage = error instanceof Error ? error.message : 'Error de red desconocido.';
-        return NextResponse.json({ success: false, message: `Ocurrió un error al contactar la API de HKA: ${errorMessage}` }, { status: 502 }); // 502 Bad Gateway
+        const errorMessage = error.message || 'Error de red desconocido.';
+        // 'error.response' puede contener el cuerpo de la respuesta SOAP con el error
+        const errorBody = error.response?.body;
+        return NextResponse.json({ success: false, message: `Ocurrió un error al contactar la API SOAP de HKA: ${errorMessage}`, details: errorBody }, { status: 502 });
     }
 }
