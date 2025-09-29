@@ -27,14 +27,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import type { Company } from '@/lib/types';
 import { getCompanies } from '@/lib/firebase/firestore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useRouter } from 'next/navigation';
 
 const defaultEnviarXml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ser="http://schemas.datacontract.org/2004/07/Services.ObjComprobante.v1_0">
 \t<soapenv:Header/>
@@ -91,7 +93,7 @@ const defaultEnviarXml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoa
 \t\t\t\t</ser:totalesSubTotales>
 \t\t\t</tem:documento>
 \t\t</tem:Enviar>
-\t</soapenv:Body>
+	</soapenv:Body>
 </soapenv:Envelope>`;
 
 const testApiSchema = z.object({
@@ -108,6 +110,7 @@ type TestApiFormValues = z.infer<typeof testApiSchema>;
 export default function TestingPage() {
   const { toast } = useToast();
   const { db } = useAuth();
+  const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isCompaniesLoading, setIsCompaniesLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -172,6 +175,14 @@ export default function TestingPage() {
     }
   }
 
+  const handleCompanyChange = (value: string) => {
+    if (value === 'add-new-company') {
+      router.push('/signup/complete-profile');
+    } else {
+      form.setValue('companyId', value);
+    }
+  };
+
   const allowedEndpoints = [
       'Enviar', 'EstadoDocumento', 'AnulacionDocumento', 'DescargaXML', 'FoliosRestantes', 'EnvioCorreo', 'DescargaPDF', 'RastreoCorreo', 'ConsultarRucDV'
   ];
@@ -206,8 +217,8 @@ export default function TestingPage() {
                       <FormItem>
                         <FormLabel>Compañía</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          onValueChange={handleCompanyChange}
+                          value={field.value}
                           disabled={isCompaniesLoading}
                         >
                           <FormControl>
@@ -216,11 +227,22 @@ export default function TestingPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {companies.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.name}
-                              </SelectItem>
-                            ))}
+                            {isCompaniesLoading ? (
+                                <SelectItem value="loading" disabled>Cargando...</SelectItem>
+                            ) : (
+                                companies.map((c) => (
+                                  <SelectItem key={c.id} value={c.id}>
+                                    {c.name}
+                                  </SelectItem>
+                                ))
+                            )}
+                            <SelectSeparator />
+                             <SelectItem value="add-new-company" className="text-primary focus:text-primary">
+                               <div className="flex items-center gap-2">
+                                 <PlusCircle className="h-4 w-4" />
+                                 <span>Añadir nueva compañía</span>
+                               </div>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
