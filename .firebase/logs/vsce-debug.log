@@ -1523,3 +1523,33 @@ I0929 16:48:14.809494    1066 dev.go:102] Listening on address (HTTP + gRPC): 12
 [info] [Firebase Plugin] Stopping Data Connect toolkit
 [warn] ⚠  Data Connect Emulator has exited upon receiving signal: SIGINT 
 [debug] [2025-09-29T17:01:53.143Z] [Firebase Plugin] Activating Firebase extension.
+[debug] [2025-09-29T17:02:26.998Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2025-09-29T17:02:27.001Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-29T17:02:27.003Z] > authorizing via signed-in user (angelnereira15@gmail.com)
+[debug] [2025-09-29T17:02:27.009Z] Checked if tokens are valid: true, expires at: 1759168087003
+[debug] [2025-09-29T17:02:27.010Z] Checked if tokens are valid: true, expires at: 1759168087003
+[debug] [2025-09-29T17:02:27.011Z] [Firebase Plugin] User found:  angelnereira15@gmail.com
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2025-09-29T17:02:27.014Z] Checked if tokens are valid: true, expires at: 1759168087003
+[debug] [2025-09-29T17:02:27.017Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2025-09-29T17:02:27.104Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[debug] [2025-09-29T17:02:27.952Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-09-29T17:02:27.953Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 2.13.0) on port 50001
+[debug] [2025-09-29T17:02:29.413Z] W0929 17:02:29.410635    3924 build.go:56] Failed to construct deployment metadata: rpc error: code = NotFound desc = no schema found for service "studio-7875732711-2b800-service". No service has a schema.
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"W0929 17:02:29.410635    3924 build.go:56] Failed to construct deployment metadata: rpc error: code = NotFound desc = no schema found for service \"studio-7875732711-2b800-service\". No service has a schema.\n"}}
+[debug] [2025-09-29T17:02:29.416Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-09-29T17:02:29.416Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2025-09-29T17:02:29.417Z] Starting Data Connect Emulator with command {"binary":"/home/user/.cache/firebase/emulators/dataconnect-emulator-2.13.0","args":["--logtostderr","-v=2","dev","--listen=localhost:50001","--config_dir=/home/user/studio/dataconnect","--enable_output_schema_extensions=true","--enable_output_generated_sdk=true"],"optionalArgs":["listen","config_dir","enable_output_schema_extensions","enable_output_generated_sdk"],"joinArgs":true,"shell":false,"port":9399} {"metadata":{"emulator":{"name":"dataconnect"},"message":"Starting Data Connect Emulator with command {\"binary\":\"/home/user/.cache/firebase/emulators/dataconnect-emulator-2.13.0\",\"args\":[\"--logtostderr\",\"-v=2\",\"dev\",\"--listen=localhost:50001\",\"--config_dir=/home/user/studio/dataconnect\",\"--enable_output_schema_extensions=true\",\"--enable_output_generated_sdk=true\"],\"optionalArgs\":[\"listen\",\"config_dir\",\"enable_output_schema_extensions\",\"enable_output_generated_sdk\"],\"joinArgs\":true,\"shell\":false,\"port\":9399}"}}
+[info] i  dataconnect: Data Connect Emulator logging to dataconnect-debug.log {"metadata":{"emulator":{"name":"dataconnect"},"message":"Data Connect Emulator logging to dataconnect-debug.log"}}
+[debug] [2025-09-29T17:02:29.587Z] I0929 17:02:29.571561    3929 load.go:31] Reloading schema and connectors...
+E0929 17:02:29.581756    3929 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "studio-7875732711-2b800-service". No service has a schema.
+E0929 17:02:29.581832    3929 load.go:73] Could not load sources: 
+Errors: schema/schema.gql:23:33: Undefined directive relation.
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0929 17:02:29.571561    3929 load.go:31] Reloading schema and connectors...\nE0929 17:02:29.581756    3929 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service \"studio-7875732711-2b800-service\". No service has a schema.\nE0929 17:02:29.581832    3929 load.go:73] Could not load sources: \nErrors: schema/schema.gql:23:33: Undefined directive relation.\n"}}
+[debug] [2025-09-29T17:02:29.655Z] I0929 17:02:29.640978    3929 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
+Generated sources: prelude.gql [73251B] 
+I0929 17:02:29.641080    3929 load.go:74] Finished reloading
+I0929 17:02:29.654658    3929 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0929 17:02:29.640978    3929 collector.go:107] schema extensions wrote into \"/home/user/studio/dataconnect/.dataconnect/schema\"\nGenerated sources: prelude.gql [73251B] \nI0929 17:02:29.641080    3929 load.go:74] Finished reloading\nI0929 17:02:29.654658    3929 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
+[error] [Firebase Plugin] error:  {}
