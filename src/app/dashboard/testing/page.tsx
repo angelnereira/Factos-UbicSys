@@ -128,14 +128,26 @@ export default function TestingPage() {
 
   useEffect(() => {
     async function fetchCompanies() {
-      if (!db) return;
+      if (!db) {
+        setIsCompaniesLoading(false);
+        return;
+      }
       setIsCompaniesLoading(true);
-      const fetchedCompanies = await getCompanies(db);
-      setCompanies(fetchedCompanies);
-      setIsCompaniesLoading(false);
+      try {
+        const fetchedCompanies = await getCompanies(db);
+        setCompanies(fetchedCompanies);
+      } catch (error) {
+        toast({
+          title: "Error al Cargar Compañías",
+          description: "No se pudieron obtener las compañías desde Firestore.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsCompaniesLoading(false);
+      }
     }
     fetchCompanies();
-  }, [db]);
+  }, [db, toast]);
 
   async function onSubmit(values: TestApiFormValues) {
     setIsSubmitting(true);
