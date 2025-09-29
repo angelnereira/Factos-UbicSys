@@ -11,9 +11,9 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getAuthToken, submitDocument } from '@/lib/factory-hka/api-client';
-import type { FactoryHkaDocumentRequest, CompanyCredentials } from '@/lib/factory-hka/types';
-import type { Company, FiscalDocument } from '@/lib/types';
+import { submitDocument } from '@/lib/factory-hka/api-client';
+import type { CompanyCredentials } from '@/lib/factory-hka/types';
+import type { FiscalDocument } from '@/lib/types';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getCompanyById_admin, adminDb } from '@/app/api/v1/documents/_lib/firebase-admin';
 
@@ -123,7 +123,7 @@ const submitDocumentFlow = ai.defineFlow(
         {
           step: 'sent_to_pac',
           status: 'warning',
-          message: 'Iniciando el envío del documento al PAC.',
+          message: 'Iniciando el envío del documento al PAC via SOAP.',
           timestamp: Timestamp.now(),
         },
       ],
@@ -135,26 +135,10 @@ const submitDocumentFlow = ai.defineFlow(
       throw new Error(`Document with ID ${documentId} disappeared during processing.`);
     }
 
-    // 4. Get auth token from HKA using company-specific credentials
-    const authResponse = await getAuthToken(credentials, env);
-    if (authResponse.error || !authResponse.data) {
-        const authErrorMessage = `Error de autenticación con HKA: ${authResponse.error}`;
-        await updateDocumentInFlow_admin(companyId, documentId, {
-            status: 'rejected',
-            errorDetails: authErrorMessage,
-            statusHistory: [
-                ...currentDocument.statusHistory,
-                { step: 'pac_response', status: 'error', message: authErrorMessage, timestamp: Timestamp.now() }
-            ]
-        });
-        return { success: false, message: authErrorMessage };
-    }
-    const { token } = authResponse.data;
+    // 4. Submit the document to HKA via SOAP
+    const submissionData = currentDocument.originalData;
 
-    // 5. Submit the document to HKA
-    const submissionData = document.originalData as unknown as FactoryHkaDocumentRequest;
-
-    const submitResponse = await submitDocument(submissionData, token, env);
+    const submitResponse = await submitDocument(submissionData.documento, credentials, env);
     
     // Refresh document state again before final update
     currentDocument = await getDocumentById_admin(companyId, documentId);
@@ -162,9 +146,9 @@ const submitDocumentFlow = ai.defineFlow(
       throw new Error(`Document with ID ${documentId} disappeared before final update.`);
     }
 
-    // 6. Handle the response and update Firestore
+    // 5. Handle the response and update Firestore
     if (submitResponse.error || !submitResponse.data) {
-      const errorMessage = `Error al enviar documento a HKA: ${submitResponse.error}`;
+      const errorMessage = `Error al enviar documento a HKA (SOAP): ${submitResponse.error}`;
       await updateDocumentInFlow_admin(companyId, documentId, {
         status: 'rejected',
         errorDetails: errorMessage,
@@ -177,16 +161,26 @@ const submitDocumentFlow = ai.defineFlow(
     }
     
     const { cufe, message } = submitResponse.data;
+    const finalStatus = cufe ? 'sent_to_pac' : 'rejected';
+    const finalMessage = cufe ? `Documento enviado exitosamente a HKA. ${message}` : `HKA procesó la solicitud pero no devolvió un CUFE. ${message}`;
+
+
     await updateDocumentInFlow_admin(companyId, documentId, {
-      status: 'sent_to_pac',
+      status: finalStatus,
       cufe: cufe,
       processedAt: Timestamp.now(),
       statusHistory: [
         ...currentDocument.statusHistory,
-        { step: 'pac_response', status: 'success', message: `Documento enviado exitosamente a HKA. ${message}`, timestamp: Timestamp.now(), details: { cufe } }
+        { 
+          step: 'pac_response', 
+          status: cufe ? 'success' : 'error', 
+          message: finalMessage, 
+          timestamp: Timestamp.now(), 
+          details: { cufe } 
+        }
       ]
     });
 
-    return { success: true, message: 'Documento enviado y estado actualizado correctamente.', cufe };
+    return { success: true, message: 'Documento procesado por SOAP y estado actualizado correctamente.', cufe };
   }
 );
