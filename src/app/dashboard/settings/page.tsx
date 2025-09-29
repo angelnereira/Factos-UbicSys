@@ -10,12 +10,6 @@ import {
   Database,
   Palette,
   User,
-  KeyRound,
-  Eye,
-  EyeOff,
-  PlusCircle,
-  ArrowLeft,
-  Copy,
 } from "lucide-react"
 import {
   Card,
@@ -28,17 +22,6 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
 
 
 const settingsNav = [
@@ -47,24 +30,28 @@ const settingsNav = [
         name: "Cuenta",
         description: "Gestiona tu información de perfil.",
         icon: User,
+        href: '/dashboard/settings?tab=account'
     },
     {
         id: 'appearance',
         name: "Apariencia",
         description: "Personaliza la apariencia de la app.",
         icon: Palette,
+        href: '/dashboard/settings?tab=appearance'
     },
     {
         id: 'credentials',
         name: "Credenciales y API",
         description: "Administra tus claves de API y secretos.",
         icon: ShieldCheck,
+        href: '/dashboard/settings/api' // Direct link to the dedicated page
     },
     {
         id: 'data',
         name: "Datos",
         description: "Administra tus datos y exportaciones.",
         icon: Database,
+        href: '/dashboard/settings?tab=data'
     },
 ]
 
@@ -118,227 +105,6 @@ function AppearanceSettings() {
     );
 }
 
-type SecretCollection = {
-    id: string;
-    demoUser: string;
-    demoPass: string;
-    prodUser: string;
-    prodPass: string;
-    status: 'active' | 'inactive';
-};
-
-function HkaSecretsManager() {
-    const [view, setView] = useState<'list' | 'form'>('list');
-    const [collections, setCollections] = useState<SecretCollection[]>([
-        { id: 'col-1', demoUser: 'walgofugiitj_ws_tfhka', demoPass: 'Tfhka.P4n4m4.2023', prodUser: '', prodPass: '', status: 'active' }
-    ]);
-    const [showDemoPass, setShowDemoPass] = useState(false);
-    const [showProdPass, setShowProdPass] = useState(false);
-    
-    // Form state
-    const [demoUser, setDemoUser] = useState('walgofugiitj_ws_tfhka');
-    const [demoPass, setDemoPass] = useState('Tfhka.P4n4m4.2023');
-    const [prodUser, setProdUser] = useState('');
-    const [prodPass, setProdPass] = useState('');
-
-    const handleSaveCollection = () => {
-        const newCollection: SecretCollection = {
-            id: `col-${collections.length + 1}`,
-            demoUser,
-            demoPass,
-            prodUser,
-            prodPass,
-            status: 'inactive',
-        };
-        setCollections(prev => [...prev, newCollection]);
-        setView('list');
-    };
-    
-    const handleCreateNewCollection = () => {
-        // Reset form fields
-        setDemoUser('');
-        setDemoPass('');
-        setProdUser('');
-        setProdPass('');
-        setView('form');
-    }
-
-    if (view === 'list') {
-        return (
-            <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h3 className="text-lg font-medium flex items-center gap-2">
-                             <KeyRound /> Bóveda de Secretos (The Factory HKA)
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                            Colecciones de credenciales para conectar con el PAC.
-                        </p>
-                    </div>
-                    <Button onClick={handleCreateNewCollection}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Crear Colección
-                    </Button>
-                </div>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Usuario Demo</TableHead>
-                            <TableHead>Usuario Producción</TableHead>
-                            <TableHead>Estado</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {collections.map((col) => (
-                            <TableRow key={col.id}>
-                                <TableCell>{col.demoUser}</TableCell>
-                                <TableCell>{col.prodUser || 'No configurado'}</TableCell>
-                                <TableCell>
-                                    <Badge variant={col.status === 'active' ? 'default' : 'outline'}>
-                                        {col.status === 'active' ? 'Activa' : 'Inactiva'}
-                                    </Badge>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-        );
-    }
-
-    // Form View
-     return (
-        <div className="space-y-4">
-            <Button variant="ghost" size="sm" onClick={() => setView('list')} className="w-fit p-1 h-auto">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Volver a la lista
-            </Button>
-            <div className="space-y-1 pt-2">
-                 <h3 className="text-lg font-medium flex items-center gap-2">
-                    <PlusCircle /> Nueva Colección de Secretos
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                   Añade las credenciales de API para los ambientes de Demo y Producción de HKA.
-                </p>
-            </div>
-            <div className="space-y-6 pt-4">
-                <div className="space-y-4 rounded-lg border p-4">
-                    <h3 className="font-semibold">Ambiente de Demo / Pruebas</h3>
-                     <div className="space-y-2">
-                        <Label htmlFor="demo-user">Username</Label>
-                        <Input id="demo-user" value={demoUser} onChange={e => setDemoUser(e.target.value)} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="demo-pass">Password</Label>
-                        <div className="relative">
-                            <Input id="demo-pass" type={showDemoPass ? 'text' : 'password'} value={demoPass} onChange={e => setDemoPass(e.target.value)} />
-                            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowDemoPass(!showDemoPass)}>
-                                {showDemoPass ? <EyeOff /> : <Eye />}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="space-y-4 rounded-lg border p-4">
-                    <h3 className="font-semibold">Ambiente de Producción</h3>
-                     <div className="space-y-2">
-                        <Label htmlFor="prod-user">Username</Label>
-                        <Input id="prod-user" placeholder="Aún no configurado" value={prodUser} onChange={e => setProdUser(e.target.value)} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="prod-pass">Password</Label>
-                         <div className="relative">
-                            <Input id="prod-pass" type={showProdPass ? 'text' : 'password'} placeholder="Aún no configurado" value={prodPass} onChange={e => setProdPass(e.target.value)} />
-                             <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowProdPass(!showProdPass)}>
-                                {showProdPass ? <EyeOff /> : <Eye />}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <Button onClick={handleSaveCollection}>Guardar Colección</Button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function CompanyApiKeys() {
-    const { toast } = useToast();
-    const [showKey, setShowKey] = useState(false);
-    const apiKey = "fu_live_sk_ex******************XYZ"; // Example key
-
-    const copyToClipboard = async () => {
-        try {
-            await navigator.clipboard.writeText(apiKey);
-            toast({
-                title: "Copiado",
-                description: "La clave de API ha sido copiada al portapapeles.",
-            });
-        } catch (err) {
-            console.error('Failed to copy using navigator.clipboard:', err);
-             toast({
-                title: "Error al Copiar",
-                description: "No se pudo copiar la clave debido a los permisos del navegador. Inténtelo manualmente.",
-                variant: "destructive",
-            });
-        }
-    };
-
-    return (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h3 className="text-lg font-medium">Claves de API de la Compañía</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Usa estas claves para conectar tu ERP o sistemas a Factos UbicSys.
-                    </p>
-                </div>
-                <Button disabled>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Generar Nueva Clave
-                </Button>
-            </div>
-            <div className="border rounded-lg p-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="font-mono text-sm">
-                        {showKey ? apiKey : `••••••••••••••••••••••••${apiKey.slice(-4)}`}
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => setShowKey(!showKey)}>
-                        {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        <span className="sr-only">Mostrar/Ocultar clave</span>
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={copyToClipboard}>
-                        <Copy className="h-4 w-4" />
-                        <span className="sr-only">Copiar clave</span>
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-
-function CredentialsSettings() {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Credenciales y API</CardTitle>
-                <CardDescription>
-                    Administra tus claves de API para conectar tus sistemas y las credenciales para el proveedor de facturación (PAC).
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-                <CompanyApiKeys />
-                <Separator />
-                <HkaSecretsManager />
-            </CardContent>
-        </Card>
-    );
-}
-
 function DataSettings() {
     return (
         <Card>
@@ -367,9 +133,8 @@ function SettingsPageContent() {
     setActiveTab(currentTab);
   }, [currentTab]);
   
-  const handleTabChange = (tabId: string) => {
-      setActiveTab(tabId);
-      router.push(`/dashboard/settings?tab=${tabId}`, { scroll: false });
+  const handleTabChange = (href: string) => {
+      router.push(href, { scroll: false });
   }
 
   return (
@@ -389,10 +154,14 @@ function SettingsPageContent() {
               <ul role="list" className="space-y-1">
                   {settingsNav.map((item) => (
                       <li key={item.name}>
-                          <button
-                              onClick={() => handleTabChange(item.id)}
+                          <Link
+                              href={item.href}
+                              onClick={(e) => {
+                                  e.preventDefault();
+                                  handleTabChange(item.href);
+                              }}
                               className={cn(
-                                  activeTab === item.id
+                                  activeTab === item.id && item.id !== 'credentials'
                                       ? "bg-accent text-primary"
                                       : "hover:bg-accent hover:text-primary",
                                   "group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-muted-foreground w-full text-left"
@@ -410,7 +179,7 @@ function SettingsPageContent() {
                                 <p className="text-xs text-muted-foreground">{item.description}</p>
                               </div>
                               <ChevronRight className="h-5 w-5 self-center text-muted-foreground/50" />
-                          </button>
+                          </Link>
                       </li>
                   ))}
               </ul>
@@ -418,8 +187,17 @@ function SettingsPageContent() {
           <div className="md:col-span-2">
             {activeTab === 'account' && <AccountSettings />}
             {activeTab === 'appearance' && <AppearanceSettings />}
-            {activeTab === 'credentials' && <CredentialsSettings />}
             {activeTab === 'data' && <DataSettings />}
+            {activeTab === 'credentials' && 
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Credenciales y API</CardTitle>
+                      <CardDescription>
+                          Has sido redirigido a la página de configuración de API.
+                      </CardDescription>
+                  </CardHeader>
+              </Card>
+            }
           </div>
       </main>
     </div>

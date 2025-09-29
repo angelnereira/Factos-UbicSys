@@ -93,7 +93,7 @@ const defaultEnviarXml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoa
 \t\t\t\t</ser:totalesSubTotales>
 \t\t\t</tem:documento>
 \t\t</tem:Enviar>
-	</soapenv:Body>
+\t</soapenv:Body>
 </soapenv:Envelope>`;
 
 const testApiSchema = z.object({
@@ -112,7 +112,7 @@ export default function TestingPage() {
   const { db } = useAuth();
   const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [isCompaniesLoading, setIsCompaniesLoading] = useState(true);
+  const [isCompaniesLoading, setIsCompaniesLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [response, setResponse] = useState<any>(null);
 
@@ -129,7 +129,6 @@ export default function TestingPage() {
   useEffect(() => {
     async function fetchCompanies() {
       if (!db) {
-        setIsCompaniesLoading(false);
         return;
       }
       setIsCompaniesLoading(true);

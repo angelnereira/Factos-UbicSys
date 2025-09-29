@@ -34,7 +34,7 @@ import { Timestamp } from 'firebase/firestore';
 const apiKeySchema = z.object({
   key: z.string().min(1, "La clave no puede estar vacía."),
   status: z.enum(['active', 'revoked']),
-  createdAt: z.instanceof(Timestamp),
+  createdAt: z.custom<Timestamp>((val) => val instanceof Timestamp, "La fecha de creación debe ser un Timestamp válido."),
 });
 
 const hkaCredentialsSchema = z.object({
@@ -280,7 +280,7 @@ export default function ApiSettingsPage() {
                                               <FormLabel>Clave de API {index + 1}</FormLabel>
                                               <div className="relative">
                                                   <FormControl>
-                                                      <Input {...field} readOnly className="pr-16" />
+                                                      <Input {...field} readOnly className="pr-16 font-mono" />
                                                   </FormControl>
                                                    <div className="absolute right-1 top-1/2 -translate-y-1/2 flex">
                                                       <Tooltip>
@@ -421,5 +421,3 @@ export default function ApiSettingsPage() {
     </TooltipProvider>
   );
 }
-
-    
