@@ -6,19 +6,21 @@ import Link from 'next/link';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, PlusCircle, Trash2, Eye, EyeOff, Copy, Loader2 } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Eye, EyeOff, Copy, Loader2, ChevronsUpDown, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +32,8 @@ import { getCompanies, updateCompany, getCompanyById } from '@/lib/firebase/fire
 import type { Company } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Timestamp } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
+
 
 const apiKeySchema = z.object({
   key: z.string().min(1, "La clave no puede estar vacía."),
@@ -60,6 +64,7 @@ export default function ApiSettingsPage() {
   const [isCompaniesLoading, setIsCompaniesLoading] = useState(true);
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openCombobox, setOpenCombobox] = useState(false);
   
   const [showDemoToken, setShowDemoToken] = useState(false);
   const [showProdToken, setShowProdToken] = useState(false);
@@ -221,24 +226,66 @@ export default function ApiSettingsPage() {
                         control={form.control}
                         name="companyId"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="flex flex-col">
                             <FormLabel>Compañía</FormLabel>
-                            <Select onValueChange={handleCompanyChange} value={field.value} disabled={isCompaniesLoading || isFormLoading}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecciona una compañía..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {isCompaniesLoading ? (
-                                    <SelectItem value="loading" disabled>Cargando compañías...</SelectItem>
-                                ) : (
-                                    companies.map(company => (
-                                        <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
-                                    ))
-                                )}
-                              </SelectContent>
-                            </Select>
+                              <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                               <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openCombobox}
+                                    className={cn(
+                                      "w-full justify-between",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                    disabled={isCompaniesLoading || isFormLoading}
+                                  >
+                                    {field.value
+                                      ? companies.find(
+                                          (company) => company.id === field.value
+                                        )?.name
+                                      : "Selecciona una compañía..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                   <CommandInput placeholder="Buscar compañía..." />
+                                   <CommandList>
+                                      <CommandEmpty>No se encontraron compañías.</CommandEmpty>
+                                      <CommandGroup>
+                                        {isCompaniesLoading ? (
+                                          <CommandItem disabled>Cargando...</CommandItem>
+                                        ) : (
+                                          companies.map((company) => (
+                                            <CommandItem
+                                              value={company.name}
+                                              key={company.id}
+                                              onSelect={() => {
+                                                form.setValue("companyId", company.id)
+                                                handleCompanyChange(company.id)
+                                                setOpenCombobox(false)
+                                              }}
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  "mr-2 h-4 w-4",
+                                                  company.id === field.value
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                                )}
+                                              />
+                                              {company.name}
+                                            </CommandItem>
+                                          ))
+                                        )}
+                                      </CommandGroup>
+                                   </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -421,3 +468,5 @@ export default function ApiSettingsPage() {
     </TooltipProvider>
   );
 }
+
+    
